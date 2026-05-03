@@ -1,0 +1,30 @@
+{
+  "name": "reprogrammed",
+  "version": "1.0.0",
+  "description": "> *“Web-based educational game focused on teaching programming logic through gamification and AI”*",
+  "main": "server/server.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "node server/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VitorFongaro/Reprogrammed.git"
+  },
+  "keywords": [],
+  "author": "Vitor Fongaro",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/VitorFongaro/Reprogrammed/issues"
+  },
+  "homepage": "https://github.com/VitorFongaro/Reprogrammed#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "pg": "^8.20.0"
+  }
+}
