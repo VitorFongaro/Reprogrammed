@@ -181,7 +181,7 @@ Vitor
 * GitHub: [https://github.com/VitorFongaro](https://github.com/VitorFongaro)
 
 Ryan
-* Email: [mudar@gmail.com](mailto:mudar@gmail.com)
+* Email: [ryanramosvp@gmail.com](mailto:ryanramosvp@gmail.com)
 * GitHub: [https://github.com/ryanramosvp](https://github.com/ryanramosvp)
 ---
 

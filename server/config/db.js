@@ -1,29 +1,13 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import pool from './config/db.js';
+import pkg from 'pg'; 
 
-dotenv.config();
-const app = express();
+const { Pool } = pkg; 
 
-app.use(express.json());
+const pool = new Pool({ 
+  user: process.env.DB_USER, 
+  host: process.env.DB_HOST, 
+  database: process.env.DB_NAME, 
+  password: process.env.DB_PASSWORD, 
+  port: process.env.DB_PORT, 
+}); 
 
-app.get('/', (req, res) => {
-  res.send('Servidor rodando 🚀');
-});
-
-
-app.get('/users', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM users');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erro no servidor' });
-  }
-});
-
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-});
+export default pool;
