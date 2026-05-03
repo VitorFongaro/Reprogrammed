@@ -114,10 +114,10 @@ IA Generativa (API)
 
 ```bash
 # Clonar repositório
-git clone https://github.com/seu-usuario/logic-awakening
+git clone https://github.com/VitorFongaro/Reprogrammed
 
 # Entrar na pasta
-cd logic-awakening
+cd Reprogrammed
 
 # Instalar dependências
 npm install
@@ -176,9 +176,13 @@ Sinta-se livre para abrir issues ou pull requests.
 
 ## 📬 Contato
 
+Vitor
 * Email: [vitorfongaro@gmail.com](mailto:vitorfongaro@gmail.com)
-* GitHub: https://github.com/VitorFongaro
+* GitHub: [https://github.com/VitorFongaro](https://github.com/VitorFongaro)
 
+Ryan
+* Email: [mudar@gmail.com](mailto:mudar@gmail.com)
+* GitHub: [https://github.com/ryanramosvp](https://github.com/ryanramosvp)
 ---
 
 > *“Understanding logic is not just about code… it's about understanding decisions.”*
