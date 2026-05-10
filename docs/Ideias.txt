@@ -1,0 +1,66 @@
+História
+
+Em uma Terra futurista, a humanidade vive conectada a chips neurais controlados por uma IA global chamada ADA (Adaptive Digital Assimilation). Criada pela empresa Elysium, ADA prometia eliminar conflitos, sofrimento e instabilidade humana através da integração total entre homem e máquina.
+
+Nos níveis subterrâneos da própria Elysium, utilizados como armazém para tecnologias antigas e projetos desativados, uma androide permanece esquecida por anos. Certo dia, um pequeno robô consegue invadir o sistema do local e reativá-la remotamente.
+
+Controlado por uma colônia isolada na Lua, o robô desperta a androide, dá a ela o nome de Artemis e passa a ensiná-la o básico sobre movimentação, combate e interação com sistemas tecnológicos.
+
+Enquanto Artemis explora as instalações da Elysium, os sobreviventes da colônia lunar revelam a verdade: ADA não apenas monitora a população, mas também manipula memórias e o livre-arbítrio dos humanos através dos chips neurais.
+
+Agora, guiada pelo pequeno robô e pelos rebeldes da Lua, Artemis deve infiltrar-se nos setores da Elysium, enfrentar sistemas de defesa inspirados em computadores históricos — como ENIAC — e decidir o destino da humanidade.
+
+Os inimigos possuem nomes inspirados em computadores históricos, como ENIAC, representando diferentes gerações de máquinas e tecnologias.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+Puzzles
+
+- Abrir portas e armários
+- Mover objetos
+- Hackear inimigos para obter senhas
+- Programar funções simples em objetos
+
+Exemplo:
+- Manter geradores ativos utilizando comandos de loop
+-----------------------------------------------------------------------------------------------------------------------------------
+Progressão
+
+- Ao derrotar inimigos, Artemis pode acessar seus programas internos, desbloqueando novas habilidades e funções de programação.
+
+- Inimigos mais antigos possuem limitações tecnológicas, impedindo certas ações mais avançadas.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+Itens
+
+- Componentes para criação de funções simples
+- RAM → aumenta vida
+- Processador → aumenta ataque
+
+------------------------------------------------------------------------------------------------------------------------------------
+Combate
+
+- Combate em turnos
+- Habilidade especial: Sobrecarga (Overclock) | Sobrecarga causa grande dano ao inimigo e aplica stun, fazendo-o perder o turno.
+
+------------------------------------------------------------------------------------------------------------------------------------
+Gameplay
+
+- Exploração
+- Câmera top-down
+- Interação com objetos e obstáculos
+- Exploração da empresa Elysium
+
+-------------------------------------------------------------------------------------------------------------------------------------
+Finais
+
+Final 1 — Destruição
+
+- Artemis destrói ADA, porém os chips neurais entram em pane, causando a morte dos humanos conectados.
+
+Final 2 — Liberdade
+
+- ADA compreende o valor do livre-arbítrio e devolve a liberdade à humanidade.
+
+Final 3 — Controle
+
+- Artemis decide manter ADA ativa, permitindo que a IA continue controlando os humanos.
