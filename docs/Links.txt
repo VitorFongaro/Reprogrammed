@@ -16,3 +16,7 @@ https://sakpix.itch.io/sci-fi-space-station-kit
 
 -- IA
 https://www.pixellab.ai/
+
+-- Fontes
+https://fonts.google.com/specimen/Pixelify+Sans?preview.lang=pt_Latn
+VCR OSD Mono (Para os textos)
