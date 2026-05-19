@@ -1,8 +1,38 @@
 @font-face {
-  font-family: 'VCR';
-  src: url('../assets/fonts/VCR_OSD_MONO_1.001.ttf') format('truetype');
+    font-family: 'VCR';
+    src: url('../assets/fonts/VCR_OSD_MONO_1.001.ttf') format('truetype');
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+
+    padding-top: 80px;
+    color: #F7F7F7;
+
+    cursor: url('../assets/cursors/default.png'), auto;
 }
 
 a {
     text-decoration: none;
+    transition: 0.3s;
+}
+
+a:hover {
+    cursor: url('../assets/cursors/pointer.png'), pointer;
+}
+
+footer {
+    padding: 40px;
+    background-color: black;
+    border-top: 1px solid rgba(247,247,247,0.2);
+
+     margin-top: auto;
 }
