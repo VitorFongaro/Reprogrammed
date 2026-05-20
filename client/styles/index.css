@@ -6,17 +6,33 @@ nav {
     position: fixed;
     top: 0;
     left: 0;
-
     width: 100%;
     height: 80px;
-
     display: flex;
     justify-content: space-between;
     align-items: center;
-
     background-color: black;
-
     z-index: 1000;
+}
+
+footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+a {
+    font-size: 22px;
+    color: #F7F7F7;
+}
+
+.footer-links {
+    display: flex;
+    gap: 32px;
+}
+
+.footer-links img {
+    height: 32px;
 }
 
 .nav-links {
@@ -25,8 +41,75 @@ nav {
     gap: 30px;
 }
 
-a {
-    font-size: 22px;
+.modal-content {
+    position: relative;
+    width: 700px;
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 5px solid rgba(247, 247, 247, 0.2);
+    box-shadow: 0 0 20px rgba(255,255,255,0.05);
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-content h2, h3{
+    text-align: center;
+}
+
+.modal-content img {
+    height: 32px;
+}
+
+.modal-line {
+    width: 100%;
+    height: 1px;
+    background-color: rgba(247, 247, 247, 0.4);
+    margin: 20px 0;
+    opacity: 0.3;
+}
+
+.team-cards {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.team-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 250px;
+    padding: 25px;
+    border: 2px solid rgba(247, 247, 247, 0.4);
+    background: rgba(255, 255, 255, 0.05);
+    transition: 0.2s;
+}
+
+.team-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.team-links a{
+    font-size: 16px;    
+}
+
+#team-content,
+#contact-content {
+    display: none;
+}
+
+#close-modal {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #F7F7F7;
+    font-size: 20px;
 }
 
 a:visited {
@@ -35,4 +118,22 @@ a:visited {
 
 a:hover {
     opacity: 0.8;
+}
+
+.team-card:hover {
+    transform: translateY(-4px);
+    border-color: #F7F7F7;
+    box-shadow: 0 0 10px rgba(255,255,255,0.08);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

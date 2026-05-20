@@ -6,6 +6,7 @@
     <title>Reprogrammed</title>
     <link rel="stylesheet" href="styles/global.css">
     <link rel="stylesheet" href="styles/index.css">
+    <script defer src="scripts/index.js"></script>
 </head>
 <body>
     <header>
@@ -25,17 +26,58 @@
             </a>
         </nav>
     </header>
+    <main>
 
+    </main>
     <footer>
         <div class="footer-content">
             <p>© 2026 Reprogrammed. Todos os direitos reservados.</p>
         </div>
 
         <div class="footer-links">
-            <a href="#">Equipe</a>
-            <a href="#">Contato</a>
-            <a href="https://github.com/VitorFongaro/Reprogrammed">GitHub</a>
+            <button id="team-button">
+                <img src="assets/icons/equipe.png" alt="Equipe">    
+            </button>
+            <button id="contact-button">
+                <img src="assets/icons/contato.png" alt="Contato">
+            </button>
+            <a href="https://github.com/VitorFongaro/Reprogrammed">
+                <img src="assets/icons/github.png" alt="Github">
+            </a>
         </div>
     </footer>
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <button id="close-modal">
+                <img src="assets/icons/x.png" alt="Fechar">
+            </button>
+            <div id="team-content">
+                <h2>EQUIPE</h2>
+                <div class="modal-line"></div>
+                <div class="team-cards">
+                    <div class="team-card">
+                        <h3>Vitor Fongaro</h3>
+                        <div class="team-links">
+                            <a href="mailto:vitorfongaro@gmail.com">Email</a>
+                            <a href="https://github.com/VitorFongaro" target="_blank">GitHub</a>
+                            <a href="https://www.linkedin.com/in/vitor-fongaro/" target="_blank">Linkedin</a>
+                        </div>
+                    </div>
+                    <div class="team-card">
+                        <h3>Ryan Ramos</h3>   
+                        <div class="team-links">
+                            <a href="mailto:ryanramosvp@gmail.com">Email</a>
+                            <a href="https://github.com/ryanramosvp" target="_blank">GitHub</a>
+                            <a href="#" target="_blank">Linkedin</a>
+                        </div> 
+                    </div>
+                </div>
+            </div>
+            <div id="contact-content">
+                <h2>CONTATO</h2>
+                <div class="modal-line"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
