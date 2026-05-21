@@ -32,7 +32,63 @@
         </nav>
     </header>
     <main>
+        <section class="hero-panel" aria-label="Banner principal">
+            <div class="banner-stage">
+                <div class="space-effects" aria-hidden="true">
+                    <span class="star star-one"></span>
+                    <span class="star star-two"></span>
+                    <span class="star star-three"></span>
+                    <span class="star star-four"></span>
+                    <span class="star star-five"></span>
+                    <span class="meteor meteor-one"></span>
+                    <span class="meteor meteor-two"></span>
+                    <span class="meteor meteor-three"></span>
+                </div>
+                <div class="banner-placeholder">
+                    <img class="banner-logo" src="assets/images/reprogrammed-logo-hero.png" alt="Reprogrammed">
+                </div>
+                <a href="pages/game.html" class="play-button hero-play-button">
+                    REPROGRAMAR
+                </a>
+            </div>
+        </section>
 
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <section class="intel-section" aria-label="Informacoes do jogo">
+            <article class="console-panel" aria-live="polite">
+                <div class="console-header">
+                    <span class="console-light"></span>
+                    <span class="console-title" id="console-kicker">ARQUIVO / SISTEMA</span>
+                </div>
+                <div class="console-screen">
+                    <p class="console-prompt">&gt; <span id="console-command">abrir_arquivo sistema</span></p>
+                    <h2 id="console-title">Sistema Reprogrammed</h2>
+                    <p id="console-text">
+                        Em uma estacao perdida entre orbitas mortas, codigos antigos acordam maquinas que ja nao obedecem humanos. Reprograme rotas, memorias e inimigos para sobreviver ao nucleo corrompido.
+                    </p>
+                </div>
+            </article>
+
+            <aside class="media-panel" aria-label="Arquivos visuais">
+                <button class="media-card active" type="button" data-topic="sistema" aria-pressed="true">
+                    <span class="media-preview system-preview"></span>
+                    <span>SISTEMA</span>
+                </button>
+                <button class="media-card" type="button" data-topic="protagonista" aria-pressed="false">
+                    <span class="media-preview hero-preview"></span>
+                    <span>PROTAGONISTA</span>
+                </button>
+                <button class="media-card" type="button" data-topic="vilao" aria-pressed="false">
+                    <span class="media-preview villain-preview"></span>
+                    <span>VILAO</span>
+                </button>
+                <button class="media-card" type="button" data-topic="gameplay" aria-pressed="false">
+                    <span class="media-preview gameplay-preview"></span>
+                    <span>GAMEPLAY</span>
+                </button>
+            </aside>
+        </section>
     </main>
     <footer>
         <div class="footer-content">

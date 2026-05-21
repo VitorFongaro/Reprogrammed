@@ -1,5 +1,6 @@
 body {
     font-family: 'VCR';
+    background: #000000;
 }
 
 nav {
@@ -22,6 +23,15 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+main {
+    flex: 1;
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        #000000;
+    background-size: 24px 24px;
 }
 
 a {
@@ -148,6 +158,353 @@ a {
         2px 2px 0 #111111;
 }
 
+.hero-panel {
+    min-height: 430px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 64px 48px 70px;
+}
+
+.banner-stage {
+    position: relative;
+    width: min(1120px, 100%);
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 44px;
+}
+
+.space-effects {
+    position: absolute;
+    inset: -70px -90px -30px;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.star {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #f7f7f7;
+    box-shadow:
+        0 0 0 3px #000000,
+        0 0 0 5px rgba(247, 247, 247, 0.25);
+    animation: pulseStar 1.8s steps(2, end) infinite;
+}
+
+.star::before,
+.star::after {
+    content: "";
+    position: absolute;
+    background: #f7f7f7;
+}
+
+.star::before {
+    top: 3px;
+    left: -8px;
+    width: 24px;
+    height: 2px;
+}
+
+.star::after {
+    top: -8px;
+    left: 3px;
+    width: 2px;
+    height: 24px;
+}
+
+.star-one {
+    top: 58px;
+    left: 8%;
+}
+
+.star-two {
+    top: 118px;
+    right: 12%;
+    animation-delay: 0.35s;
+}
+
+.star-three {
+    right: 5%;
+    bottom: 72px;
+    transform: scale(0.7);
+    animation-delay: 0.75s;
+}
+
+.star-four {
+    left: 16%;
+    bottom: 104px;
+    transform: scale(0.75);
+    animation-delay: 1.1s;
+}
+
+.star-five {
+    top: 28px;
+    left: 46%;
+    transform: scale(0.55);
+    animation-delay: 1.35s;
+}
+
+.meteor {
+    position: absolute;
+    width: 86px;
+    height: 6px;
+    background: #f7f7f7;
+    box-shadow:
+        -12px 0 0 #d9d9d9,
+        -26px 0 0 #7a7a7a,
+        -40px 0 0 #2a2a2a;
+    opacity: 0;
+    transform: rotate(-24deg);
+    animation: meteorFly 4.8s steps(16, end) infinite;
+}
+
+.meteor::after {
+    content: "";
+    position: absolute;
+    right: -8px;
+    top: -4px;
+    width: 12px;
+    height: 12px;
+    background: #f7f7f7;
+    box-shadow: 0 0 0 3px #111111;
+}
+
+.meteor-one {
+    top: 74px;
+    left: -140px;
+}
+
+.meteor-two {
+    top: 188px;
+    left: -240px;
+    animation-delay: 1.65s;
+    transform: rotate(-18deg) scale(0.7);
+}
+
+.meteor-three {
+    top: 20px;
+    left: -320px;
+    animation-delay: 3.1s;
+    transform: rotate(-28deg) scale(0.55);
+}
+
+.banner-placeholder {
+    position: relative;
+    width: min(900px, 100%);
+    height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 3px solid #f7f7f7;
+    background:
+        radial-gradient(circle at 50% 42%, rgba(247, 247, 247, 0.12), transparent 42%),
+        linear-gradient(135deg, rgba(247, 247, 247, 0.08) 0 12px, transparent 12px 24px),
+        #030507;
+    background-size: auto, 24px 24px, auto;
+    box-shadow:
+        0 0 0 4px #111111,
+        8px 8px 0 #7a7a7a,
+        14px 14px 0 #050505;
+}
+
+.banner-placeholder::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(rgba(247, 247, 247, 0.05) 50%, transparent 50%),
+        radial-gradient(circle at 16% 18%, #f7f7f7 0 2px, transparent 3px),
+        radial-gradient(circle at 84% 24%, #d9d9d9 0 2px, transparent 3px),
+        radial-gradient(circle at 68% 78%, #7a7a7a 0 2px, transparent 3px);
+    background-size: 100% 8px, auto, auto, auto;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.banner-logo {
+    position: relative;
+    z-index: 1;
+    width: min(108%, 980px);
+    height: auto;
+    transform: translateY(-2%);
+    filter: drop-shadow(0 0 10px rgba(247, 247, 247, 0.16));
+    image-rendering: pixelated;
+}
+
+.hero-play-button {
+    min-height: 62px;
+    padding: 0 46px;
+    font-size: 28px;
+    box-shadow:
+        0 0 0 4px #7a7a7a,
+        8px 8px 0 #d9d9d9,
+        14px 14px 0 #111111;
+}
+
+.hero-play-button:hover {
+    transform: translate(5px, 5px);
+    box-shadow:
+        0 0 0 4px #f7f7f7,
+        3px 3px 0 #7a7a7a,
+        7px 7px 0 #111111;
+}
+
+.section-divider {
+    height: 4px;
+    background: #f7f7f7;
+    box-shadow:
+        0 4px 0 #2a2a2a,
+        0 -2px 0 #7a7a7a;
+}
+
+.intel-section {
+    width: min(1280px, 100%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.4fr);
+    gap: 72px;
+    padding: 82px 48px 88px;
+}
+
+.console-panel,
+.media-card {
+    image-rendering: pixelated;
+}
+
+.console-panel {
+    min-height: 330px;
+    border: 3px solid #f7f7f7;
+    background: #050505;
+    box-shadow:
+        0 0 0 4px #111111,
+        9px 9px 0 #7a7a7a;
+}
+
+.console-header {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 18px;
+    border-bottom: 3px solid #7a7a7a;
+    background: #111111;
+}
+
+.console-light {
+    width: 12px;
+    height: 12px;
+    background: #f7f7f7;
+    box-shadow: 18px 0 0 #7a7a7a, 36px 0 0 #2a2a2a;
+}
+
+.console-title {
+    margin-left: 48px;
+    font-size: 14px;
+    color: #d9d9d9;
+}
+
+.console-screen {
+    min-height: 280px;
+    padding: 26px;
+    background:
+        linear-gradient(rgba(247, 247, 247, 0.035) 50%, transparent 50%),
+        #000000;
+    background-size: 100% 8px;
+}
+
+.console-prompt {
+    margin-bottom: 18px;
+    color: #d9d9d9;
+    font-size: 15px;
+}
+
+.console-screen h2 {
+    margin-bottom: 22px;
+    color: #f7f7f7;
+    font-size: 30px;
+    line-height: 1.1;
+    text-align: left;
+}
+
+.console-screen p {
+    color: #d9d9d9;
+    font-size: 18px;
+    line-height: 1.55;
+}
+
+.media-panel {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 18px;
+    align-content: stretch;
+}
+
+.media-card {
+    min-height: 330px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    color: #f7f7f7;
+    border: 3px solid #7a7a7a;
+    background: #0b0b0b;
+    box-shadow: 6px 6px 0 #111111;
+    transition: transform 0.12s steps(2, end), border-color 0.12s steps(2, end), background-color 0.12s steps(2, end), box-shadow 0.12s steps(2, end);
+}
+
+.media-card span:last-child {
+    font-size: 16px;
+    line-height: 1.1;
+    text-align: center;
+}
+
+.media-preview {
+    flex: 1;
+    min-height: 230px;
+    border: 2px solid #2a2a2a;
+    background-color: #050505;
+    background-size: 28px 28px, 100% 100%;
+}
+
+.system-preview {
+    background-image:
+        linear-gradient(90deg, transparent 45%, #d9d9d9 45% 55%, transparent 55%),
+        linear-gradient(#111111, #2a2a2a);
+}
+
+.hero-preview {
+    background-image:
+        linear-gradient(90deg, transparent 30%, #f7f7f7 30% 42%, transparent 42% 58%, #f7f7f7 58% 70%, transparent 70%),
+        linear-gradient(#050505, #2a2a2a);
+}
+
+.villain-preview {
+    background-image:
+        linear-gradient(135deg, transparent 38%, #7a7a7a 38% 50%, transparent 50%),
+        linear-gradient(#111111, #050505);
+}
+
+.gameplay-preview {
+    background-image:
+        linear-gradient(90deg, #2a2a2a 2px, transparent 2px),
+        linear-gradient(#050505, #1a1a1a);
+}
+
+.media-card:hover,
+.media-card.active {
+    transform: translate(4px, 4px);
+    border-color: #f7f7f7;
+    background: #1a1a1a;
+    box-shadow: 2px 2px 0 #7a7a7a;
+}
+
 .modal-content {
     position: relative;
     width: 700px;
@@ -246,6 +603,41 @@ a:hover {
     }
 }
 
+@keyframes pulseStar {
+    0%,
+    100% {
+        opacity: 0.35;
+        transform: scale(0.75);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes meteorFly {
+    0% {
+        opacity: 0;
+        translate: 0 0;
+    }
+
+    8% {
+        opacity: 1;
+    }
+
+    42% {
+        opacity: 1;
+        translate: 1280px 330px;
+    }
+
+    43%,
+    100% {
+        opacity: 0;
+        translate: 1280px 330px;
+    }
+}
+
 @media (max-width: 860px) {
     nav {
         height: auto;
@@ -292,6 +684,39 @@ a:hover {
         width: 44px;
         height: 44px;
     }
+
+    .hero-panel {
+        min-height: 360px;
+        padding: 44px 24px 54px;
+    }
+
+    .banner-placeholder {
+        height: 230px;
+    }
+
+    .hero-play-button {
+        min-height: 54px;
+        padding: 0 32px;
+        font-size: 22px;
+    }
+
+    .intel-section {
+        grid-template-columns: 1fr;
+        gap: 42px;
+        padding: 58px 24px 68px;
+    }
+
+    .media-panel {
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+    }
+
+    .media-card {
+        min-height: 240px;
+    }
+
+    .media-preview {
+        min-height: 160px;
+    }
 }
 
 @media (max-width: 560px) {
@@ -311,5 +736,72 @@ a:hover {
 
     .nav-links {
         flex-wrap: wrap;
+    }
+
+    .hero-panel {
+        min-height: 310px;
+        padding: 34px 16px 42px;
+    }
+
+    .banner-stage {
+        gap: 32px;
+    }
+
+    .banner-placeholder {
+        height: 150px;
+        box-shadow:
+            0 0 0 3px #111111,
+            5px 5px 0 #7a7a7a;
+    }
+
+    .banner-logo {
+        width: 100%;
+    }
+
+    .space-effects {
+        inset: -44px -50px -24px;
+    }
+
+    .star {
+        transform: scale(0.65);
+    }
+
+    .meteor {
+        width: 64px;
+        animation-duration: 5.6s;
+    }
+
+    .hero-play-button {
+        min-height: 50px;
+        padding: 0 24px;
+        font-size: 19px;
+    }
+
+    .intel-section {
+        padding: 42px 16px 56px;
+    }
+
+    .console-screen {
+        padding: 22px;
+    }
+
+    .console-screen h2 {
+        font-size: 24px;
+    }
+
+    .console-screen p {
+        font-size: 16px;
+    }
+
+    .media-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .media-card {
+        min-height: 180px;
+    }
+
+    .media-preview {
+        min-height: 120px;
     }
 }
