@@ -11,7 +11,10 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 32px;
+    padding: 0 48px;
     background-color: black;
+    border-bottom: 2px solid rgba(247, 247, 247, 0.14);
     z-index: 1000;
 }
 
@@ -24,6 +27,12 @@ footer {
 a {
     font-size: 22px;
     color: #F7F7F7;
+}
+
+.logo h1 {
+    font-size: 28px;
+    line-height: 1;
+    white-space: nowrap;
 }
 
 .footer-links {
@@ -39,6 +48,104 @@ a {
     list-style: none;
     display: flex;
     gap: 30px;
+    align-items: center;
+    margin-left: auto;
+}
+
+.nav-links a {
+    font-size: 18px;
+    letter-spacing: 0;
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.play-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 24px;
+    color: #111111;
+    font-size: 20px;
+    line-height: 1;
+    text-transform: uppercase;
+    background: #f7f7f7;
+    border: 3px solid #111111;
+    box-shadow:
+        0 0 0 3px #7a7a7a,
+        6px 6px 0 #d9d9d9,
+        10px 10px 0 #111111;
+    image-rendering: pixelated;
+    transition: transform 0.12s steps(2, end), box-shadow 0.12s steps(2, end), background-color 0.12s steps(2, end), color 0.12s steps(2, end);
+}
+
+.play-button::before,
+.play-button::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #111111;
+}
+
+.play-button::before {
+    top: 7px;
+    left: 8px;
+}
+
+.play-button::after {
+    right: 8px;
+    bottom: 7px;
+}
+
+.play-button:visited {
+    color: #111111;
+}
+
+.play-button:hover {
+    opacity: 1;
+    transform: translate(4px, 4px);
+    color: #f7f7f7;
+    background: #2a2a2a;
+    box-shadow:
+        0 0 0 3px #f7f7f7,
+        2px 2px 0 #7a7a7a,
+        5px 5px 0 #111111;
+}
+
+.profile-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: #0f0f0f;
+    border: 3px solid #7a7a7a;
+    box-shadow:
+        0 0 0 3px #f7f7f7,
+        5px 5px 0 #111111;
+    transition: transform 0.12s steps(2, end), box-shadow 0.12s steps(2, end), background-color 0.12s steps(2, end), border-color 0.12s steps(2, end);
+}
+
+.profile-button img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+.profile-button:hover {
+    transform: translate(3px, 3px);
+    background: #2a2a2a;
+    border-color: #f7f7f7;
+    box-shadow:
+        0 0 0 3px #7a7a7a,
+        2px 2px 0 #111111;
 }
 
 .modal-content {
@@ -46,9 +153,10 @@ a {
     width: 700px;
     padding: 30px;
     background: rgba(0, 0, 0, 0.7);
-    border: 5px solid rgba(247, 247, 247, 0.2);
     box-shadow: 0 0 20px rgba(255,255,255,0.05);
-    animation: fadeIn 0.2s ease;
+    animation: fadeIn 0.3s ease;
+    border: 2px solid #7a7a7a;
+    box-shadow: 4px 0 0 #7a7a7a, -4px 0 0 #7a7a7a, 0 4px 0 #7a7a7a, 0 -4px 0 #7a7a7a;
 }
 
 .modal-content h2, h3{
@@ -62,7 +170,7 @@ a {
 .modal-line {
     width: 100%;
     height: 1px;
-    background-color: rgba(247, 247, 247, 0.4);
+    background-color: #7a7a7a;
     margin: 20px 0;
     opacity: 0.3;
 }
@@ -81,7 +189,7 @@ a {
     gap: 15px;
     width: 250px;
     padding: 25px;
-    border: 2px solid rgba(247, 247, 247, 0.4);
+    border: 2px solid #7a7a7a;
     background: rgba(255, 255, 255, 0.05);
     transition: 0.2s;
 }
@@ -135,5 +243,73 @@ a:hover {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@media (max-width: 860px) {
+    nav {
+        height: auto;
+        min-height: 80px;
+        flex-wrap: wrap;
+        gap: 18px;
+        padding: 18px 24px;
+    }
+
+    body {
+        padding-top: 132px;
+    }
+
+    .logo h1 {
+        font-size: 22px;
+    }
+
+    .nav-links {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+        gap: 18px;
+    }
+
+    .nav-links a {
+        font-size: 15px;
+    }
+
+    .nav-actions {
+        gap: 14px;
+    }
+
+    .play-button {
+        min-height: 44px;
+        padding: 0 18px;
+        font-size: 17px;
+        box-shadow:
+            0 0 0 3px #7a7a7a,
+            5px 5px 0 #d9d9d9,
+            8px 8px 0 #111111;
+    }
+
+    .profile-button {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+@media (max-width: 560px) {
+    nav {
+        padding: 16px;
+    }
+
+    body {
+        padding-top: 178px;
+    }
+
+    .logo,
+    .nav-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .nav-links {
+        flex-wrap: wrap;
     }
 }
