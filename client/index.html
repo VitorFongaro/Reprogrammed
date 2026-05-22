@@ -6,7 +6,7 @@
     <title>Reprogrammed</title>
     <link rel="stylesheet" href="styles/global.css">
     <link rel="stylesheet" href="styles/index.css">
-    <script defer src="scripts/index.js"></script>
+    <script type="module" defer src="scripts/index.js"></script>
 </head>
 <body>
     <header>
@@ -16,9 +16,9 @@
             </div>  
 
             <ul class="nav-links">
-                <li><a href="#">SOBRE</a></li>
-                <li><a href="#">PERSONAGENS</a></li>
-                <li><a href="#">GAMEPLAY</a></li>
+                <li><a href="#intel" class="section-link active" data-section="sobre">SOBRE</a></li>
+                <li><a href="#intel" class="section-link" data-section="personagens">PERSONAGENS</a></li>
+                <li><a href="#intel" class="section-link" data-section="gameplay">GAMEPLAY</a></li>
             </ul>
 
             <div class="nav-actions">
@@ -33,17 +33,19 @@
     </header>
     <main>
         <section class="hero-panel" aria-label="Banner principal">
+            <div class="space-effects" aria-hidden="true">
+                <span class="star star-one"></span>
+                <span class="star star-two"></span>
+                <span class="star star-three"></span>
+                <span class="star star-four"></span>
+                <span class="star star-five"></span>
+                <span class="star star-six"></span>
+                <span class="star star-seven"></span>
+                <span class="meteor meteor-one"></span>
+                <span class="meteor meteor-two"></span>
+                <span class="meteor meteor-three"></span>
+            </div>
             <div class="banner-stage">
-                <div class="space-effects" aria-hidden="true">
-                    <span class="star star-one"></span>
-                    <span class="star star-two"></span>
-                    <span class="star star-three"></span>
-                    <span class="star star-four"></span>
-                    <span class="star star-five"></span>
-                    <span class="meteor meteor-one"></span>
-                    <span class="meteor meteor-two"></span>
-                    <span class="meteor meteor-three"></span>
-                </div>
                 <div class="banner-placeholder">
                     <img class="banner-logo" src="assets/images/reprogrammed-logo-hero.png" alt="Reprogrammed">
                 </div>
@@ -52,10 +54,13 @@
                 </a>
             </div>
         </section>
-
         <div class="section-divider" aria-hidden="true"></div>
-
-        <section class="intel-section" aria-label="Informacoes do jogo">
+        <section class="section-tabs" aria-label="Selecionar tema">
+            <button class="section-button active" type="button" data-section="sobre" aria-pressed="true">SOBRE</button>
+            <button class="section-button" type="button" data-section="personagens" aria-pressed="false">PERSONAGENS</button>
+            <button class="section-button" type="button" data-section="gameplay" aria-pressed="false">GAMEPLAY</button>
+        </section>
+        <section class="intel-section" id="intel" aria-label="Informacoes do jogo">
             <article class="console-panel" aria-live="polite">
                 <div class="console-header">
                     <span class="console-light"></span>
@@ -69,8 +74,7 @@
                     </p>
                 </div>
             </article>
-
-            <aside class="media-panel" aria-label="Arquivos visuais">
+            <aside class="media-panel" id="media-panel" aria-label="Arquivos visuais">
                 <button class="media-card active" type="button" data-topic="sistema" aria-pressed="true">
                     <span class="media-preview system-preview"></span>
                     <span>SISTEMA</span>
