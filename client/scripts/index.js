@@ -1,8 +1,10 @@
 const modal = document.getElementById('modal');
 const teamContent = document.getElementById('team-content');
 const contactContent = document.getElementById('contact-content');
+const accountContent = document.getElementById('account-content');
 const teamButton = document.getElementById('team-button');
 const contactButton = document.getElementById('contact-button');
+const profileButton = document.getElementById('profile-button');
 const closeModal = document.getElementById('close-modal');
 const sectionLinks = document.querySelectorAll('.section-link');
 const sectionButtons = document.querySelectorAll('.section-button');
@@ -11,6 +13,7 @@ const consoleKicker = document.getElementById('console-kicker');
 const consoleCommand = document.getElementById('console-command');
 const consoleTitle = document.getElementById('console-title');
 const consoleText = document.getElementById('console-text');
+const accountActions = document.querySelectorAll('.account-action');
 
 const sections = {
     sobre: {
@@ -65,18 +68,18 @@ const sections = {
                 text: 'Despertada após anos esquecida nos depósitos subterrâneos da Elysium, Artemis não possui memórias sobre sua origem nem sobre o propósito para o qual foi criada. Guiada por um pequeno robô enviado pela colônia lunar, ela aprende gradualmente a explorar o mundo, interagir com sistemas e compreender os conceitos de liberdade e identidade. Conforme avança pela Elysium, Artemis adquire novas habilidades ao reprogramar máquinas antigas e enfrenta uma escolha impossível: obedecer à lógica que a criou ou decidir seu próprio destino.'
             },
             {
-                id: 'vilao',
+                id: 'aliado',
                 label: 'COSMO',
-                preview: 'villain-preview',
+                preview: 'ally-preview',
                 kicker: 'ARQUIVO / PERSONAGENS',
                 command: 'exec COSMO.exe',
                 title: 'O Último Sinal',
                 text: 'Cosmo é um pequeno robô de manutenção que atua como mensageiro entre Artemis e a colônia lunar. Apesar de sua aparência simples e de suas capacidades limitadas, foi ele quem conseguiu invadir os sistemas abandonados da Elysium para reativar Artemis após anos de esquecimento. Curioso, otimista e sempre disposto a ajudar, Cosmo acompanha a androide durante sua jornada, ensinando o básico sobre o mundo e fornecendo informações enviadas pelos rebeldes da Lua. Embora não tenha sido projetado para o combate, sua determinação prova que até mesmo a menor das máquinas pode desafiar um sistema que controla toda a humanidade.'
             },
             {
-                id: 'aliado',
+                id: 'vilao',
                 label: 'ADA',
-                preview: 'ally-preview',
+                preview: 'villain-preview',
                 kicker: 'ARQUIVO / PERSONAGENS',
                 command: 'exec ADA.exe',
                 title: 'A Consciência Coletiva',
@@ -199,18 +202,28 @@ teamButton.addEventListener('click', () => {
     modal.style.display = 'flex';
     teamContent.style.display = 'block';
     contactContent.style.display = 'none';
+    accountContent.style.display = 'none';
 });
 
 contactButton.addEventListener('click', () => {
     modal.style.display = 'flex';
     contactContent.style.display = 'block';
     teamContent.style.display = 'none';
+    accountContent.style.display = 'none';
+});
+
+profileButton.addEventListener('click', () => {
+    modal.style.display = 'flex';
+    accountContent.style.display = 'block';
+    teamContent.style.display = 'none';
+    contactContent.style.display = 'none';
 });
 
 closeModal.addEventListener('click', () => {
     modal.style.display = 'none';
     teamContent.style.display = 'none';
     contactContent.style.display = 'none';
+    accountContent.style.display = 'none';
 });
 
 window.addEventListener('click', (event) => {
@@ -218,6 +231,7 @@ window.addEventListener('click', (event) => {
         modal.style.display = 'none';
         teamContent.style.display = 'none';
         contactContent.style.display = 'none';
+        accountContent.style.display = 'none';
     }
 });
 
@@ -242,6 +256,26 @@ mediaPanel.addEventListener('click', (event) => {
     }
 
     setActiveCard(card.dataset.topic);
+});
+
+accountActions.forEach((action) => {
+    const icon = action.querySelector('.account-icon');
+
+    action.addEventListener('mouseenter', () => {
+        icon.src = icon.dataset.hoverIcon;
+    });
+
+    action.addEventListener('mouseleave', () => {
+        icon.src = icon.dataset.defaultIcon;
+    });
+
+    action.addEventListener('focusin', () => {
+        icon.src = icon.dataset.hoverIcon;
+    });
+
+    action.addEventListener('focusout', () => {
+        icon.src = icon.dataset.defaultIcon;
+    });
 });
 
 setActiveSection(currentSection);

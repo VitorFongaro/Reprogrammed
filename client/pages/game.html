@@ -9,6 +9,43 @@
     <script type="module" defer src="../main.js"></script>
 </head>
 <body>
-    
+    <header>
+        <nav class="game-nav">
+            <div class="logo">
+                <h1>REPROGRAMMED</h1>
+            </div>
+
+            <div class="game-nav-status" aria-label="Status do jogo">
+                <span class="status-light"></span>
+                <span>SIMULADOR ATIVO</span>
+            </div>
+
+            <a class="home-button" href="../index.html" aria-label="Voltar para home">
+                <img src="../assets/icons/home.png" alt="">
+            </a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="game-shell" aria-label="Area do jogo">
+            <div class="space-effects" aria-hidden="true">
+                <span class="star star-one"></span>
+                <span class="star star-two"></span>
+                <span class="star star-three"></span>
+                <span class="meteor meteor-one"></span>
+                <span class="meteor meteor-two"></span>
+            </div>
+
+            <div class="game-frame">
+                <div class="game-frame-header">
+                    <div class="frame-dots" aria-hidden="true"></div>
+                    <span>ARQUIVO / GAMEPLAY</span>
+                    <span class="frame-command">exec REPROGRAMMED.exe</span>
+                </div>
+
+                <div class="game-viewport" id="game-container"></div>
+            </div>
+        </section>
+    </main>
 </body>
 </html>

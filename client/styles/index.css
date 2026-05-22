@@ -322,6 +322,25 @@ a {
     transform: rotate(-28deg) scale(0.55);
 }
 
+.meteor-four,
+.meteor-five {
+    right: -170px;
+    transform: rotate(156deg);
+    animation-name: meteorFlyReverse;
+}
+
+.meteor-four {
+    top: 26%;
+    animation-delay: 0.85s;
+}
+
+.meteor-five {
+    top: 58%;
+    right: -260px;
+    animation-delay: 2.7s;
+    transform: rotate(162deg) scale(0.68);
+}
+
 .banner-placeholder {
     position: relative;
     width: min(900px, 100%);
@@ -506,9 +525,11 @@ a {
     grid-template-columns: repeat(4, minmax(120px, 1fr));
     gap: 18px;
     align-content: stretch;
+    align-items: stretch;
 }
 
 .media-card {
+    height: 100%;
     min-height: 330px;
     display: flex;
     flex-direction: column;
@@ -673,8 +694,54 @@ a {
 }
 
 #team-content,
-#contact-content {
+#contact-content,
+#account-content {
     display: none;
+}
+
+.account-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    gap: 24px;
+    margin-top: 28px;
+}
+
+.account-action {
+    min-height: 128px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 22px;
+    color: #f7f7f7;
+    font-family: inherit;
+    font-size: 18px;
+    border: 3px solid #7a7a7a;
+    background: #050505;
+    box-shadow:
+        0 0 0 3px #111111,
+        6px 6px 0 #2a2a2a;
+    transition: transform 0.12s steps(2, end), border-color 0.12s steps(2, end), background-color 0.12s steps(2, end), box-shadow 0.12s steps(2, end);
+}
+
+.account-action:hover,
+.account-action:focus-visible {
+    transform: translate(4px, 4px);
+    color: #111111;
+    border-color: #111111;
+    background: #f7f7f7;
+    outline: none;
+    box-shadow:
+        0 0 0 3px #7a7a7a,
+        2px 2px 0 #111111;
+}
+
+.account-action .account-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 #close-modal {
@@ -710,6 +777,28 @@ a:hover {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@keyframes meteorFlyReverse {
+    0% {
+        opacity: 0;
+        translate: 0 0;
+    }
+
+    8% {
+        opacity: 1;
+    }
+
+    42% {
+        opacity: 1;
+        translate: -1280px 330px;
+    }
+
+    43%,
+    100% {
+        opacity: 0;
+        translate: -1280px 330px;
     }
 }
 
@@ -930,5 +1019,9 @@ a:hover {
 
     .media-preview {
         min-height: 120px;
+    }
+
+    .account-actions {
+        grid-template-columns: 1fr;
     }
 }
