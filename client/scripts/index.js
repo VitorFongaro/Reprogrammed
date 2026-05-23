@@ -19,6 +19,7 @@ const consoleCommand = document.getElementById('console-command');
 const consoleTitle = document.getElementById('console-title');
 const consoleText = document.getElementById('console-text');
 const accountActions = document.querySelectorAll('.account-action');
+const executeButtons = document.querySelectorAll('.execute-button');
 
 const showAccountMenu = () => {
     accountMenu.style.display = 'block';
@@ -300,6 +301,26 @@ accountActions.forEach((action) => {
     });
 
     action.addEventListener('focusout', () => {
+        icon.src = icon.dataset.defaultIcon;
+    });
+});
+
+executeButtons.forEach((button) => {
+    const icon = button.querySelector('img');
+
+    button.addEventListener('mouseenter', () => {
+        icon.src = icon.dataset.hoverIcon;
+    });
+
+    button.addEventListener('mouseleave', () => {
+        icon.src = icon.dataset.defaultIcon;
+    });
+
+    button.addEventListener('focusin', () => {
+        icon.src = icon.dataset.hoverIcon;
+    });
+
+    button.addEventListener('focusout', () => {
         icon.src = icon.dataset.defaultIcon;
     });
 });
