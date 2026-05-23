@@ -6,6 +6,11 @@ const teamButton = document.getElementById('team-button');
 const contactButton = document.getElementById('contact-button');
 const profileButton = document.getElementById('profile-button');
 const closeModal = document.getElementById('close-modal');
+const accountMenu = document.getElementById('account-menu');
+const loginPanel = document.getElementById('login-panel');
+const createAccountPanel = document.getElementById('create-account-panel');
+const openLoginButton = document.getElementById('open-login-button');
+const openCreateAccountButton = document.getElementById('open-create-account-button');
 const sectionLinks = document.querySelectorAll('.section-link');
 const sectionButtons = document.querySelectorAll('.section-button');
 const mediaPanel = document.getElementById('media-panel');
@@ -14,6 +19,12 @@ const consoleCommand = document.getElementById('console-command');
 const consoleTitle = document.getElementById('console-title');
 const consoleText = document.getElementById('console-text');
 const accountActions = document.querySelectorAll('.account-action');
+
+const showAccountMenu = () => {
+    accountMenu.style.display = 'block';
+    loginPanel.style.display = 'none';
+    createAccountPanel.style.display = 'none';
+};
 
 const sections = {
     sobre: {
@@ -217,6 +228,19 @@ profileButton.addEventListener('click', () => {
     accountContent.style.display = 'block';
     teamContent.style.display = 'none';
     contactContent.style.display = 'none';
+    showAccountMenu();
+});
+
+openLoginButton.addEventListener('click', () => {
+    accountMenu.style.display = 'none';
+    loginPanel.style.display = 'block';
+    createAccountPanel.style.display = 'none';
+});
+
+openCreateAccountButton.addEventListener('click', () => {
+    accountMenu.style.display = 'none';
+    loginPanel.style.display = 'none';
+    createAccountPanel.style.display = 'block';
 });
 
 closeModal.addEventListener('click', () => {
@@ -224,6 +248,7 @@ closeModal.addEventListener('click', () => {
     teamContent.style.display = 'none';
     contactContent.style.display = 'none';
     accountContent.style.display = 'none';
+    showAccountMenu();
 });
 
 window.addEventListener('click', (event) => {
@@ -232,6 +257,7 @@ window.addEventListener('click', (event) => {
         teamContent.style.display = 'none';
         contactContent.style.display = 'none';
         accountContent.style.display = 'none';
+        showAccountMenu();
     }
 });
 

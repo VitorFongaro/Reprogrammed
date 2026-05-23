@@ -103,10 +103,10 @@
 
         <div class="footer-links">
             <button id="team-button">
-                <img src="assets/icons/equipe.png" alt="Equipe">    
+                <img src="assets/icons/team.png" alt="Equipe">    
             </button>
             <button id="contact-button">
-                <img src="assets/icons/contato.png" alt="Contato">
+                <img src="assets/icons/contact.png" alt="Contato">
             </button>
             <a href="https://github.com/VitorFongaro/Reprogrammed">
                 <img src="assets/icons/github.png" alt="Github">
@@ -145,17 +145,61 @@
                 <div class="modal-line"></div>
             </div>
             <div id="account-content">
-                <h2>CONTA</h2>
-                <div class="modal-line"></div>
-                <div class="account-actions">
-                    <button class="account-action" type="button">
-                        <img class="account-icon" src="assets/icons/login.png" data-default-icon="assets/icons/login.png" data-hover-icon="assets/icons/loginPreto.png" alt="">
-                        <span>LOGIN</span>
-                    </button>
-                    <button class="account-action" type="button">
-                        <img class="account-icon" src="assets/icons/criarConta.png" data-default-icon="assets/icons/criarConta.png" data-hover-icon="assets/icons/criarContaPreto.png" alt="">
-                        <span>CRIAR CONTA</span>
-                    </button>
+                <div class="account-menu" id="account-menu">
+                    <h2>CONTA</h2>
+                    <div class="modal-line"></div>
+                    <div class="account-actions">
+                        <button class="account-action" id="open-login-button" type="button">
+                            <img class="account-icon" src="assets/icons/login.png" data-default-icon="assets/icons/login.png" data-hover-icon="assets/icons/login-black.png" alt="">
+                            <span>LOGIN</span>
+                        </button>
+                        <button class="account-action" id="open-create-account-button" type="button">
+                            <img class="account-icon" src="assets/icons/power-on.png" data-default-icon="assets/icons/power-on.png" data-hover-icon="assets/icons/power-on-black.png" alt="">
+                            <span>CRIAR CONTA</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="login-panel" id="login-panel">
+                    <h2>LOGIN</h2>
+                    <div class="modal-line"></div>
+                    <form class="login-form">
+                        <label class="login-field">
+                            <span>USUARIO</span>
+                            <input type="text" name="username" autocomplete="username">
+                        </label>
+                        <label class="login-field">
+                            <span>SENHA</span>
+                            <input type="password" name="password" autocomplete="current-password">
+                        </label>
+                        <button class="execute-button" type="button">
+                            <span>[</span>
+                            <img src="assets/icons/play.png" alt="">
+                            <span>]</span>
+                            <span>EXECUTAR</span>
+                        </button>
+                    </form>
+                </div>
+
+                <div class="login-panel" id="create-account-panel">
+                    <h2>CRIAR CONTA</h2>
+                    <div class="modal-line"></div>
+                    <form class="login-form">
+                        <label class="login-field">
+                            <span>EMAIL</span>
+                            <input type="email" name="email" autocomplete="email">
+                        </label>
+                        <label class="login-field">
+                            <span>SENHA</span>
+                            <input type="password" name="new-password" autocomplete="new-password">
+                        </label>
+                        <button class="execute-button" type="button">
+                            <span>[</span>
+                            <img src="assets/icons/play.png" alt="">
+                            <span>]</span>
+                            <span>INICIALIZAR</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
