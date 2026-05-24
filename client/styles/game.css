@@ -194,7 +194,7 @@ main {
 .game-frame {
     position: relative;
     z-index: 1;
-    width: min(1640px, 100%);
+    width: min(1640px, 96vw);
     border: 3px solid #f7f7f7;
     background: #050505;
     box-shadow:
@@ -233,7 +233,6 @@ main {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    min-height: min(800px, calc(100vh - 170px));
     overflow: hidden;
     background:
         linear-gradient(rgba(247, 247, 247, 0.035) 50%, transparent 50%),
