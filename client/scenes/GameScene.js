@@ -3,10 +3,11 @@ import Phaser from "phaser";
 const WIDTH = 1280;
 const HEIGHT = 720;
 const CARD_WIDTH = 178;
-const CARD_HEIGHT = 230;
+const CARD_HEIGHT = 220;
+const LOWER_DIVIDER_Y = 470;
 const DROP_ZONE = {
     x: WIDTH / 2,
-    y: 255,
+    y: 300,
     width: 280,
     height: 250
 };
@@ -60,7 +61,7 @@ export default class GameScene extends Phaser.Scene {
 
         background.lineStyle(2, 0xb8f5e8, 0.45);
         background.lineBetween(0, 86, WIDTH, 86);
-        background.lineBetween(0, 430, WIDTH, 430);
+        background.lineBetween(0, LOWER_DIVIDER_Y, WIDTH, LOWER_DIVIDER_Y);
 
         background.lineStyle(1, 0x0f2224, 0.85);
         for (let y = 0; y < HEIGHT; y += 8) {
@@ -85,7 +86,7 @@ export default class GameScene extends Phaser.Scene {
         this.dropZoneGraphic = this.add.graphics();
         this.renderDropZone(false);
 
-        this.dropText = this.add.text(DROP_ZONE.x, DROP_ZONE.y + DROP_ZONE.height / 2 + 24, "EXECUTAR", {
+        this.dropText = this.add.text(DROP_ZONE.x, DROP_ZONE.y + DROP_ZONE.height / 2 + 18, "EXECUTAR", {
             fontFamily: "VCR",
             fontSize: "20px",
             color: "#9edfd2"
@@ -112,17 +113,17 @@ export default class GameScene extends Phaser.Scene {
 
         this.dropZoneGraphic.lineStyle(2, 0x061012, 0.9);
         this.dropZoneGraphic.strokeRect(
-            DROP_ZONE.x - DROP_ZONE.width / 2 + 22,
-            DROP_ZONE.y - DROP_ZONE.height / 2 + 22,
-            DROP_ZONE.width - 44,
-            DROP_ZONE.height - 44
+            DROP_ZONE.x - DROP_ZONE.width / 2 + 16,
+            DROP_ZONE.y - DROP_ZONE.height / 2 + 16,
+            DROP_ZONE.width - 32,
+            DROP_ZONE.height - 32
         );
     }
 
     drawMenuCards() {
         const spacing = 228;
         const startX = WIDTH / 2 - spacing;
-        const y = 555;
+        const y = 592;
 
         MENU_ITEMS.forEach((item, index) => {
             const card = this.createCard(startX + spacing * index, y, item);
@@ -201,12 +202,12 @@ export default class GameScene extends Phaser.Scene {
     }
 
     drawStatusPanel() {
-        this.statusBox = this.add.rectangle(WIDTH / 2, 137, 690, 54, 0x071315, 0.72)
+        this.statusBox = this.add.rectangle(WIDTH / 2, 138, 690, 44, 0x071315, 0.72)
             .setStrokeStyle(2, 0x9edfd2, 0.7);
 
-        this.statusText = this.add.text(WIDTH / 2, 137, "SELECIONE UM BLOCO", {
+        this.statusText = this.add.text(WIDTH / 2, 138, "SELECIONE UM BLOCO", {
             fontFamily: "VCR",
-            fontSize: "25px",
+            fontSize: "24px",
             color: "#eef3b8",
             align: "center"
         }).setOrigin(0.5);

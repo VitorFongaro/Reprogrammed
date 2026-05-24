@@ -57,16 +57,14 @@ export default class OptionsScene extends Phaser.Scene {
             fontSize: "20px",
             color: "#d6f6ec"
         }).setOrigin(0.5);
+        const hitArea = this.add.rectangle(0, 0, 158, 46, 0xffffff, 0.001).setOrigin(0.5);
 
-        backButton.add([backBox, backText]);
+        backButton.add([backBox, backText, hitArea]);
         backButton.setSize(158, 46);
-        backButton.setInteractive(
-            new Phaser.Geom.Rectangle(-79, -23, 158, 46),
-            Phaser.Geom.Rectangle.Contains
-        );
-        backButton.on("pointerover", () => backBox.setFillStyle(0x12383b, 1));
-        backButton.on("pointerout", () => backBox.setFillStyle(0x071315, 0.92));
-        backButton.on("pointerdown", () => this.scene.start("game-scene"));
+        hitArea.setInteractive();
+        hitArea.on("pointerover", () => backBox.setFillStyle(0x12383b, 1));
+        hitArea.on("pointerout", () => backBox.setFillStyle(0x071315, 0.92));
+        hitArea.on("pointerdown", () => this.scene.start("game-scene"));
     }
 
     drawTabs() {
@@ -82,16 +80,14 @@ export default class OptionsScene extends Phaser.Scene {
                 fontSize: "19px",
                 color: "#d6f6ec"
             }).setOrigin(0.5);
+            const hitArea = this.add.rectangle(0, 0, 164, 52, 0xffffff, 0.001).setOrigin(0.5);
 
             button.tabName = tabName;
             button.box = box;
-            button.add([box, label]);
+            button.add([box, label, hitArea]);
             button.setSize(164, 52);
-            button.setInteractive(
-                new Phaser.Geom.Rectangle(-82, -26, 164, 52),
-                Phaser.Geom.Rectangle.Contains
-            );
-            button.on("pointerdown", () => {
+            hitArea.setInteractive();
+            hitArea.on("pointerdown", () => {
                 this.activeTab = tabName;
                 this.updateTabButtons();
                 this.renderTabContent();
@@ -156,16 +152,14 @@ export default class OptionsScene extends Phaser.Scene {
             fontSize: "26px",
             color: "#eef3b8"
         }).setOrigin(0.5);
+        const hitArea = this.add.rectangle(0, 0, 330, 70, 0xffffff, 0.001).setOrigin(0.5);
 
-        fullscreenButton.add([box, label]);
+        fullscreenButton.add([box, label, hitArea]);
         fullscreenButton.setSize(330, 70);
-        fullscreenButton.setInteractive(
-            new Phaser.Geom.Rectangle(-165, -35, 330, 70),
-            Phaser.Geom.Rectangle.Contains
-        );
-        fullscreenButton.on("pointerover", () => box.setFillStyle(0x273738, 1));
-        fullscreenButton.on("pointerout", () => box.setFillStyle(0x182426, 1));
-        fullscreenButton.on("pointerdown", () => this.toggleFullscreen());
+        hitArea.setInteractive();
+        hitArea.on("pointerover", () => box.setFillStyle(0x273738, 1));
+        hitArea.on("pointerout", () => box.setFillStyle(0x182426, 1));
+        hitArea.on("pointerdown", () => this.toggleFullscreen());
 
         this.panelContent.add(fullscreenButton);
     }
