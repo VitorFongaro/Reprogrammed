@@ -7,9 +7,9 @@ const CARD_HEIGHT = 220;
 const LOWER_DIVIDER_Y = 470;
 const DROP_ZONE = {
     x: WIDTH / 2,
-    y: 300,
+    y: 295,
     width: 280,
-    height: 250
+    height: 258
 };
 
 const MENU_ITEMS = [
@@ -86,7 +86,7 @@ export default class GameScene extends Phaser.Scene {
         this.dropZoneGraphic = this.add.graphics();
         this.renderDropZone(false);
 
-        this.dropText = this.add.text(DROP_ZONE.x, DROP_ZONE.y + DROP_ZONE.height / 2 + 18, "EXECUTAR", {
+        this.dropText = this.add.text(DROP_ZONE.x, DROP_ZONE.y + DROP_ZONE.height / 2 + 21, "EXECUTAR", {
             fontFamily: "VCR",
             fontSize: "20px",
             color: "#9edfd2"
@@ -202,10 +202,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     drawStatusPanel() {
-        this.statusBox = this.add.rectangle(WIDTH / 2, 138, 690, 44, 0x071315, 0.72)
+        this.statusBox = this.add.rectangle(WIDTH / 2, 130, 690, 44, 0x071315, 0.72)
             .setStrokeStyle(2, 0x9edfd2, 0.7);
 
-        this.statusText = this.add.text(WIDTH / 2, 138, "SELECIONE UM BLOCO", {
+        this.statusText = this.add.text(WIDTH / 2, 130, "SELECIONE UM BLOCO", {
             fontFamily: "VCR",
             fontSize: "24px",
             color: "#eef3b8",
@@ -269,7 +269,7 @@ export default class GameScene extends Phaser.Scene {
         this.tweens.add({
             targets: card,
             x: DROP_ZONE.x,
-            y: DROP_ZONE.y - 10,
+            y: DROP_ZONE.y - 2,
             scale: 0.88,
             duration: 180,
             ease: "Power2",
