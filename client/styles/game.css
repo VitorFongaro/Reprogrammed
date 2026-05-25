@@ -86,6 +86,9 @@ main {
 }
 
 .game-shell {
+    --game-nav-height: 80px;
+    --game-shell-padding-y: 66px;
+    --game-frame-header-height: 54px;
     position: relative;
     min-height: calc(100vh - 80px);
     display: flex;
@@ -194,7 +197,11 @@ main {
 .game-frame {
     position: relative;
     z-index: 1;
-    width: min(1640px, 96vw);
+    width: min(
+        1640px,
+        96vw,
+        calc((100vh - var(--game-nav-height) - var(--game-shell-padding-y) - var(--game-frame-header-height)) * 16 / 9)
+    );
     border: 3px solid #f7f7f7;
     background: #050505;
     box-shadow:
@@ -345,6 +352,8 @@ main {
     }
 
     .game-shell {
+        --game-nav-height: 132px;
+        --game-shell-padding-y: 86px;
         min-height: calc(100vh - 132px);
         padding: 34px 24px 52px;
     }
@@ -365,6 +374,9 @@ main {
     }
 
     .game-shell {
+        --game-nav-height: 150px;
+        --game-shell-padding-y: 72px;
+        --game-frame-header-height: 86px;
         min-height: calc(100vh - 150px);
         padding: 28px 16px 44px;
     }
