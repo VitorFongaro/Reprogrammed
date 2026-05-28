@@ -1,27 +1,49 @@
+import 'dotenv/config';
 import express from 'express';
-import dotenv from 'dotenv';
-dotenv.config();
-import pool from './config/db.js';
+import aiRoutes from './routes/aiRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import gameRoutes from './routes/gameRoutes.js';
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send('Servidor rodando 🚀');
-});
+app.use((req, res, next) => {
+  const allowedOrigin = process.env.CLIENT_ORIGIN || '*';
 
-app.get('/users', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM users');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Erro no servidor' });
+  res.header('Access-Control-Allow-Origin', allowedOrigin);
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
   }
+
+  return next();
 });
 
-const PORT = process.env.PORT || 3000;
+app.get('/', (req, res) => {
+  res.json({ status: 'Servidor Reprogrammed rodando' });
+});
+
+app.use('/auth', authRoutes);
+app.use('/game', gameRoutes);
+app.use('/ai', aiRoutes);
+
+app.use((req, res) => {
+  res.status(404).json({ error: 'Rota nao encontrada.' });
+});
+
+app.use((error, req, res, next) => {
+  console.error(error);
+  const statusCode = error.statusCode || error.status || 500;
+  const message = statusCode >= 500
+    ? 'Erro no servidor.'
+    : error.message || 'Requisicao invalida.';
+
+  res.status(statusCode).json({ error: message });
+});
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);

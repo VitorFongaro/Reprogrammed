@@ -1,40 +1,628 @@
-CREATE TABLE users (
-	id SERIAL,
-	username VARCHAR(50) UNIQUE,
-	password TEXT
+-- =========================================================
+-- REPROGRAMMED - SUPABASE DATABASE SCHEMA
+-- Banco com autenticação via Supabase Auth e dificuldade adaptativa por IA
+-- =========================================================
+
+create extension if not exists "pgcrypto";
+
+-- =========================================================
+-- ENUMS
+-- =========================================================
+
+create type public.user_role as enum (
+  'player',
+  'admin',
+  'teacher'
 );
 
-ALTER TABLE users
-ADD CONSTRAINT pk_id_user PRIMARY KEY(id);
-
-CREATE TABLE progress (
-    id SERIAL,
-    user_id INT,
-    level INT,
-    chapter INT,
-    completed BOOLEAN DEFAULT FALSE,
-    score INT,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+create type public.level_status as enum (
+  'locked',
+  'unlocked',
+  'in_progress',
+  'completed'
 );
 
-ALTER TABLE progress
-ADD CONSTRAINT pk_id_progress PRIMARY KEY(id);
-
-ALTER TABLE progress
-ADD CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE;
-
-CREATE TABLE performance (
-    id SERIAL,
-    user_id INT,
-    topic VARCHAR(50), -- exemplo: 'loop', 'condition', 'sequence'
-    attempts INT DEFAULT 0,
-    correct INT DEFAULT 0,
-    accuracy FLOAT,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+create type public.difficulty_level as enum (
+  'easy',
+  'medium',
+  'hard'
 );
 
-ALTER TABLE performance
-ADD CONSTRAINT pk_id_performance PRIMARY KEY(id);
+create type public.programming_topic as enum (
+  'variables',
+  'operators',
+  'conditionals',
+  'loops',
+  'functions',
+  'mixed'
+);
 
-ALTER TABLE performance
-ADD CONSTRAINT fk_user_id FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE;
+-- =========================================================
+-- PROFILES
+-- Dados públicos do usuário.
+-- Login, email e senha ficam no auth.users do Supabase.
+-- =========================================================
+
+create table public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  username varchar(50) unique not null,
+  display_name varchar(100),
+  avatar_url text,
+  role public.user_role not null default 'player',
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now()
+);
+
+-- =========================================================
+-- CHAPTERS
+-- Capítulos principais do jogo
+-- Ex: Variáveis, Condicionais, Loops, Funções
+-- =========================================================
+
+create table public.chapters (
+  id bigint generated always as identity primary key,
+  title varchar(100) not null,
+  description text,
+  order_index int not null unique,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now()
+);
+
+-- =========================================================
+-- LEVELS
+-- Fases dentro dos capítulos
+-- base_difficulty = dificuldade planejada pelos desenvolvedores
+-- =========================================================
+
+create table public.levels (
+  id bigint generated always as identity primary key,
+  chapter_id bigint not null references public.chapters(id) on delete cascade,
+  title varchar(100) not null,
+  description text,
+  base_difficulty public.difficulty_level not null default 'easy',
+  main_topic public.programming_topic not null,
+  order_index int not null,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now(),
+
+  constraint unique_level_order_per_chapter unique (chapter_id, order_index)
+);
+
+-- =========================================================
+-- PUZZLES
+-- Desafios de programação dentro das fases
+-- base_difficulty = dificuldade base do puzzle
+-- =========================================================
+
+create table public.puzzles (
+  id bigint generated always as identity primary key,
+  level_id bigint not null references public.levels(id) on delete cascade,
+  title varchar(100) not null,
+  description text,
+  topic public.programming_topic not null,
+  objective text,
+  initial_code text,
+  expected_output text,
+  base_difficulty public.difficulty_level not null default 'easy',
+  order_index int not null,
+  max_score int not null default 100,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now(),
+
+  constraint unique_puzzle_order_per_level unique (level_id, order_index),
+  constraint check_puzzle_max_score check (max_score >= 0)
+);
+
+-- =========================================================
+-- USER LEVEL PROGRESS
+-- Progresso do jogador em cada fase
+-- current_difficulty = dificuldade atual aplicada ao jogador
+-- ai_adjusted_difficulty = última dificuldade sugerida pela IA
+-- =========================================================
+
+create table public.user_level_progress (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  level_id bigint not null references public.levels(id) on delete cascade,
+
+  status public.level_status not null default 'locked',
+  best_score int not null default 0,
+  attempts int not null default 0,
+
+  current_difficulty public.difficulty_level not null default 'easy',
+  ai_adjusted_difficulty public.difficulty_level,
+  last_ai_analysis_at timestamp with time zone,
+
+  completed_at timestamp with time zone,
+  updated_at timestamp with time zone not null default now(),
+
+  constraint unique_user_level_progress unique (user_id, level_id),
+  constraint check_best_score check (best_score >= 0),
+  constraint check_attempts check (attempts >= 0)
+);
+
+-- =========================================================
+-- PUZZLE ATTEMPTS
+-- Histórico de tentativas do jogador nos puzzles
+-- difficulty_used = dificuldade ativa no momento da tentativa
+-- ai_feedback = feedback ou análise gerada pela IA
+-- =========================================================
+
+create table public.puzzle_attempts (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  puzzle_id bigint not null references public.puzzles(id) on delete cascade,
+
+  submitted_code text,
+  is_correct boolean not null default false,
+  score int not null default 0,
+  errors_count int not null default 0,
+  time_spent_seconds int not null default 0,
+
+  difficulty_used public.difficulty_level not null default 'easy',
+  ai_feedback text,
+
+  created_at timestamp with time zone not null default now(),
+
+  constraint check_attempt_score check (score >= 0),
+  constraint check_errors_count check (errors_count >= 0),
+  constraint check_time_spent check (time_spent_seconds >= 0)
+);
+
+-- =========================================================
+-- USER TOPIC PERFORMANCE
+-- Desempenho do jogador por assunto de programação
+-- estimated_skill_level = nível estimado pela IA
+-- =========================================================
+
+create table public.user_topic_performance (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+
+  topic public.programming_topic not null,
+  attempts int not null default 0,
+  correct_attempts int not null default 0,
+  wrong_attempts int not null default 0,
+  accuracy numeric(5,2) not null default 0,
+
+  estimated_skill_level public.difficulty_level not null default 'easy',
+  last_ai_feedback text,
+  last_ai_analysis_at timestamp with time zone,
+
+  updated_at timestamp with time zone not null default now(),
+
+  constraint unique_user_topic_performance unique (user_id, topic),
+  constraint check_topic_attempts check (attempts >= 0),
+  constraint check_correct_attempts check (correct_attempts >= 0),
+  constraint check_wrong_attempts check (wrong_attempts >= 0),
+  constraint check_accuracy check (accuracy >= 0 and accuracy <= 100)
+);
+
+-- =========================================================
+-- USER GAME STATE
+-- Save geral do jogador
+-- Útil para guardar posição, cena atual e último ponto salvo
+-- =========================================================
+
+create table public.user_game_state (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+
+  current_chapter_id bigint references public.chapters(id) on delete set null,
+  current_level_id bigint references public.levels(id) on delete set null,
+
+  current_scene varchar(100),
+  position_x int not null default 0,
+  position_y int not null default 0,
+  companion_unlocked boolean not null default false,
+
+  last_saved_at timestamp with time zone not null default now()
+);
+
+-- =========================================================
+-- ACHIEVEMENTS
+-- Conquistas do jogo
+-- =========================================================
+
+create table public.achievements (
+  id bigint generated always as identity primary key,
+  name varchar(100) not null,
+  description text,
+  icon varchar(100),
+  condition_type varchar(100),
+  created_at timestamp with time zone not null default now()
+);
+
+create table public.user_achievements (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  achievement_id bigint not null references public.achievements(id) on delete cascade,
+  unlocked_at timestamp with time zone not null default now(),
+
+  constraint unique_user_achievement unique (user_id, achievement_id)
+);
+
+-- =========================================================
+-- USER SETTINGS
+-- Configurações do jogador
+-- =========================================================
+
+create table public.user_settings (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+
+  music_volume int not null default 80,
+  sfx_volume int not null default 80,
+  text_speed int not null default 50,
+  fullscreen boolean not null default false,
+  language varchar(10) not null default 'pt-BR',
+
+  updated_at timestamp with time zone not null default now(),
+
+  constraint check_music_volume check (music_volume >= 0 and music_volume <= 100),
+  constraint check_sfx_volume check (sfx_volume >= 0 and sfx_volume <= 100),
+  constraint check_text_speed check (text_speed >= 0 and text_speed <= 100)
+);
+
+-- =========================================================
+-- AI ANALYSIS LOGS
+-- Histórico das análises feitas pela IA
+-- Não é obrigatório para o jogo funcionar, mas ajuda muito no TCC
+-- =========================================================
+
+create table public.ai_analysis_logs (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+
+  topic public.programming_topic,
+  level_id bigint references public.levels(id) on delete set null,
+  puzzle_id bigint references public.puzzles(id) on delete set null,
+
+  previous_difficulty public.difficulty_level,
+  suggested_difficulty public.difficulty_level,
+
+  accuracy_snapshot numeric(5,2),
+  attempts_snapshot int,
+  correct_attempts_snapshot int,
+  wrong_attempts_snapshot int,
+
+  analysis_summary text,
+  created_at timestamp with time zone not null default now(),
+
+  constraint check_ai_accuracy_snapshot check (
+    accuracy_snapshot is null or 
+    accuracy_snapshot between 0 and 100
+  ),
+  constraint check_ai_attempts_snapshot check (
+    attempts_snapshot is null or 
+    attempts_snapshot >= 0
+  ),
+  constraint check_ai_correct_attempts_snapshot check (
+    correct_attempts_snapshot is null or 
+    correct_attempts_snapshot >= 0
+  ),
+  constraint check_ai_wrong_attempts_snapshot check (
+    wrong_attempts_snapshot is null or 
+    wrong_attempts_snapshot >= 0
+  )
+);
+
+-- =========================================================
+-- UPDATED_AT FUNCTION
+-- Atualiza automaticamente campos updated_at
+-- =========================================================
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger set_profiles_updated_at
+before update on public.profiles
+for each row
+execute function public.set_updated_at();
+
+create trigger set_chapters_updated_at
+before update on public.chapters
+for each row
+execute function public.set_updated_at();
+
+create trigger set_levels_updated_at
+before update on public.levels
+for each row
+execute function public.set_updated_at();
+
+create trigger set_puzzles_updated_at
+before update on public.puzzles
+for each row
+execute function public.set_updated_at();
+
+create trigger set_user_level_progress_updated_at
+before update on public.user_level_progress
+for each row
+execute function public.set_updated_at();
+
+create trigger set_user_topic_performance_updated_at
+before update on public.user_topic_performance
+for each row
+execute function public.set_updated_at();
+
+create trigger set_user_settings_updated_at
+before update on public.user_settings
+for each row
+execute function public.set_updated_at();
+
+-- =========================================================
+-- HANDLE NEW USER
+-- Quando um usuário é criado no Supabase Auth,
+-- cria automaticamente profile, settings e game_state
+-- =========================================================
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (
+    id,
+    username,
+    display_name
+  )
+  values (
+    new.id,
+    coalesce(
+      new.raw_user_meta_data->>'username',
+      split_part(new.email, '@', 1)
+    ),
+    coalesce(
+      new.raw_user_meta_data->>'display_name',
+      split_part(new.email, '@', 1)
+    )
+  );
+
+  insert into public.user_settings (user_id)
+  values (new.id);
+
+  insert into public.user_game_state (user_id)
+  values (new.id);
+
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+after insert on auth.users
+for each row
+execute function public.handle_new_user();
+
+-- =========================================================
+-- INDEXES
+-- Melhoram consultas frequentes
+-- =========================================================
+
+create index idx_levels_chapter_id
+on public.levels(chapter_id);
+
+create index idx_puzzles_level_id
+on public.puzzles(level_id);
+
+create index idx_user_level_progress_user_id
+on public.user_level_progress(user_id);
+
+create index idx_user_level_progress_level_id
+on public.user_level_progress(level_id);
+
+create index idx_puzzle_attempts_user_id
+on public.puzzle_attempts(user_id);
+
+create index idx_puzzle_attempts_puzzle_id
+on public.puzzle_attempts(puzzle_id);
+
+create index idx_user_topic_performance_user_id
+on public.user_topic_performance(user_id);
+
+create index idx_ai_analysis_logs_user_id
+on public.ai_analysis_logs(user_id);
+
+create index idx_ai_analysis_logs_level_id
+on public.ai_analysis_logs(level_id);
+
+create index idx_ai_analysis_logs_puzzle_id
+on public.ai_analysis_logs(puzzle_id);
+
+-- =========================================================
+-- ROW LEVEL SECURITY
+-- =========================================================
+
+alter table public.profiles enable row level security;
+alter table public.chapters enable row level security;
+alter table public.levels enable row level security;
+alter table public.puzzles enable row level security;
+alter table public.user_level_progress enable row level security;
+alter table public.puzzle_attempts enable row level security;
+alter table public.user_topic_performance enable row level security;
+alter table public.user_game_state enable row level security;
+alter table public.achievements enable row level security;
+alter table public.user_achievements enable row level security;
+alter table public.user_settings enable row level security;
+alter table public.ai_analysis_logs enable row level security;
+
+-- =========================================================
+-- POLICIES: PROFILES
+-- =========================================================
+
+create policy "Users can view their own profile"
+on public.profiles
+for select
+to authenticated
+using (auth.uid() = id);
+
+create policy "Users can update their own profile"
+on public.profiles
+for update
+to authenticated
+using (auth.uid() = id)
+with check (auth.uid() = id);
+
+-- =========================================================
+-- POLICIES: PUBLIC GAME CONTENT
+-- Usuários logados podem ler capítulos, fases, puzzles e conquistas.
+-- Criação/edição desses dados deve ser feita pelo painel ou SQL editor.
+-- =========================================================
+
+create policy "Authenticated users can view chapters"
+on public.chapters
+for select
+to authenticated
+using (true);
+
+create policy "Authenticated users can view levels"
+on public.levels
+for select
+to authenticated
+using (true);
+
+create policy "Authenticated users can view puzzles"
+on public.puzzles
+for select
+to authenticated
+using (true);
+
+create policy "Authenticated users can view achievements"
+on public.achievements
+for select
+to authenticated
+using (true);
+
+-- =========================================================
+-- POLICIES: USER LEVEL PROGRESS
+-- =========================================================
+
+create policy "Users can view their own level progress"
+on public.user_level_progress
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own level progress"
+on public.user_level_progress
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy "Users can update their own level progress"
+on public.user_level_progress
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- =========================================================
+-- POLICIES: PUZZLE ATTEMPTS
+-- =========================================================
+
+create policy "Users can view their own puzzle attempts"
+on public.puzzle_attempts
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own puzzle attempts"
+on public.puzzle_attempts
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+-- =========================================================
+-- POLICIES: USER TOPIC PERFORMANCE
+-- =========================================================
+
+create policy "Users can view their own topic performance"
+on public.user_topic_performance
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own topic performance"
+on public.user_topic_performance
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+create policy "Users can update their own topic performance"
+on public.user_topic_performance
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- =========================================================
+-- POLICIES: USER GAME STATE
+-- =========================================================
+
+create policy "Users can view their own game state"
+on public.user_game_state
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can update their own game state"
+on public.user_game_state
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- =========================================================
+-- POLICIES: USER ACHIEVEMENTS
+-- =========================================================
+
+create policy "Users can view their own achievements"
+on public.user_achievements
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own achievements"
+on public.user_achievements
+for insert
+to authenticated
+with check (auth.uid() = user_id);
+
+-- =========================================================
+-- POLICIES: USER SETTINGS
+-- =========================================================
+
+create policy "Users can view their own settings"
+on public.user_settings
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can update their own settings"
+on public.user_settings
+for update
+to authenticated
+using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- =========================================================
+-- POLICIES: AI ANALYSIS LOGS
+-- =========================================================
+
+create policy "Users can view their own ai analysis logs"
+on public.ai_analysis_logs
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own ai analysis logs"
+on public.ai_analysis_logs
+for insert
+to authenticated
+with check (auth.uid() = user_id);

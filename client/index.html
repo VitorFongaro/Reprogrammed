@@ -163,16 +163,17 @@
                 <div class="login-panel" id="login-panel">
                     <h2>LOGIN</h2>
                     <div class="modal-line"></div>
-                    <form class="login-form">
+                    <p class="auth-message" id="login-message" aria-live="polite"></p>
+                    <form class="login-form" id="login-form">
                         <label class="login-field">
-                            <span>USUARIO</span>
-                            <input type="text" name="username" autocomplete="username">
+                            <span>USUARIO OU EMAIL</span>
+                            <input type="text" name="identifier" autocomplete="username" required>
                         </label>
                         <label class="login-field">
                             <span>SENHA</span>
-                            <input type="password" name="password" autocomplete="current-password">
+                            <input type="password" name="password" autocomplete="current-password" required>
                         </label>
-                        <button class="execute-button" type="button">
+                        <button class="execute-button" type="submit">
                             <span>[</span>
                             <img src="assets/icons/page/play.png" data-default-icon="assets/icons/page/play.png" data-hover-icon="assets/icons/page/play-white.png" alt="">
                             <span>]</span>
@@ -184,16 +185,25 @@
                 <div class="login-panel" id="create-account-panel">
                     <h2>CRIAR CONTA</h2>
                     <div class="modal-line"></div>
-                    <form class="login-form">
+                    <p class="auth-message" id="register-message" aria-live="polite"></p>
+                    <form class="login-form" id="register-form">
+                        <label class="login-field">
+                            <span>USUARIO</span>
+                            <input type="text" name="username" autocomplete="username" required>
+                        </label>
                         <label class="login-field">
                             <span>EMAIL</span>
-                            <input type="email" name="email" autocomplete="email">
+                            <input type="email" name="email" autocomplete="email" required>
                         </label>
                         <label class="login-field">
                             <span>SENHA</span>
-                            <input type="password" name="new-password" autocomplete="new-password">
+                            <input type="password" name="password" autocomplete="new-password" required>
                         </label>
-                        <button class="execute-button" type="button">
+                        <label class="login-field">
+                            <span>CONFIRMAR SENHA</span>
+                            <input type="password" name="confirmPassword" autocomplete="new-password" required>
+                        </label>
+                        <button class="execute-button" type="submit">
                             <span>[</span>
                             <img src="assets/icons/page/play.png" data-default-icon="assets/icons/page/play.png" data-hover-icon="assets/icons/page/play-white.png" alt="">
                             <span>]</span>

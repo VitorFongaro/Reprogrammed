@@ -11,6 +11,10 @@ const loginPanel = document.getElementById('login-panel');
 const createAccountPanel = document.getElementById('create-account-panel');
 const openLoginButton = document.getElementById('open-login-button');
 const openCreateAccountButton = document.getElementById('open-create-account-button');
+const loginForm = document.getElementById('login-form');
+const registerForm = document.getElementById('register-form');
+const loginMessage = document.getElementById('login-message');
+const registerMessage = document.getElementById('register-message');
 const sectionLinks = document.querySelectorAll('.section-link');
 const sectionButtons = document.querySelectorAll('.section-button');
 const mediaPanel = document.getElementById('media-panel');
@@ -20,11 +24,66 @@ const consoleTitle = document.getElementById('console-title');
 const consoleText = document.getElementById('console-text');
 const accountActions = document.querySelectorAll('.account-action');
 const executeButtons = document.querySelectorAll('.execute-button');
+const API_BASE_URL = window.REPROGRAMMED_API_URL || 'http://localhost:3000';
+const AUTH_STORAGE_KEY = 'reprogrammed.auth';
+
+const setAuthMessage = (element, message = '', type = 'info') => {
+    if (!element) {
+        return;
+    }
+
+    element.textContent = message;
+    element.dataset.type = type;
+};
+
+const clearAuthMessages = () => {
+    setAuthMessage(loginMessage);
+    setAuthMessage(registerMessage);
+};
+
+const setFormLoading = (form, isLoading) => {
+    form.querySelectorAll('button, input').forEach((element) => {
+        element.disabled = isLoading;
+    });
+};
+
+const saveAuthData = (data) => {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
+        accessToken: data.session?.access_token || null,
+        refreshToken: data.session?.refresh_token || null,
+        user: data.user || null
+    }));
+};
+
+const requestAuth = async (path, payload) => {
+    let response;
+
+    try {
+        response = await fetch(`${API_BASE_URL}${path}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        throw new Error('Servidor indisponivel. Inicie o backend e tente novamente.');
+    }
+
+    const data = response.status === 204 ? null : await response.json();
+
+    if (!response.ok) {
+        throw new Error(data?.error || 'Nao foi possivel concluir a autenticacao.');
+    }
+
+    return data;
+};
 
 const showAccountMenu = () => {
     accountMenu.style.display = 'block';
     loginPanel.style.display = 'none';
     createAccountPanel.style.display = 'none';
+    clearAuthMessages();
 };
 
 const sections = {
@@ -236,12 +295,14 @@ openLoginButton.addEventListener('click', () => {
     accountMenu.style.display = 'none';
     loginPanel.style.display = 'block';
     createAccountPanel.style.display = 'none';
+    clearAuthMessages();
 });
 
 openCreateAccountButton.addEventListener('click', () => {
     accountMenu.style.display = 'none';
     loginPanel.style.display = 'none';
     createAccountPanel.style.display = 'block';
+    clearAuthMessages();
 });
 
 closeModal.addEventListener('click', () => {
@@ -283,6 +344,66 @@ mediaPanel.addEventListener('click', (event) => {
     }
 
     setActiveCard(card.dataset.topic);
+});
+
+loginForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(loginForm);
+
+    setFormLoading(loginForm, true);
+    setAuthMessage(loginMessage, 'Conectando...', 'info');
+
+    try {
+        const data = await requestAuth('/auth/login', {
+            identifier: formData.get('identifier'),
+            password: formData.get('password')
+        });
+
+        saveAuthData(data);
+        setAuthMessage(loginMessage, 'Login realizado com sucesso.', 'success');
+        loginForm.reset();
+
+        window.setTimeout(() => {
+            modal.style.display = 'none';
+            accountContent.style.display = 'none';
+            showAccountMenu();
+        }, 700);
+    } catch (error) {
+        setAuthMessage(loginMessage, error.message, 'error');
+    } finally {
+        setFormLoading(loginForm, false);
+    }
+});
+
+registerForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(registerForm);
+
+    setFormLoading(registerForm, true);
+    setAuthMessage(registerMessage, 'Criando conta...', 'info');
+
+    try {
+        const data = await requestAuth('/auth/register', {
+            username: formData.get('username'),
+            email: formData.get('email'),
+            password: formData.get('password'),
+            confirmPassword: formData.get('confirmPassword')
+        });
+
+        saveAuthData(data);
+        setAuthMessage(registerMessage, 'Conta criada com sucesso.', 'success');
+        registerForm.reset();
+
+        window.setTimeout(() => {
+            modal.style.display = 'none';
+            accountContent.style.display = 'none';
+            showAccountMenu();
+        }, 700);
+    } catch (error) {
+        setAuthMessage(registerMessage, error.message, 'error');
+    } finally {
+        setFormLoading(registerForm, false);
+    }
 });
 
 accountActions.forEach((action) => {
