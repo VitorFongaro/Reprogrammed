@@ -284,6 +284,10 @@ export default class GameScene extends Phaser.Scene {
     finishExecution(card) {
         if (card.item.id === "start") {
             this.statusText.setText("JOGO INICIADO");
+            this.time.delayedCall(350, () => {
+                this.scene.start("sprit-test-scene");
+            });
+            return;
         }
 
         if (card.item.id === "options") {

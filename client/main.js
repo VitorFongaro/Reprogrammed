@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import GameScene from './scenes/GameScene';
 import OptionsScene from './scenes/OptionsScene';
+import SpritTestScene from './scenes/SpritTestScene';
 
 const config = {
     type: Phaser.AUTO,
@@ -18,7 +19,7 @@ const config = {
         }
     },
 
-    scene: [GameScene, OptionsScene]
+    scene: [GameScene, OptionsScene, SpritTestScene]
 };
 
 new Phaser.Game(config);
