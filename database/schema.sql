@@ -213,7 +213,6 @@ create table public.user_game_state (
   current_scene varchar(100),
   position_x int not null default 0,
   position_y int not null default 0,
-  companion_unlocked boolean not null default false,
 
   last_saved_at timestamp with time zone not null default now()
 );
