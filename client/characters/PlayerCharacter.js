@@ -22,6 +22,19 @@ const ROTATION_DIRECTIONS = [
 const RUN_DIRECTIONS = ["south", "east", "west", "north"];
 const RUN_FRAME_COUNT = 6;
 const IDLE_FRAME_COUNT = 4;
+const DIRECTION_KEYS = {
+    KeyW: "north",
+    KeyA: "west",
+    KeyS: "south",
+    KeyD: "east"
+};
+
+const DIRECTION_VELOCITY = {
+    north: { x: 0, y: -1 },
+    west: { x: -1, y: 0 },
+    south: { x: 0, y: 1 },
+    east: { x: 1, y: 0 }
+};
 
 export default class PlayerCharacter {
     static preload(scene) {
@@ -100,6 +113,7 @@ export default class PlayerCharacter {
         this.scene = scene;
         this.speed = options.speed ?? DEFAULT_SPEED;
         this.lastDirection = "south";
+        this.directionQueue = [];
 
         PlayerCharacter.createAnimations(scene);
 
@@ -109,30 +123,58 @@ export default class PlayerCharacter {
         this.sprite.play("maid-idle-south");
 
         this.keys = scene.input.keyboard.addKeys({
-            up: Phaser.Input.Keyboard.KeyCodes.W,
-            left: Phaser.Input.Keyboard.KeyCodes.A,
-            down: Phaser.Input.Keyboard.KeyCodes.S,
-            right: Phaser.Input.Keyboard.KeyCodes.D
+            north: Phaser.Input.Keyboard.KeyCodes.W,
+            west: Phaser.Input.Keyboard.KeyCodes.A,
+            south: Phaser.Input.Keyboard.KeyCodes.S,
+            east: Phaser.Input.Keyboard.KeyCodes.D
         });
+
+        this.keydownHandler = (event) => this.trackPressedDirection(event.code);
+        this.keyupHandler = (event) => this.releasePressedDirection(event.code);
+        scene.input.keyboard.on("keydown", this.keydownHandler);
+        scene.input.keyboard.on("keyup", this.keyupHandler);
+        scene.events.once("shutdown", () => this.destroy());
     }
 
     update() {
-        const axisX = Number(this.keys.right.isDown) - Number(this.keys.left.isDown);
-        const axisY = Number(this.keys.down.isDown) - Number(this.keys.up.isDown);
-        const isMoving = axisX !== 0 || axisY !== 0;
+        const direction = this.getActiveDirection();
 
-        if (!isMoving) {
+        if (!direction) {
             this.sprite.setVelocity(0, 0);
             this.playIdleAnimation();
             return;
         }
 
-        const direction = this.getDirection(axisX, axisY);
-        const velocity = new Phaser.Math.Vector2(axisX, axisY).normalize().scale(this.speed);
+        const velocity = DIRECTION_VELOCITY[direction];
 
         this.lastDirection = direction;
-        this.sprite.setVelocity(velocity.x, velocity.y);
+        this.sprite.setVelocity(velocity.x * this.speed, velocity.y * this.speed);
         this.playMoveAnimation(direction);
+    }
+
+    trackPressedDirection(code) {
+        const direction = DIRECTION_KEYS[code];
+
+        if (!direction || this.directionQueue.includes(direction)) {
+            return;
+        }
+
+        this.directionQueue.push(direction);
+    }
+
+    releasePressedDirection(code) {
+        const direction = DIRECTION_KEYS[code];
+
+        if (!direction) {
+            return;
+        }
+
+        this.directionQueue = this.directionQueue.filter((queuedDirection) => queuedDirection !== direction);
+    }
+
+    getActiveDirection() {
+        this.directionQueue = this.directionQueue.filter((direction) => this.keys[direction].isDown);
+        return this.directionQueue[0] ?? null;
     }
 
     playIdleAnimation() {
@@ -155,35 +197,8 @@ export default class PlayerCharacter {
         this.sprite.setTexture(PlayerCharacter.rotationKey(direction));
     }
 
-    getDirection(axisX, axisY) {
-        if (axisX > 0 && axisY > 0) {
-            return "south-east";
-        }
-
-        if (axisX > 0 && axisY < 0) {
-            return "north-east";
-        }
-
-        if (axisX < 0 && axisY > 0) {
-            return "south-west";
-        }
-
-        if (axisX < 0 && axisY < 0) {
-            return "north-west";
-        }
-
-        if (axisX > 0) {
-            return "east";
-        }
-
-        if (axisX < 0) {
-            return "west";
-        }
-
-        if (axisY < 0) {
-            return "north";
-        }
-
-        return "south";
+    destroy() {
+        this.scene.input.keyboard.off("keydown", this.keydownHandler);
+        this.scene.input.keyboard.off("keyup", this.keyupHandler);
     }
 }
