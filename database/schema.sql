@@ -219,29 +219,6 @@ create table public.user_game_state (
 );
 
 -- =========================================================
--- ACHIEVEMENTS
--- Conquistas do jogo
--- =========================================================
-
-create table public.achievements (
-  id bigint generated always as identity primary key,
-  name varchar(100) not null,
-  description text,
-  icon varchar(100),
-  condition_type varchar(100),
-  created_at timestamp with time zone not null default now()
-);
-
-create table public.user_achievements (
-  id bigint generated always as identity primary key,
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  achievement_id bigint not null references public.achievements(id) on delete cascade,
-  unlocked_at timestamp with time zone not null default now(),
-
-  constraint unique_user_achievement unique (user_id, achievement_id)
-);
-
--- =========================================================
 -- USER SETTINGS
 -- Configurações do jogador
 -- =========================================================
@@ -447,8 +424,6 @@ alter table public.user_level_progress enable row level security;
 alter table public.puzzle_attempts enable row level security;
 alter table public.user_topic_performance enable row level security;
 alter table public.user_game_state enable row level security;
-alter table public.achievements enable row level security;
-alter table public.user_achievements enable row level security;
 alter table public.user_settings enable row level security;
 alter table public.ai_analysis_logs enable row level security;
 
@@ -489,12 +464,6 @@ using (true);
 
 create policy "Authenticated users can view puzzles"
 on public.puzzles
-for select
-to authenticated
-using (true);
-
-create policy "Authenticated users can view achievements"
-on public.achievements
 for select
 to authenticated
 using (true);
@@ -576,22 +545,6 @@ on public.user_game_state
 for update
 to authenticated
 using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
-
--- =========================================================
--- POLICIES: USER ACHIEVEMENTS
--- =========================================================
-
-create policy "Users can view their own achievements"
-on public.user_achievements
-for select
-to authenticated
-using (auth.uid() = user_id);
-
-create policy "Users can insert their own achievements"
-on public.user_achievements
-for insert
-to authenticated
 with check (auth.uid() = user_id);
 
 -- =========================================================
