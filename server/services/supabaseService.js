@@ -1,4 +1,4 @@
-import { createUserSupabaseClient, supabase, supabaseAdmin } from '../config/supabase.js';
+import { createUserSupabaseClient, supabase } from '../config/supabase.js';
 
 const profileColumns = 'id, username, display_name, avatar_url, role, created_at, updated_at';
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -16,16 +16,6 @@ const buildAuthResponse = (session, user, profile) => ({
   }
 });
 
-const requireAdminClient = () => {
-  if (!supabaseAdmin) {
-    const error = new Error('Servidor sem SUPABASE_SERVICE_ROLE_KEY. Configure a chave para cadastro e login por usuario.');
-    error.statusCode = 503;
-    throw error;
-  }
-
-  return supabaseAdmin;
-};
-
 const mapSupabaseError = (error, fallbackMessage = 'Erro ao comunicar com o Supabase.') => {
   if (!error) {
     return null;
@@ -37,8 +27,12 @@ const mapSupabaseError = (error, fallbackMessage = 'Erro ao comunicar com o Supa
   return authError;
 };
 
-export const getProfileByUserId = async (userId, accessToken = null) => {
-  const client = accessToken ? createUserSupabaseClient(accessToken) : requireAdminClient();
+export const getProfileByUserId = async (userId, accessToken) => {
+  if (!accessToken) {
+    return null;
+  }
+
+  const client = createUserSupabaseClient(accessToken);
   const { data, error } = await client
     .from('profiles')
     .select(profileColumns)
@@ -46,7 +40,7 @@ export const getProfileByUserId = async (userId, accessToken = null) => {
     .single();
 
   if (error) {
-    throw mapSupabaseError(error, 'Nao foi possivel carregar o perfil.');
+    throw mapSupabaseError(error, 'Não foi possível carregar o perfil.');
   }
 
   return data;
@@ -59,19 +53,19 @@ export const registerUser = async ({ username, email, password, confirmPassword 
   const cleanConfirmPassword = String(confirmPassword || '');
 
   if (!cleanUsername || !cleanEmail || !cleanPassword || !cleanConfirmPassword) {
-    const error = new Error('Preencha usuario, email, senha e confirmacao de senha.');
+    const error = new Error('Preencha usuário, email, senha e confirmação de senha.');
     error.statusCode = 400;
     throw error;
   }
 
   if (!usernamePattern.test(cleanUsername)) {
-    const error = new Error('Usuario deve ter 3 a 50 caracteres e usar apenas letras, numeros ou _.');
+    const error = new Error('Usuario deve ter 3 a 50 caracteres e usar apenas letras, números ou _.');
     error.statusCode = 400;
     throw error;
   }
 
   if (!emailPattern.test(cleanEmail)) {
-    const error = new Error('Email invalido.');
+    const error = new Error('Email inválido.');
     error.statusCode = 400;
     throw error;
   }
@@ -83,25 +77,8 @@ export const registerUser = async ({ username, email, password, confirmPassword 
   }
 
   if (cleanPassword !== cleanConfirmPassword) {
-    const error = new Error('As senhas nao conferem.');
+    const error = new Error('As senhas não conferem.');
     error.statusCode = 400;
-    throw error;
-  }
-
-  const adminClient = requireAdminClient();
-  const { data: existingProfile, error: profileLookupError } = await adminClient
-    .from('profiles')
-    .select('id')
-    .eq('username', cleanUsername)
-    .maybeSingle();
-
-  if (profileLookupError) {
-    throw mapSupabaseError(profileLookupError, 'Nao foi possivel verificar o usuario.');
-  }
-
-  if (existingProfile) {
-    const error = new Error('Este usuario ja esta em uso.');
-    error.statusCode = 409;
     throw error;
   }
 
@@ -118,66 +95,51 @@ export const registerUser = async ({ username, email, password, confirmPassword 
 
   if (error) {
     if (/already|registered|exists/i.test(error.message)) {
-      const conflictError = new Error('Este email ja esta em uso.');
+      const conflictError = new Error('Este email já esta em uso.');
       conflictError.statusCode = 409;
       throw conflictError;
     }
 
-    throw mapSupabaseError(error, 'Nao foi possivel criar a conta.');
+    if (/database|duplicate|unique|profile|username/i.test(error.message)) {
+      const accountError = new Error('Não foi possivel criar a conta. Verifique se email ou usuário já estão em uso.');
+      accountError.statusCode = 409;
+      throw accountError;
+    }
+
+    throw mapSupabaseError(error, 'Não foi possivel criar a conta.');
   }
 
   const accessToken = data.session?.access_token;
-  const profile = data.user ? await getProfileByUserId(data.user.id, accessToken) : null;
+  const profile = data.user
+    ? await getProfileByUserId(data.user.id, accessToken)
+    : null;
 
   return buildAuthResponse(data.session, data.user, profile);
 };
 
-export const loginUser = async ({ identifier, password } = {}) => {
-  const cleanIdentifier = (identifier || '').trim();
+export const loginUser = async ({ email, password } = {}) => {
+  const cleanEmail = normalizeEmail(email);
   const cleanPassword = String(password || '');
 
-  if (!cleanIdentifier || !cleanPassword) {
-    const error = new Error('Preencha usuario/email e senha.');
+  if (!cleanEmail || !cleanPassword) {
+    const error = new Error('Preencha email e senha.');
     error.statusCode = 400;
     throw error;
   }
 
-  let email = cleanIdentifier;
-
-  if (!emailPattern.test(cleanIdentifier)) {
-    const adminClient = requireAdminClient();
-    const { data: profile, error: profileLookupError } = await adminClient
-      .from('profiles')
-      .select('id, username')
-      .eq('username', cleanIdentifier)
-      .maybeSingle();
-
-    if (profileLookupError) {
-      throw mapSupabaseError(profileLookupError, 'Nao foi possivel verificar o usuario.');
-    }
-
-    if (!profile) {
-      const error = new Error('Usuario ou senha invalidos.');
-      error.statusCode = 401;
-      throw error;
-    }
-
-    const { data: authUser, error: authUserError } = await adminClient.auth.admin.getUserById(profile.id);
-
-    if (authUserError || !authUser?.user?.email) {
-      throw mapSupabaseError(authUserError, 'Nao foi possivel carregar o email do usuario.');
-    }
-
-    email = authUser.user.email;
+  if (!emailPattern.test(cleanEmail)) {
+    const error = new Error('Email inválido.');
+    error.statusCode = 400;
+    throw error;
   }
 
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: normalizeEmail(email),
+    email: cleanEmail,
     password: cleanPassword
   });
 
   if (error) {
-    const loginError = new Error('Usuario ou senha invalidos.');
+    const loginError = new Error('Email ou senha inválidos.');
     loginError.statusCode = 401;
     throw loginError;
   }
@@ -198,7 +160,7 @@ export const logoutUser = async (accessToken) => {
 
 export const getCurrentUser = async (accessToken) => {
   if (!accessToken) {
-    const error = new Error('Token de autenticacao ausente.');
+    const error = new Error('Token de autenticação ausente.');
     error.statusCode = 401;
     throw error;
   }
@@ -206,7 +168,7 @@ export const getCurrentUser = async (accessToken) => {
   const { data, error } = await supabase.auth.getUser(accessToken);
 
   if (error || !data.user) {
-    const authError = new Error('Sessao invalida ou expirada.');
+    const authError = new Error('Sessao inválida ou expirada.');
     authError.statusCode = 401;
     throw authError;
   }

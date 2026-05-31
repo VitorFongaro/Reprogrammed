@@ -22,9 +22,16 @@
             </ul>
 
             <div class="nav-actions">
-                <button class="profile-button" id="profile-button" type="button" aria-label="Conta de usuario">
-                    <img src="assets/icons/page/profile-avatar.png" alt="">
-                </button>
+                <div class="profile-menu-wrapper">
+                    <button class="profile-button" id="profile-button" type="button" aria-label="Conta de usuario" aria-expanded="false" aria-controls="profile-dropdown">
+                        <img src="assets/icons/page/profile-avatar.png" alt="">
+                    </button>
+                    <div class="profile-dropdown" id="profile-dropdown" aria-label="Menu do usuario">
+                        <a href="pages/user.html">PROGRESSO</a>
+                        <a href="pages/user.html">CONFIGURACOES</a>
+                        <button type="button" id="logout-button">SAIR</button>
+                    </div>
+                </div>
                 <a href="pages/game.html" class="play-button"> 
                     REPROGRAMAR
                 </a>
@@ -166,8 +173,8 @@
                     <p class="auth-message" id="login-message" aria-live="polite"></p>
                     <form class="login-form" id="login-form">
                         <label class="login-field">
-                            <span>USUARIO OU EMAIL</span>
-                            <input type="text" name="identifier" autocomplete="username" required>
+                            <span>EMAIL</span>
+                            <input type="email" name="email" autocomplete="email" required>
                         </label>
                         <label class="login-field">
                             <span>SENHA</span>

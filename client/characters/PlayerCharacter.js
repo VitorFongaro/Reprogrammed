@@ -174,7 +174,7 @@ export default class PlayerCharacter {
 
     getActiveDirection() {
         this.directionQueue = this.directionQueue.filter((direction) => this.keys[direction].isDown);
-        return this.directionQueue[0] ?? null;
+        return this.directionQueue[this.directionQueue.length - 1] ?? null;
     }
 
     playIdleAnimation() {

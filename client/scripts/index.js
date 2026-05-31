@@ -5,6 +5,8 @@ const accountContent = document.getElementById('account-content');
 const teamButton = document.getElementById('team-button');
 const contactButton = document.getElementById('contact-button');
 const profileButton = document.getElementById('profile-button');
+const profileDropdown = document.getElementById('profile-dropdown');
+const logoutButton = document.getElementById('logout-button');
 const closeModal = document.getElementById('close-modal');
 const accountMenu = document.getElementById('account-menu');
 const loginPanel = document.getElementById('login-panel');
@@ -55,6 +57,27 @@ const saveAuthData = (data) => {
     }));
 };
 
+const getAuthData = () => {
+    try {
+        return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY)) || null;
+    } catch (error) {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        return null;
+    }
+};
+
+const isLoggedIn = () => Boolean(getAuthData()?.accessToken);
+
+const setProfileDropdownOpen = (isOpen) => {
+    profileDropdown.classList.toggle('open', isOpen);
+    profileButton.setAttribute('aria-expanded', String(isOpen));
+};
+
+const clearAuthData = () => {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    setProfileDropdownOpen(false);
+};
+
 const requestAuth = async (path, payload) => {
     let response;
 
@@ -77,6 +100,21 @@ const requestAuth = async (path, payload) => {
     }
 
     return data;
+};
+
+const requestLogout = async () => {
+    const token = getAuthData()?.accessToken;
+
+    if (!token) {
+        return;
+    }
+
+    await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
 };
 
 const showAccountMenu = () => {
@@ -283,12 +321,37 @@ contactButton.addEventListener('click', () => {
     accountContent.style.display = 'none';
 });
 
-profileButton.addEventListener('click', () => {
+profileButton.addEventListener('click', (event) => {
+    event.stopPropagation();
+
+    if (isLoggedIn()) {
+        setProfileDropdownOpen(!profileDropdown.classList.contains('open'));
+        return;
+    }
+
+    setProfileDropdownOpen(false);
     modal.style.display = 'flex';
     accountContent.style.display = 'block';
     teamContent.style.display = 'none';
     contactContent.style.display = 'none';
     showAccountMenu();
+});
+
+profileDropdown.addEventListener('click', (event) => {
+    event.stopPropagation();
+});
+
+logoutButton.addEventListener('click', async () => {
+    logoutButton.disabled = true;
+
+    try {
+        await requestLogout();
+    } catch (error) {
+        console.warn('Nao foi possivel encerrar a sessao no servidor.', error);
+    } finally {
+        clearAuthData();
+        logoutButton.disabled = false;
+    }
 });
 
 openLoginButton.addEventListener('click', () => {
@@ -320,6 +383,10 @@ window.addEventListener('click', (event) => {
         contactContent.style.display = 'none';
         accountContent.style.display = 'none';
         showAccountMenu();
+    }
+
+    if (!event.target.closest('.profile-menu-wrapper')) {
+        setProfileDropdownOpen(false);
     }
 });
 
@@ -355,7 +422,7 @@ loginForm.addEventListener('submit', async (event) => {
 
     try {
         const data = await requestAuth('/auth/login', {
-            identifier: formData.get('identifier'),
+            email: formData.get('email'),
             password: formData.get('password')
         });
 
@@ -366,6 +433,7 @@ loginForm.addEventListener('submit', async (event) => {
         window.setTimeout(() => {
             modal.style.display = 'none';
             accountContent.style.display = 'none';
+            setProfileDropdownOpen(false);
             showAccountMenu();
         }, 700);
     } catch (error) {
@@ -397,6 +465,7 @@ registerForm.addEventListener('submit', async (event) => {
         window.setTimeout(() => {
             modal.style.display = 'none';
             accountContent.style.display = 'none';
+            setProfileDropdownOpen(false);
             showAccountMenu();
         }, 700);
     } catch (error) {

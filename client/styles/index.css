@@ -81,9 +81,14 @@ a {
 }
 
 .nav-actions {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 18px;
+}
+
+.profile-menu-wrapper {
+    position: relative;
 }
 
 .play-button {
@@ -169,6 +174,55 @@ a {
     box-shadow:
         0 0 0 3px #7a7a7a,
         2px 2px 0 #111111;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 18px);
+    left: 0;
+    width: 260px;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: #050505;
+    border: 3px solid #7a7a7a;
+    box-shadow:
+        0 0 0 3px #111111,
+        6px 6px 0 #2a2a2a;
+    z-index: 1200;
+}
+
+.profile-dropdown.open {
+    display: flex;
+}
+
+.profile-dropdown a,
+.profile-dropdown button {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    color: #f7f7f7;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1;
+    text-align: left;
+    background: #0b0b0b;
+    border: 2px solid #2a2a2a;
+    transition: transform 0.12s steps(2, end), background-color 0.12s steps(2, end), color 0.12s steps(2, end), border-color 0.12s steps(2, end);
+}
+
+.profile-dropdown a:hover,
+.profile-dropdown button:hover,
+.profile-dropdown a:focus-visible,
+.profile-dropdown button:focus-visible {
+    transform: translate(3px, 3px);
+    color: #111111;
+    background: #f7f7f7;
+    border-color: #111111;
+    opacity: 1;
+    outline: none;
 }
 
 .hero-panel {
