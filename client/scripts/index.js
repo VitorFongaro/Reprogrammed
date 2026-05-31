@@ -9,10 +9,14 @@ const profileDropdown = document.getElementById('profile-dropdown');
 const logoutButton = document.getElementById('logout-button');
 const closeModal = document.getElementById('close-modal');
 const accountMenu = document.getElementById('account-menu');
+const loginRequiredPanel = document.getElementById('login-required-panel');
 const loginPanel = document.getElementById('login-panel');
 const createAccountPanel = document.getElementById('create-account-panel');
 const openLoginButton = document.getElementById('open-login-button');
 const openCreateAccountButton = document.getElementById('open-create-account-button');
+const alertLoginButton = document.getElementById('alert-login-button');
+const alertCreateAccountButton = document.getElementById('alert-create-account-button');
+const alertCloseButton = document.getElementById('alert-close-button');
 const loginForm = document.getElementById('login-form');
 const registerForm = document.getElementById('register-form');
 const loginMessage = document.getElementById('login-message');
@@ -26,6 +30,7 @@ const consoleTitle = document.getElementById('console-title');
 const consoleText = document.getElementById('console-text');
 const accountActions = document.querySelectorAll('.account-action');
 const executeButtons = document.querySelectorAll('.execute-button');
+const playLinks = document.querySelectorAll('a[href$="game.html"]');
 const API_BASE_URL = window.REPROGRAMMED_API_URL || 'http://localhost:3000';
 const AUTH_STORAGE_KEY = 'reprogrammed.auth';
 
@@ -119,6 +124,20 @@ const requestLogout = async () => {
 
 const showAccountMenu = () => {
     accountMenu.style.display = 'block';
+    loginRequiredPanel.style.display = 'none';
+    loginPanel.style.display = 'none';
+    createAccountPanel.style.display = 'none';
+    clearAuthMessages();
+};
+
+const showLoginRequired = () => {
+    setProfileDropdownOpen(false);
+    modal.style.display = 'flex';
+    accountContent.style.display = 'block';
+    teamContent.style.display = 'none';
+    contactContent.style.display = 'none';
+    accountMenu.style.display = 'none';
+    loginRequiredPanel.style.display = 'block';
     loginPanel.style.display = 'none';
     createAccountPanel.style.display = 'none';
     clearAuthMessages();
@@ -356,6 +375,7 @@ logoutButton.addEventListener('click', async () => {
 
 openLoginButton.addEventListener('click', () => {
     accountMenu.style.display = 'none';
+    loginRequiredPanel.style.display = 'none';
     loginPanel.style.display = 'block';
     createAccountPanel.style.display = 'none';
     clearAuthMessages();
@@ -363,9 +383,30 @@ openLoginButton.addEventListener('click', () => {
 
 openCreateAccountButton.addEventListener('click', () => {
     accountMenu.style.display = 'none';
+    loginRequiredPanel.style.display = 'none';
     loginPanel.style.display = 'none';
     createAccountPanel.style.display = 'block';
     clearAuthMessages();
+});
+
+alertLoginButton.addEventListener('click', () => {
+    loginRequiredPanel.style.display = 'none';
+    loginPanel.style.display = 'block';
+    createAccountPanel.style.display = 'none';
+    setAuthMessage(loginMessage, 'Entre para liberar o simulador.', 'info');
+});
+
+alertCreateAccountButton.addEventListener('click', () => {
+    loginRequiredPanel.style.display = 'none';
+    loginPanel.style.display = 'none';
+    createAccountPanel.style.display = 'block';
+    setAuthMessage(registerMessage, 'Crie uma conta para liberar o simulador.', 'info');
+});
+
+alertCloseButton.addEventListener('click', () => {
+    modal.style.display = 'none';
+    accountContent.style.display = 'none';
+    showAccountMenu();
 });
 
 closeModal.addEventListener('click', () => {
@@ -411,6 +452,17 @@ mediaPanel.addEventListener('click', (event) => {
     }
 
     setActiveCard(card.dataset.topic);
+});
+
+playLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+        if (isLoggedIn()) {
+            return;
+        }
+
+        event.preventDefault();
+        showLoginRequired();
+    });
 });
 
 loginForm.addEventListener('submit', async (event) => {

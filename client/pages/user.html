@@ -6,8 +6,47 @@
     <title>Reprogrammed</title>
     <link rel="stylesheet" href="../styles/global.css">
     <link rel="stylesheet" href="../styles/user.css">
+    <script type="module" defer src="../scripts/user.js"></script>
 </head>
 <body>
-    
+    <header>
+        <nav class="user-nav">
+            <div class="logo">
+                <h1>REPROGRAMMED</h1>
+            </div>
+
+            <div class="user-nav-status" aria-label="Status do painel">
+                <span class="status-light"></span>
+                <span>PROTOCOLO DE ACESSO</span>
+            </div>
+
+            <div class="nav-actions">
+                <a class="home-button" href="../index.html" aria-label="Voltar para home">
+                    <img src="../assets/icons/page/home.png" alt="">
+                </a>
+                <a href="game.html" class="play-button"> 
+                    REPROGRAMAR
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <aside class="user-sidebar" aria-label="Menu do usuario">
+            <button class="sidebar-action active" type="button" data-panel="progress">PROGRESSO</button>
+            <button class="sidebar-action" type="button" data-panel="settings">CONFIGURAÇÕES</button>
+            <button class="sidebar-action" id="logout-button" type="button">SAIR</button>
+        </aside>
+
+        <section class="user-content" aria-label="Painel do usuario">
+            <div class="content-frame">
+                <div class="content-frame-header">
+                    <span class="console-prompt">&gt;</span>
+                    <span id="content-frame-title">ARQUIVO / PROGRESSO</span>
+                    <span class="console-cursor" aria-hidden="true"></span>
+                </div>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
