@@ -11,8 +11,7 @@ create extension if not exists "pgcrypto";
 
 create type public.user_role as enum (
   'player',
-  'admin',
-  'teacher'
+  'admin'
 );
 
 create type public.level_status as enum (
@@ -47,7 +46,6 @@ create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   username varchar(50) unique not null,
   display_name varchar(100),
-  avatar_url text,
   role public.user_role not null default 'player',
   created_at timestamp with time zone not null default now(),
   updated_at timestamp with time zone not null default now()
@@ -105,12 +103,36 @@ create table public.puzzles (
   expected_output text,
   base_difficulty public.difficulty_level not null default 'easy',
   order_index int not null,
-  max_score int not null default 100,
+  max_score int not null default 100, -- tem que ver
   created_at timestamp with time zone not null default now(),
   updated_at timestamp with time zone not null default now(),
 
   constraint unique_puzzle_order_per_level unique (level_id, order_index),
   constraint check_puzzle_max_score check (max_score >= 0)
+);
+
+-- =========================================================
+-- BOSSES
+-- Bosses vinculados a fases específicas
+-- =========================================================
+
+create table public.bosses (
+  id bigint generated always as identity primary key,
+  level_id bigint not null references public.levels(id) on delete cascade,
+
+  name varchar(100) not null,
+  description text,
+
+  max_hp int not null default 100,
+  attack_power int not null default 10,
+  base_difficulty public.difficulty_level not null default 'medium',
+
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now(),
+
+  constraint unique_boss_per_level unique (level_id),
+  constraint check_boss_max_hp check (max_hp > 0),
+  constraint check_boss_attack_power check (attack_power >= 0)
 );
 
 -- =========================================================
@@ -126,7 +148,7 @@ create table public.user_level_progress (
   level_id bigint not null references public.levels(id) on delete cascade,
 
   status public.level_status not null default 'locked',
-  best_score int not null default 0,
+  best_score int not null default 0, -- ver isso daqui
   attempts int not null default 0,
 
   current_difficulty public.difficulty_level not null default 'easy',
@@ -167,6 +189,34 @@ create table public.puzzle_attempts (
   constraint check_attempt_score check (score >= 0),
   constraint check_errors_count check (errors_count >= 0),
   constraint check_time_spent check (time_spent_seconds >= 0)
+);
+
+-- =========================================================
+-- BOSS BATTLE ATTEMPTS
+-- Histórico de batalhas contra bosses
+-- =========================================================
+
+create table public.boss_battle_attempts (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  boss_id bigint not null references public.bosses(id) on delete cascade,
+
+  won boolean not null default false,
+  player_remaining_hp int not null default 0,
+  boss_remaining_hp int not null default 0,
+
+  turns_count int not null default 0,
+  score int not null default 0,
+  difficulty_used public.difficulty_level not null default 'medium',
+
+  ai_feedback text,
+
+  created_at timestamp with time zone not null default now(),
+
+  constraint check_battle_player_hp check (player_remaining_hp >= 0),
+  constraint check_battle_boss_hp check (boss_remaining_hp >= 0),
+  constraint check_battle_turns check (turns_count >= 0),
+  constraint check_battle_score check (score >= 0)
 );
 
 -- =========================================================
@@ -316,6 +366,11 @@ before update on public.puzzles
 for each row
 execute function public.set_updated_at();
 
+create trigger set_bosses_updated_at
+before update on public.bosses
+for each row
+execute function public.set_updated_at();
+
 create trigger set_user_level_progress_updated_at
 before update on public.user_level_progress
 for each row
@@ -399,6 +454,15 @@ on public.puzzle_attempts(user_id);
 create index idx_puzzle_attempts_puzzle_id
 on public.puzzle_attempts(puzzle_id);
 
+create index idx_bosses_level_id
+on public.bosses(level_id);
+
+create index idx_boss_battle_attempts_user_id
+on public.boss_battle_attempts(user_id);
+
+create index idx_boss_battle_attempts_boss_id
+on public.boss_battle_attempts(boss_id);
+
 create index idx_user_topic_performance_user_id
 on public.user_topic_performance(user_id);
 
@@ -419,8 +483,10 @@ alter table public.profiles enable row level security;
 alter table public.chapters enable row level security;
 alter table public.levels enable row level security;
 alter table public.puzzles enable row level security;
+alter table public.bosses enable row level security;
 alter table public.user_level_progress enable row level security;
 alter table public.puzzle_attempts enable row level security;
+alter table public.boss_battle_attempts enable row level security;
 alter table public.user_topic_performance enable row level security;
 alter table public.user_game_state enable row level security;
 alter table public.user_settings enable row level security;
@@ -467,6 +533,12 @@ for select
 to authenticated
 using (true);
 
+create policy "Authenticated users can view bosses"
+on public.bosses
+for select
+to authenticated
+using (true);
+
 -- =========================================================
 -- POLICIES: USER LEVEL PROGRESS
 -- =========================================================
@@ -491,7 +563,7 @@ using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
 -- =========================================================
--- POLICIES: PUZZLE ATTEMPTS
+-- POLICIES: BOSS BATTLE ATTEMPTS
 -- =========================================================
 
 create policy "Users can view their own puzzle attempts"
@@ -506,6 +578,21 @@ for insert
 to authenticated
 with check (auth.uid() = user_id);
 
+-- =========================================================
+-- POLICIES: PUZZLE ATTEMPTS
+-- =========================================================
+
+create policy "Users can view their own boss battle attempts"
+on public.boss_battle_attempts
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own boss battle attempts"
+on public.boss_battle_attempts
+for insert
+to authenticated
+with check (auth.uid() = user_id);
 -- =========================================================
 -- POLICIES: USER TOPIC PERFORMANCE
 -- =========================================================
