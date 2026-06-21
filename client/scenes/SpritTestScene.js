@@ -27,17 +27,17 @@ export default class SpritTestScene extends Phaser.Scene {
     }
 
     drawTestRoom() {
-        this.cameras.main.setBackgroundColor("#13282b");
+        this.cameras.main.setBackgroundColor("#050505");
         this.physics.world.setBounds(48, 96, WIDTH - 96, HEIGHT - 144);
 
         const background = this.add.graphics();
-        background.fillStyle(0x13282b, 1);
+        background.fillStyle(0x050505, 1);
         background.fillRect(0, 0, WIDTH, HEIGHT);
 
-        background.lineStyle(2, 0xb8f5e8, 0.42);
+        background.lineStyle(2, 0xf7f7f7, 0.42);
         background.strokeRect(48, 96, WIDTH - 96, HEIGHT - 144);
 
-        background.lineStyle(1, 0x0b1b1d, 0.82);
+        background.lineStyle(1, 0x2a2a2a, 0.82);
         for (let y = 96; y <= HEIGHT - 48; y += 30) {
             background.lineBetween(48, y, WIDTH - 48, y);
         }
@@ -49,14 +49,14 @@ export default class SpritTestScene extends Phaser.Scene {
         this.add.text(WIDTH / 2, 44, "- TESTE DE SPRITE -", {
             fontFamily: "VCR",
             fontSize: "34px",
-            color: "#e7ebb2",
+            color: "#f7f7f7",
             align: "center"
         }).setOrigin(0.5);
 
         this.add.text(WIDTH / 2, HEIGHT - 28, "WASD MOVE  |  ESC VOLTA AO MENU", {
             fontFamily: "VCR",
             fontSize: "20px",
-            color: "#9edfd2",
+            color: "#d9d9d9",
             align: "center"
         }).setOrigin(0.5);
     }

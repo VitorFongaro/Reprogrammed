@@ -1,6 +1,6 @@
 import { createUserSupabaseClient, supabase } from '../config/supabase.js';
 
-const profileColumns = 'id, username, display_name, avatar_url, role, created_at, updated_at';
+const profileColumns = 'id, username, display_name, role, created_at, updated_at';
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const usernamePattern = /^[a-zA-Z0-9_]{3,50}$/;
 
@@ -156,6 +156,33 @@ export const logoutUser = async (accessToken) => {
 
   const client = createUserSupabaseClient(accessToken);
   await client.auth.signOut();
+};
+
+export const refreshUserSession = async (refreshToken) => {
+  const cleanRefreshToken = String(refreshToken || '').trim();
+
+  if (!cleanRefreshToken) {
+    const error = new Error('Refresh token ausente.');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const { data, error } = await supabase.auth.refreshSession({
+    refresh_token: cleanRefreshToken
+  });
+
+  if (error || !data.session || !data.user) {
+    const refreshError = new Error('Sessao expirada. Faca login novamente.');
+    refreshError.statusCode = 401;
+    throw refreshError;
+  }
+
+  const profile = await getProfileByUserId(
+    data.user.id,
+    data.session.access_token
+  );
+
+  return buildAuthResponse(data.session, data.user, profile);
 };
 
 export const getCurrentUser = async (accessToken) => {

@@ -2,7 +2,15 @@ import Phaser from "phaser";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
-const TABS = ["Tela", "Controles", "Audio", "Legenda"];
+const TABS = ["Tela", "Controles", "Áudio", "Legenda"];
+const API_BASE_URL = window.REPROGRAMMED_API_URL || "http://localhost:3000";
+const AUTH_STORAGE_KEY = "reprogrammed.auth";
+const MIN_VOLUME = 1;
+const MAX_VOLUME = 100;
+const POINTER_CURSOR = "url('../assets/cursors/pointer.png'), pointer";
+const DEFAULT_CURSOR = "url('../assets/cursors/default.png'), auto";
+const VOLUME_TRACK_X = 92;
+const VOLUME_TRACK_WIDTH = 366;
 
 export default class OptionsScene extends Phaser.Scene {
     constructor() {
@@ -12,26 +20,32 @@ export default class OptionsScene extends Phaser.Scene {
     create() {
         this.activeTab = "Tela";
         this.tabButtons = [];
+        this.settings = {
+            music_volume: 80,
+            sfx_volume: 80
+        };
+        this.settingsMessage = "";
 
         this.drawBackground();
         this.drawHeader();
         this.drawTabs();
         this.drawPanel();
         this.renderTabContent();
+        this.loadSettings();
     }
 
     drawBackground() {
-        this.cameras.main.setBackgroundColor("#13282b");
+        this.cameras.main.setBackgroundColor("#050505");
 
         const background = this.add.graphics();
-        background.fillStyle(0x13282b, 1);
+        background.fillStyle(0x050505, 1);
         background.fillRect(0, 0, WIDTH, HEIGHT);
 
-        background.lineStyle(2, 0xb8f5e8, 0.45);
+        background.lineStyle(2, 0xf7f7f7, 0.45);
         background.lineBetween(0, 88, WIDTH, 88);
         background.lineBetween(0, 630, WIDTH, 630);
 
-        background.lineStyle(1, 0x0b1b1d, 0.85);
+        background.lineStyle(1, 0x111111, 0.85);
         for (let y = 0; y < HEIGHT; y += 8) {
             background.lineBetween(0, y, WIDTH, y);
         }
@@ -46,24 +60,24 @@ export default class OptionsScene extends Phaser.Scene {
         this.add.text(WIDTH / 2, 45, "- OPÇÕES -", {
             fontFamily: "VCR",
             fontSize: "34px",
-            color: "#e7ebb2"
+            color: "#f7f7f7"
         }).setOrigin(0.5);
 
         const backButton = this.add.container(112, 45);
-        const backBox = this.add.rectangle(0, 0, 158, 46, 0x071315, 0.92)
-            .setStrokeStyle(2, 0x9edfd2, 0.9);
+        const backBox = this.add.rectangle(0, 0, 158, 46, 0x0b0b0b, 0.92)
+            .setStrokeStyle(2, 0x7a7a7a, 0.9);
         const backText = this.add.text(0, 0, "VOLTAR", {
             fontFamily: "VCR",
             fontSize: "20px",
-            color: "#d6f6ec"
+            color: "#f7f7f7"
         }).setOrigin(0.5);
         const hitArea = this.add.rectangle(0, 0, 158, 46, 0xffffff, 0.001).setOrigin(0.5);
 
         backButton.add([backBox, backText, hitArea]);
         backButton.setSize(158, 46);
         hitArea.setInteractive();
-        hitArea.on("pointerover", () => backBox.setFillStyle(0x12383b, 1));
-        hitArea.on("pointerout", () => backBox.setFillStyle(0x071315, 0.92));
+        hitArea.on("pointerover", () => backBox.setFillStyle(0x2a2a2a, 1));
+        hitArea.on("pointerout", () => backBox.setFillStyle(0x0b0b0b, 0.92));
         hitArea.on("pointerdown", () => this.scene.start("game-scene"));
     }
 
@@ -73,12 +87,12 @@ export default class OptionsScene extends Phaser.Scene {
 
         TABS.forEach((tabName, index) => {
             const button = this.add.container(startX + spacing * index, 138);
-            const box = this.add.rectangle(0, 0, 164, 52, 0x071315, 0.9)
-                .setStrokeStyle(2, 0x547b78, 1);
+            const box = this.add.rectangle(0, 0, 164, 52, 0x0b0b0b, 0.9)
+                .setStrokeStyle(2, 0x7a7a7a, 1);
             const label = this.add.text(0, 1, tabName.toUpperCase(), {
                 fontFamily: "VCR",
                 fontSize: "19px",
-                color: "#d6f6ec"
+                color: "#f7f7f7"
             }).setOrigin(0.5);
             const hitArea = this.add.rectangle(0, 0, 164, 52, 0xffffff, 0.001).setOrigin(0.5);
 
@@ -101,10 +115,10 @@ export default class OptionsScene extends Phaser.Scene {
 
     drawPanel() {
         this.panel = this.add.container(WIDTH / 2, 380);
-        const outer = this.add.rectangle(0, 0, 820, 386, 0x9edfd2, 0.14)
-            .setStrokeStyle(3, 0x9edfd2, 0.78);
-        const inner = this.add.rectangle(0, 0, 784, 350, 0x071315, 0.72)
-            .setStrokeStyle(2, 0x061012, 0.95);
+        const outer = this.add.rectangle(0, 0, 820, 386, 0x7a7a7a, 0.14)
+            .setStrokeStyle(3, 0x7a7a7a, 0.78);
+        const inner = this.add.rectangle(0, 0, 784, 350, 0x0b0b0b, 0.72)
+            .setStrokeStyle(2, 0x000000, 0.95);
 
         this.panel.add([outer, inner]);
         this.panelContent = this.add.container(0, 0);
@@ -114,8 +128,8 @@ export default class OptionsScene extends Phaser.Scene {
     updateTabButtons() {
         this.tabButtons.forEach((button) => {
             const isActive = button.tabName === this.activeTab;
-            button.box.setFillStyle(isActive ? 0x1b4545 : 0x071315, isActive ? 1 : 0.9);
-            button.box.setStrokeStyle(2, isActive ? 0xe7ebb2 : 0x547b78, 1);
+            button.box.setFillStyle(isActive ? 0x2a2a2a : 0x0b0b0b, isActive ? 1 : 0.9);
+            button.box.setStrokeStyle(2, isActive ? 0xf7f7f7 : 0x7a7a7a, 1);
         });
     }
 
@@ -127,11 +141,16 @@ export default class OptionsScene extends Phaser.Scene {
             return;
         }
 
+        if (this.activeTab === "Áudio") {
+            this.renderAudioTab();
+            return;
+        }
+
         this.addPanelTitle(this.activeTab.toUpperCase());
         this.panelContent.add(this.add.text(0, 30, "EM BREVE", {
             fontFamily: "VCR",
             fontSize: "28px",
-            color: "#8eb6af"
+            color: "#7a7a7a"
         }).setOrigin(0.5));
     }
 
@@ -141,34 +160,288 @@ export default class OptionsScene extends Phaser.Scene {
         this.panelContent.add(this.add.text(0, -52, "MODO DE EXIBIÇÃO", {
             fontFamily: "VCR",
             fontSize: "20px",
-            color: "#8eb6af"
+            color: "#d9d9d9"
         }).setOrigin(0.5));
 
         const fullscreenButton = this.add.container(0, 35);
-        const box = this.add.rectangle(0, 0, 330, 70, 0x182426, 1)
-            .setStrokeStyle(3, 0xe7ebb2, 0.95);
+        const box = this.add.rectangle(0, 0, 330, 70, 0x111111, 1)
+            .setStrokeStyle(3, 0xf7f7f7, 0.95);
         const label = this.add.text(0, 1, "TELA CHEIA", {
             fontFamily: "VCR",
             fontSize: "26px",
-            color: "#eef3b8"
+            color: "#f7f7f7"
         }).setOrigin(0.5);
         const hitArea = this.add.rectangle(0, 0, 330, 70, 0xffffff, 0.001).setOrigin(0.5);
 
         fullscreenButton.add([box, label, hitArea]);
         fullscreenButton.setSize(330, 70);
         hitArea.setInteractive();
-        hitArea.on("pointerover", () => box.setFillStyle(0x273738, 1));
-        hitArea.on("pointerout", () => box.setFillStyle(0x182426, 1));
+        hitArea.on("pointerover", () => box.setFillStyle(0x2a2a2a, 1));
+        hitArea.on("pointerout", () => box.setFillStyle(0x111111, 1));
         hitArea.on("pointerdown", () => this.toggleFullscreen());
 
         this.panelContent.add(fullscreenButton);
+    }
+
+    renderAudioTab() {
+        this.addPanelTitle("ÁUDIO");
+        this.createVolumeControl("MÚSICA", "music_volume", -50);
+        this.createVolumeControl("EFEITOS SONOROS", "sfx_volume", 55);
+
+        if (this.settingsMessage) {
+            this.panelContent.add(this.add.text(0, 128, this.settingsMessage, {
+                fontFamily: "VCR",
+                fontSize: "16px",
+                color: "#d9d9d9"
+            }).setOrigin(0.5));
+        }
+    }
+
+    createVolumeControl(labelText, field, y) {
+        const control = this.add.container(0, y);
+        const label = this.add.text(-350, 0, labelText, {
+            fontFamily: "VCR",
+            fontSize: "18px",
+            color: "#d9d9d9"
+        }).setOrigin(0, 0.5);
+        const minusButton = this.createVolumeButton(-120, 0, "−", () => {
+            this.setVolume(field, this.settings[field] - 1, true);
+        });
+        const track = this.add.rectangle(
+            VOLUME_TRACK_X,
+            0,
+            VOLUME_TRACK_WIDTH,
+            18,
+            0x111111,
+            1
+        ).setStrokeStyle(2, 0x7a7a7a, 1);
+        const fill = this.add.rectangle(
+            VOLUME_TRACK_X - VOLUME_TRACK_WIDTH / 2,
+            0,
+            0,
+            12,
+            0xf7f7f7,
+            1
+        ).setOrigin(0, 0.5);
+        const hitArea = this.add.rectangle(
+            VOLUME_TRACK_X,
+            0,
+            VOLUME_TRACK_WIDTH,
+            42,
+            0xffffff,
+            0.001
+        ).setInteractive({ cursor: POINTER_CURSOR });
+        const valueText = this.add.text(305, 0, String(this.settings[field]), {
+            fontFamily: "VCR",
+            fontSize: "20px",
+            color: "#f7f7f7"
+        }).setOrigin(0.5);
+        const plusButton = this.createVolumeButton(350, 0, "+", () => {
+            this.setVolume(field, this.settings[field] + 1, true);
+        });
+
+        control.add([label, minusButton, track, fill, hitArea, valueText, plusButton]);
+        control.valueText = valueText;
+        control.fill = fill;
+        control.field = field;
+        this.panelContent.add(control);
+        this.updateVolumeControl(control);
+
+        const updateFromPointer = (pointer) => {
+            const trackStartX = WIDTH / 2 + VOLUME_TRACK_X - VOLUME_TRACK_WIDTH / 2;
+            const localX = Phaser.Math.Clamp(
+                pointer.x - trackStartX,
+                0,
+                VOLUME_TRACK_WIDTH
+            );
+            const volume = Math.round(
+                MIN_VOLUME +
+                (localX / VOLUME_TRACK_WIDTH) * (MAX_VOLUME - MIN_VOLUME)
+            );
+            this.setVolume(field, volume, false);
+        };
+
+        hitArea.on("pointerdown", (pointer) => {
+            this.game.canvas.style.cursor = POINTER_CURSOR;
+            updateFromPointer(pointer);
+        });
+        hitArea.on("pointermove", (pointer) => {
+            if (pointer.isDown) {
+                updateFromPointer(pointer);
+            }
+        });
+        const finishDrag = () => {
+            this.game.canvas.style.cursor = DEFAULT_CURSOR;
+            this.saveSettings({ [field]: this.settings[field] });
+        };
+        hitArea.on("pointerup", finishDrag);
+        hitArea.on("pointerupoutside", finishDrag);
+    }
+
+    createVolumeButton(x, y, text, onClick) {
+        const button = this.add.container(x, y);
+        const box = this.add.rectangle(0, 0, 42, 42, 0x111111, 1)
+            .setStrokeStyle(2, 0x7a7a7a, 1);
+        const label = this.add.text(0, -1, text, {
+            fontFamily: "VCR",
+            fontSize: "24px",
+            color: "#f7f7f7"
+        }).setOrigin(0.5);
+        const hitArea = this.add.rectangle(0, 0, 42, 42, 0xffffff, 0.001)
+            .setInteractive({ cursor: POINTER_CURSOR });
+
+        hitArea.on("pointerover", () => box.setFillStyle(0x2a2a2a, 1));
+        hitArea.on("pointerout", () => box.setFillStyle(0x111111, 1));
+        hitArea.on("pointerdown", onClick);
+        button.add([box, label, hitArea]);
+        return button;
+    }
+
+    setVolume(field, value, shouldSave) {
+        this.settings[field] = Phaser.Math.Clamp(
+            Math.round(value),
+            MIN_VOLUME,
+            MAX_VOLUME
+        );
+
+        const control = this.panelContent.list.find((item) => item.field === field);
+        if (control) {
+            this.updateVolumeControl(control);
+        }
+
+        if (shouldSave) {
+            this.saveSettings({ [field]: this.settings[field] });
+        }
+    }
+
+    updateVolumeControl(control) {
+        const value = this.settings[control.field];
+        const progress = (value - MIN_VOLUME) / (MAX_VOLUME - MIN_VOLUME);
+        control.valueText.setText(String(value));
+        control.fill.width = VOLUME_TRACK_WIDTH * progress;
+    }
+
+    getAccessToken() {
+        return this.getAuthData()?.accessToken || null;
+    }
+
+    getAuthData() {
+        try {
+            return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY)) || null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    saveAuthData(data) {
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
+            accessToken: data.session?.access_token || null,
+            refreshToken: data.session?.refresh_token || null,
+            user: data.user || null
+        }));
+    }
+
+    async refreshSession() {
+        const refreshToken = this.getAuthData()?.refreshToken;
+
+        if (!refreshToken) {
+            throw new Error("Sessão expirada. Faça login novamente.");
+        }
+
+        const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ refreshToken })
+        });
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            throw new Error(data?.error || "Sessão expirada. Faça login novamente.");
+        }
+
+        this.saveAuthData(data);
+        return data.session.access_token;
+    }
+
+    normalizeSettings(settings) {
+        return {
+            music_volume: Phaser.Math.Clamp(
+                Math.round(Number(settings?.music_volume) || 80),
+                MIN_VOLUME,
+                MAX_VOLUME
+            ),
+            sfx_volume: Phaser.Math.Clamp(
+                Math.round(Number(settings?.sfx_volume) || 80),
+                MIN_VOLUME,
+                MAX_VOLUME
+            )
+        };
+    }
+
+    async requestSettings(method = "GET", payload, allowRefresh = true) {
+        const token = this.getAccessToken();
+        const response = await fetch(`${API_BASE_URL}/game/settings`, {
+            method,
+            headers: {
+                ...(payload ? { "Content-Type": "application/json" } : {}),
+                Authorization: `Bearer ${token}`
+            },
+            ...(payload ? { body: JSON.stringify(payload) } : {})
+        });
+        const data = await response.json().catch(() => null);
+
+        if (response.status === 401 && allowRefresh) {
+            await this.refreshSession();
+            return this.requestSettings(method, payload, false);
+        }
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error("Reinicie o backend para carregar as novas rotas.");
+            }
+
+            throw new Error(data?.error || "Não foi possível acessar as configurações.");
+        }
+
+        return data.settings;
+    }
+
+    async loadSettings() {
+        try {
+            this.settings = this.normalizeSettings(await this.requestSettings());
+            this.settingsMessage = "";
+        } catch (error) {
+            this.settingsMessage = "NÃO FOI POSSÍVEL CARREGAR";
+        }
+
+        if (this.sys.isActive() && this.activeTab === "Áudio") {
+            this.renderTabContent();
+        }
+    }
+
+    async saveSettings(changes) {
+        try {
+            this.settings = this.normalizeSettings(
+                await this.requestSettings("PATCH", changes)
+            );
+            this.settingsMessage = "";
+        } catch (error) {
+            console.error("Erro ao salvar configurações:", error);
+            this.settingsMessage = error.message || "ERRO AO SALVAR";
+        }
+
+        if (this.sys.isActive() && this.activeTab === "Áudio") {
+            this.renderTabContent();
+        }
     }
 
     addPanelTitle(text) {
         this.panelContent.add(this.add.text(0, -126, text, {
             fontFamily: "VCR",
             fontSize: "32px",
-            color: "#eef3b8"
+            color: "#f7f7f7"
         }).setOrigin(0.5));
     }
 

@@ -17,21 +17,21 @@ const MENU_ITEMS = [
         id: "start",
         label: "INICIAR",
         icon: "play",
-        accent: 0xdadf97,
+        accent: 0xf7f7f7,
         executeText: "CARREGANDO JOGO..."
     },
     {
         id: "options",
         label: "OPÇÕES",
         icon: "gear",
-        accent: 0x86d8c7,
+        accent: 0x7a7a7a,
         executeText: "ABRINDO OPÇÕES..."
     },
     {
         id: "exit",
         label: "SAIR",
         icon: "exit",
-        accent: 0xd84b4b,
+        accent: 0xff4545,
         executeText: "ENCERRANDO SESSAO..."
     }
 ];
@@ -53,17 +53,17 @@ export default class GameScene extends Phaser.Scene {
     }
 
     drawBackground() {
-        this.cameras.main.setBackgroundColor("#172f31");
+        this.cameras.main.setBackgroundColor("#050505");
 
         const background = this.add.graphics();
-        background.fillStyle(0x172f31, 1);
+        background.fillStyle(0x050505, 1);
         background.fillRect(0, 0, WIDTH, HEIGHT);
 
-        background.lineStyle(2, 0xb8f5e8, 0.45);
+        background.lineStyle(2, 0xf7f7f7, 0.45);
         background.lineBetween(0, 86, WIDTH, 86);
         background.lineBetween(0, LOWER_DIVIDER_Y, WIDTH, LOWER_DIVIDER_Y);
 
-        background.lineStyle(1, 0x0f2224, 0.85);
+        background.lineStyle(1, 0x111111, 0.85);
         for (let y = 0; y < HEIGHT; y += 8) {
             background.lineBetween(0, y, WIDTH, y);
         }
@@ -76,7 +76,7 @@ export default class GameScene extends Phaser.Scene {
         this.add.text(WIDTH / 2, 44, "- MENU -", {
             fontFamily: "VCR",
             fontSize: "34px",
-            color: "#e7ebb2",
+            color: "#f7f7f7",
             align: "center"
         }).setOrigin(0.5);
 
@@ -89,13 +89,13 @@ export default class GameScene extends Phaser.Scene {
         this.dropText = this.add.text(DROP_ZONE.x, DROP_ZONE.y + DROP_ZONE.height / 2 + 21, "EXECUTAR", {
             fontFamily: "VCR",
             fontSize: "20px",
-            color: "#9edfd2"
+            color: "#d9d9d9"
         }).setOrigin(0.5);
     }
 
     renderDropZone(isArmed) {
         this.dropZoneGraphic.clear();
-        this.dropZoneGraphic.lineStyle(3, isArmed ? 0xe7ebb2 : 0x9edfd2, isArmed ? 1 : 0.65);
+        this.dropZoneGraphic.lineStyle(3, isArmed ? 0xf7f7f7 : 0x7a7a7a, isArmed ? 1 : 0.65);
         this.dropZoneGraphic.strokeRect(
             DROP_ZONE.x - DROP_ZONE.width / 2,
             DROP_ZONE.y - DROP_ZONE.height / 2,
@@ -103,7 +103,7 @@ export default class GameScene extends Phaser.Scene {
             DROP_ZONE.height
         );
 
-        this.dropZoneGraphic.fillStyle(isArmed ? 0xe7ebb2 : 0x9edfd2, isArmed ? 0.13 : 0.055);
+        this.dropZoneGraphic.fillStyle(isArmed ? 0xf7f7f7 : 0x7a7a7a, isArmed ? 0.13 : 0.055);
         this.dropZoneGraphic.fillRect(
             DROP_ZONE.x - DROP_ZONE.width / 2 + 10,
             DROP_ZONE.y - DROP_ZONE.height / 2 + 10,
@@ -111,7 +111,7 @@ export default class GameScene extends Phaser.Scene {
             DROP_ZONE.height - 20
         );
 
-        this.dropZoneGraphic.lineStyle(2, 0x061012, 0.9);
+        this.dropZoneGraphic.lineStyle(2, 0x000000, 0.9);
         this.dropZoneGraphic.strokeRect(
             DROP_ZONE.x - DROP_ZONE.width / 2 + 16,
             DROP_ZONE.y - DROP_ZONE.height / 2 + 16,
@@ -141,15 +141,15 @@ export default class GameScene extends Phaser.Scene {
         card.floatY = Phaser.Math.Between(-8, 8);
         card.item = item;
 
-        const shadow = this.add.rectangle(10, 12, CARD_WIDTH, CARD_HEIGHT, 0x061012, 0.7).setOrigin(0.5);
+        const shadow = this.add.rectangle(10, 12, CARD_WIDTH, CARD_HEIGHT, 0x000000, 0.7).setOrigin(0.5);
         const outer = this.add.rectangle(0, 0, CARD_WIDTH, CARD_HEIGHT, item.accent, 1).setOrigin(0.5);
-        const inner = this.add.rectangle(0, 0, CARD_WIDTH - 14, CARD_HEIGHT - 14, 0x182426, 1).setOrigin(0.5);
-        const face = this.add.rectangle(0, -16, CARD_WIDTH - 36, CARD_HEIGHT - 72, 0x11181c, 1).setOrigin(0.5);
+        const inner = this.add.rectangle(0, 0, CARD_WIDTH - 14, CARD_HEIGHT - 14, 0x111111, 1).setOrigin(0.5);
+        const face = this.add.rectangle(0, -16, CARD_WIDTH - 36, CARD_HEIGHT - 72, 0x050505, 1).setOrigin(0.5);
 
         const label = this.add.text(0, 82, item.label, {
             fontFamily: "VCR",
             fontSize: "25px",
-            color: "#eef3b8",
+            color: "#f7f7f7",
             align: "center"
         }).setOrigin(0.5);
 
@@ -175,7 +175,7 @@ export default class GameScene extends Phaser.Scene {
 
         if (item.icon === "play") {
             icon.fillTriangle(-32, -54, -32, 28, 42, -12);
-            icon.lineStyle(4, 0x061012, 1);
+            icon.lineStyle(4, 0x000000, 1);
             icon.strokeTriangle(-32, -54, -32, 28, 42, -12);
         }
 
@@ -202,13 +202,13 @@ export default class GameScene extends Phaser.Scene {
     }
 
     drawStatusPanel() {
-        this.statusBox = this.add.rectangle(WIDTH / 2, 130, 690, 44, 0x071315, 0.72)
-            .setStrokeStyle(2, 0x9edfd2, 0.7);
+        this.statusBox = this.add.rectangle(WIDTH / 2, 130, 690, 44, 0x0b0b0b, 0.72)
+            .setStrokeStyle(2, 0x7a7a7a, 0.7);
 
         this.statusText = this.add.text(WIDTH / 2, 130, "SELECIONE UM BLOCO", {
             fontFamily: "VCR",
             fontSize: "24px",
-            color: "#eef3b8",
+            color: "#f7f7f7",
             align: "center"
         }).setOrigin(0.5);
     }
@@ -325,7 +325,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.statusBox.setStrokeStyle(2, color, 1);
         this.time.delayedCall(600, () => {
-            this.statusBox.setStrokeStyle(2, 0x9edfd2, 0.7);
+            this.statusBox.setStrokeStyle(2, 0x7a7a7a, 0.7);
         });
     }
 

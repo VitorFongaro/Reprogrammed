@@ -2,6 +2,7 @@ import {
   getCurrentUser,
   loginUser,
   logoutUser,
+  refreshUserSession,
   registerUser
 } from '../services/supabaseService.js';
 
@@ -42,6 +43,15 @@ export const logout = async (req, res) => {
   try {
     await logoutUser(getAccessToken(req));
     res.status(204).send();
+  } catch (error) {
+    sendAuthError(res, error);
+  }
+};
+
+export const refresh = async (req, res) => {
+  try {
+    const data = await refreshUserSession(req.body?.refreshToken);
+    res.json(data);
   } catch (error) {
     sendAuthError(res, error);
   }

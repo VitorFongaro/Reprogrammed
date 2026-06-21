@@ -283,8 +283,8 @@ create table public.user_settings (
 
   updated_at timestamp with time zone not null default now(),
 
-  constraint check_music_volume check (music_volume >= 0 and music_volume <= 100),
-  constraint check_sfx_volume check (sfx_volume >= 0 and sfx_volume <= 100),
+  constraint check_music_volume check (music_volume >= 1 and music_volume <= 100),
+  constraint check_sfx_volume check (sfx_volume >= 1 and sfx_volume <= 100),
   constraint check_text_speed check (text_speed >= 0 and text_speed <= 100)
 );
 

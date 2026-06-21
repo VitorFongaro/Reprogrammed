@@ -342,7 +342,7 @@ a {
         -26px 0 0 #7a7a7a,
         -40px 0 0 #2a2a2a;
     opacity: 0;
-    transform: rotate(-24deg);
+    transform: rotate(24deg);
     animation: meteorFly 4.8s steps(16, end) infinite;
 }
 
@@ -366,14 +366,14 @@ a {
     top: 42%;
     left: -240px;
     animation-delay: 1.65s;
-    transform: rotate(-18deg) scale(0.7);
+    transform: rotate(18deg) scale(0.7);
 }
 
 .meteor-three {
     top: 8%;
     left: -320px;
     animation-delay: 3.1s;
-    transform: rotate(-28deg) scale(0.55);
+    transform: rotate(28deg) scale(0.55);
 }
 
 .meteor-four,

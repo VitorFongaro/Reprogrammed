@@ -418,14 +418,6 @@ closeModal.addEventListener('click', () => {
 });
 
 window.addEventListener('click', (event) => {
-    if (event.target === modal) {
-        modal.style.display = 'none';
-        teamContent.style.display = 'none';
-        contactContent.style.display = 'none';
-        accountContent.style.display = 'none';
-        showAccountMenu();
-    }
-
     if (!event.target.closest('.profile-menu-wrapper')) {
         setProfileDropdownOpen(false);
     }
