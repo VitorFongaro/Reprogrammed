@@ -32,6 +32,18 @@ export default class OptionsScene extends Phaser.Scene {
         this.drawPanel();
         this.renderTabContent();
         this.loadSettings();
+
+        const refreshDisplayTab = () => {
+            if (this.sys.isActive() && this.activeTab === "Tela") {
+                this.renderTabContent();
+            }
+        };
+        this.scale.on("enterfullscreen", refreshDisplayTab);
+        this.scale.on("leavefullscreen", refreshDisplayTab);
+        this.events.once("shutdown", () => {
+            this.scale.off("enterfullscreen", refreshDisplayTab);
+            this.scale.off("leavefullscreen", refreshDisplayTab);
+        });
     }
 
     drawBackground() {
@@ -163,21 +175,22 @@ export default class OptionsScene extends Phaser.Scene {
             color: "#d9d9d9"
         }).setOrigin(0.5));
 
+        const isFullscreen = this.scale.isFullscreen;
         const fullscreenButton = this.add.container(0, 35);
-        const box = this.add.rectangle(0, 0, 330, 70, 0x111111, 1)
+        const box = this.add.rectangle(0, 0, 330, 70, isFullscreen ? 0xf7f7f7 : 0x111111, 1)
             .setStrokeStyle(3, 0xf7f7f7, 0.95);
         const label = this.add.text(0, 1, "TELA CHEIA", {
             fontFamily: "VCR",
             fontSize: "26px",
-            color: "#f7f7f7"
+            color: isFullscreen ? "#111111" : "#f7f7f7"
         }).setOrigin(0.5);
         const hitArea = this.add.rectangle(0, 0, 330, 70, 0xffffff, 0.001).setOrigin(0.5);
 
         fullscreenButton.add([box, label, hitArea]);
         fullscreenButton.setSize(330, 70);
         hitArea.setInteractive();
-        hitArea.on("pointerover", () => box.setFillStyle(0x2a2a2a, 1));
-        hitArea.on("pointerout", () => box.setFillStyle(0x111111, 1));
+        hitArea.on("pointerover", () => box.setFillStyle(isFullscreen ? 0xd9d9d9 : 0x2a2a2a, 1));
+        hitArea.on("pointerout", () => box.setFillStyle(isFullscreen ? 0xf7f7f7 : 0x111111, 1));
         hitArea.on("pointerdown", () => this.toggleFullscreen());
 
         this.panelContent.add(fullscreenButton);
@@ -446,11 +459,10 @@ export default class OptionsScene extends Phaser.Scene {
     }
 
     toggleFullscreen() {
-        if (!this.scale.isFullscreen) {
+        if (this.scale.isFullscreen) {
+            this.scale.stopFullscreen();
+        } else {
             this.scale.startFullscreen();
-            return;
         }
-
-        this.scale.stopFullscreen();
     }
 }

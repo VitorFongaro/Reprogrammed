@@ -278,7 +278,6 @@ create table public.user_settings (
   music_volume int not null default 80,
   sfx_volume int not null default 80,
   text_speed int not null default 50,
-  fullscreen boolean not null default false,
   language varchar(10) not null default 'pt-BR',
 
   updated_at timestamp with time zone not null default now(),

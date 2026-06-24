@@ -184,6 +184,7 @@ main {
 .meteor-one {
     top: 16%;
     left: -160px;
+    transform: rotate(24deg);
 }
 
 .meteor-two {
