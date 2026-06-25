@@ -158,8 +158,12 @@ export default class OptionsScene extends Phaser.Scene {
             return;
         }
 
-        this.addPanelTitle(this.activeTab.toUpperCase());
-        this.panelContent.add(this.add.text(0, 30, "EM BREVE", {
+        if (this.activeTab === "Controles") {
+            this.renderControlsTab();
+            return;
+        }
+
+        this.panelContent.add(this.add.text(0, 0, "EM BREVE", {
             fontFamily: "VCR",
             fontSize: "28px",
             color: "#7a7a7a"
@@ -167,8 +171,6 @@ export default class OptionsScene extends Phaser.Scene {
     }
 
     renderDisplayTab() {
-        this.addPanelTitle("TELA");
-
         this.panelContent.add(this.add.text(0, -52, "MODO DE EXIBIÇÃO", {
             fontFamily: "VCR",
             fontSize: "20px",
@@ -196,8 +198,43 @@ export default class OptionsScene extends Phaser.Scene {
         this.panelContent.add(fullscreenButton);
     }
 
+    renderControlsTab() {
+        const bindings = [
+            { key: "W", action: "CIMA" },
+            { key: "A", action: "ESQUERDA" },
+            { key: "S", action: "BAIXO" },
+            { key: "D", action: "DIREITA" },
+            { key: "E", action: "INTERAGIR" }
+        ];
+
+        const rowSpacing = 62;
+        const startY = -((bindings.length - 1) * rowSpacing) / 2 + 8;
+
+        bindings.forEach((binding, index) => {
+            const y = startY + rowSpacing * index;
+            this.panelContent.add(this.createKeyCap(-320, y, binding.key));
+            this.panelContent.add(this.add.text(-262, y, binding.action, {
+                fontFamily: "VCR",
+                fontSize: "22px",
+                color: "#d9d9d9"
+            }).setOrigin(0, 0.5));
+        });
+    }
+
+    createKeyCap(x, y, text) {
+        const cap = this.add.container(x, y);
+        const box = this.add.rectangle(0, 0, 46, 46, 0x111111, 1)
+            .setStrokeStyle(2, 0xf7f7f7, 0.95);
+        const label = this.add.text(0, -1, text, {
+            fontFamily: "VCR",
+            fontSize: "24px",
+            color: "#f7f7f7"
+        }).setOrigin(0.5);
+        cap.add([box, label]);
+        return cap;
+    }
+
     renderAudioTab() {
-        this.addPanelTitle("ÁUDIO");
         this.createVolumeControl("MÚSICA", "music_volume", -50);
         this.createVolumeControl("EFEITOS SONOROS", "sfx_volume", 55);
 
@@ -448,14 +485,6 @@ export default class OptionsScene extends Phaser.Scene {
         if (this.sys.isActive() && this.activeTab === "Áudio") {
             this.renderTabContent();
         }
-    }
-
-    addPanelTitle(text) {
-        this.panelContent.add(this.add.text(0, -126, text, {
-            fontFamily: "VCR",
-            fontSize: "32px",
-            color: "#f7f7f7"
-        }).setOrigin(0.5));
     }
 
     toggleFullscreen() {
