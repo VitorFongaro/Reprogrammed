@@ -63,16 +63,6 @@ export default class GameScene extends Phaser.Scene {
         background.lineBetween(0, 86, WIDTH, 86);
         background.lineBetween(0, LOWER_DIVIDER_Y, WIDTH, LOWER_DIVIDER_Y);
 
-        background.lineStyle(1, 0x111111, 0.85);
-        for (let y = 0; y < HEIGHT; y += 8) {
-            background.lineBetween(0, y, WIDTH, y);
-        }
-
-        background.lineStyle(1, 0xffffff, 0.05);
-        for (let x = 0; x < WIDTH; x += 16) {
-            background.lineBetween(x, 0, x, HEIGHT);
-        }
-
         this.add.text(WIDTH / 2, 44, "- MENU -", {
             fontFamily: "VCR",
             fontSize: "34px",
@@ -285,7 +275,7 @@ export default class GameScene extends Phaser.Scene {
         if (card.item.id === "start") {
             this.statusText.setText("JOGO INICIADO");
             this.time.delayedCall(350, () => {
-                this.scene.start("sprit-test-scene");
+                this.scene.start("intro-scene");
             });
             return;
         }

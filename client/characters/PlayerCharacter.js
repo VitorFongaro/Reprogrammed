@@ -114,6 +114,7 @@ export default class PlayerCharacter {
         this.speed = options.speed ?? DEFAULT_SPEED;
         this.lastDirection = "south";
         this.directionQueue = [];
+        this.enabled = true;
 
         PlayerCharacter.createAnimations(scene);
 
@@ -136,7 +137,22 @@ export default class PlayerCharacter {
         scene.events.once("shutdown", () => this.destroy());
     }
 
+    setEnabled(value) {
+        this.enabled = value;
+
+        if (!value) {
+            this.directionQueue = [];
+            this.sprite.setVelocity(0, 0);
+            this.playIdleAnimation();
+        }
+    }
+
     update() {
+        if (!this.enabled) {
+            this.sprite.setVelocity(0, 0);
+            return;
+        }
+
         const direction = this.getActiveDirection();
 
         if (!direction) {
@@ -153,6 +169,10 @@ export default class PlayerCharacter {
     }
 
     trackPressedDirection(code) {
+        if (!this.enabled) {
+            return;
+        }
+
         const direction = DIRECTION_KEYS[code];
 
         if (!direction || this.directionQueue.includes(direction)) {

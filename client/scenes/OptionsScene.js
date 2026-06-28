@@ -33,17 +33,37 @@ export default class OptionsScene extends Phaser.Scene {
         this.renderTabContent();
         this.loadSettings();
 
+        const onEnterFullscreen = () => {
+            this.lockEscapeKey();
+            refreshDisplayTab();
+        };
+        const onLeaveFullscreen = () => {
+            this.unlockEscapeKey();
+            refreshDisplayTab();
+        };
         const refreshDisplayTab = () => {
             if (this.sys.isActive() && this.activeTab === "Tela") {
                 this.renderTabContent();
             }
         };
-        this.scale.on("enterfullscreen", refreshDisplayTab);
-        this.scale.on("leavefullscreen", refreshDisplayTab);
+        this.scale.on("enterfullscreen", onEnterFullscreen);
+        this.scale.on("leavefullscreen", onLeaveFullscreen);
         this.events.once("shutdown", () => {
-            this.scale.off("enterfullscreen", refreshDisplayTab);
-            this.scale.off("leavefullscreen", refreshDisplayTab);
+            this.scale.off("enterfullscreen", onEnterFullscreen);
+            this.scale.off("leavefullscreen", onLeaveFullscreen);
         });
+    }
+
+    // Impede que um toque em ESC saia da tela cheia (Chrome/Edge).
+    // O navegador passa a entregar o ESC ao jogo; para sair, segure ESC.
+    lockEscapeKey() {
+        if (navigator.keyboard?.lock) {
+            navigator.keyboard.lock(["Escape"]).catch(() => {});
+        }
+    }
+
+    unlockEscapeKey() {
+        navigator.keyboard?.unlock?.();
     }
 
     drawBackground() {
@@ -56,16 +76,6 @@ export default class OptionsScene extends Phaser.Scene {
         background.lineStyle(2, 0xf7f7f7, 0.45);
         background.lineBetween(0, 88, WIDTH, 88);
         background.lineBetween(0, 630, WIDTH, 630);
-
-        background.lineStyle(1, 0x111111, 0.85);
-        for (let y = 0; y < HEIGHT; y += 8) {
-            background.lineBetween(0, y, WIDTH, y);
-        }
-
-        background.lineStyle(1, 0xffffff, 0.045);
-        for (let x = 0; x < WIDTH; x += 16) {
-            background.lineBetween(x, 0, x, HEIGHT);
-        }
     }
 
     drawHeader() {

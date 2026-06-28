@@ -46,13 +46,13 @@ Tudo isso de forma **lúdica, interativa e progressiva**.
 
 ## 🤖 Inteligência Artificial
 
-O jogo utiliza IA generativa por meio da OpenAI para:
+O backend já expõe a rota `/ai` e a integração com **IA generativa (OpenAI)** está em implementação, com o objetivo de:
 
 * Gerar desafios automaticamente
 * Adaptar o nível de dificuldade
 * Personalizar a experiência do jogador
 
-⚠️ O sistema **não treina modelos próprios**, utilizando dados do usuário para orientar a geração de conteúdo.
+⚠️ O sistema **não treina modelos próprios**; os dados do usuário servem apenas para orientar a geração de conteúdo.
 
 ---
 
@@ -60,35 +60,36 @@ O jogo utiliza IA generativa por meio da OpenAI para:
 
 ### 🎨 Frontend
 
-* HTML
-* CSS
-* JavaScript
-* Phaser (game engine 2D)
+* HTML / CSS / JavaScript (ES Modules)
+* Phaser 4 (game engine 2D)
+* Vite (bundler e dev server)
 
 ### ⚙️ Backend
 
-* Node.js
+* Node.js + Express
+* Autenticação via JWT (Supabase Auth)
 
 ### 🗄️ Banco de Dados
 
-* PostgreSQL
+* PostgreSQL (gerenciado via Supabase)
 
 ### 🔧 Ferramentas
 
 * Git / GitHub
+* Supabase (BaaS — banco de dados e autenticação)
 
 ---
 
 ## 🏗️ Arquitetura do Sistema
 
 ```text
-Frontend (Jogo - Phaser)
+Frontend (Jogo - Phaser + Vite)
+        ↓  REST (JSON / JWT)
+Backend (Node.js + Express)
         ↓
-Backend (Node.js)
+Supabase (PostgreSQL + Auth)
         ↓
-Banco de Dados (PostgreSQL)
-        ↓
-IA Generativa (API)
+IA Generativa (OpenAI) — em implementação
 ```
 
 ---
@@ -105,25 +106,45 @@ IA Generativa (API)
 
 ## 🚀 Como Executar o Projeto
 
+O projeto tem **dois pacotes independentes** (`client/` e `server/`), cada um com suas próprias dependências. Não há `package.json` na raiz.
+
 ### 🔹 Pré-requisitos
 
-* Node.js instalado
-* PostgreSQL configurado
+* Node.js (v18+)
+* Conta no Supabase (para `SUPABASE_URL` e `SUPABASE_ANON_KEY`)
 
-### 🔹 Passos
+### 🔹 Clonar o repositório
 
 ```bash
-# Clonar repositório
 git clone https://github.com/VitorFongaro/Reprogrammed
-
-# Entrar na pasta
 cd Reprogrammed
+```
 
-# Instalar dependências
+### 🔹 Backend
+
+```bash
+cd server
 npm install
 
-# Rodar o servidor
-npm start
+# Crie um arquivo .env (veja o exemplo abaixo) e então:
+npm run dev        # http://localhost:3000
+```
+
+Exemplo de `server/.env`:
+
+```env
+PORT=3000
+CLIENT_ORIGIN=http://localhost:5173
+SUPABASE_URL=sua-url-do-supabase
+SUPABASE_ANON_KEY=sua-anon-key
+```
+
+### 🔹 Frontend
+
+```bash
+cd client
+npm install
+npm run dev        # http://localhost:5173
 ```
 
 ---

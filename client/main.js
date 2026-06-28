@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import GameScene from './scenes/GameScene';
 import OptionsScene from './scenes/OptionsScene';
+import IntroScene from './scenes/IntroScene';
 import SpritTestScene from './scenes/SpritTestScene';
 
 const config = {
@@ -19,7 +20,7 @@ const config = {
         }
     },
 
-    scene: [GameScene, OptionsScene, SpritTestScene]
+    scene: [GameScene, OptionsScene, IntroScene, SpritTestScene]
 };
 
 new Phaser.Game(config);
