@@ -18,7 +18,9 @@ const GENERATOR_PUZZLE = {
     ],
     hint: "dica:  nome = valor   (ex: energia = 100)",
     variable: "energia",
-    expected: 100
+    expected: 100,
+    successMessage: "GERADOR ATIVADO",
+    wrongValueMessage: "carga insuficiente"
 };
 
 export default class SpritTestScene extends Phaser.Scene {
@@ -28,6 +30,7 @@ export default class SpritTestScene extends Phaser.Scene {
 
     preload() {
         PlayerCharacter.preload(this);
+        CosmoCompanion.preload(this);
     }
 
     create() {

@@ -1,7 +1,9 @@
 import Phaser from "phaser";
 
-// Terminal de programação pixelado (overlay). Por enquanto o puzzle é de VARIÁVEL:
-// o jogador declara `nome = valor` e o console valida contra o esperado.
+// Terminal de programação pixelado (overlay). O puzzle é de VARIÁVEL: o jogador
+// declara `nome = valor` e o console valida nome, tipo e valor contra o esperado.
+// Tipos suportados: int, float (ponto decimal), string (entre aspas) e boolean
+// (true/false). O tipo esperado é inferido de `puzzle.expected`.
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -24,8 +26,64 @@ const COLOR = {
 };
 
 const MAX_INPUT = 40;
-const INPUT_REGEX = /^[A-Za-z0-9_= ]$/;
-const ASSIGN_REGEX = /^\s*([A-Za-z_]\w*)\s*=\s*(-?\d+)\s*$/;
+const INPUT_REGEX = /^[A-Za-z0-9_="'.,\- ]$/;
+const ASSIGN_REGEX = /^\s*([A-Za-z_]\w*)\s*=\s*(.+?)\s*$/;
+
+const STRING_REGEX = /^"([^"]*)"$|^'([^']*)'$/;
+const FLOAT_REGEX = /^-?\d+\.\d+$/;
+const INT_REGEX = /^-?\d+$/;
+const COMMA_DECIMAL_REGEX = /^-?\d+,\d+$/;
+const BARE_WORD_REGEX = /^[A-Za-z_]\w*$/;
+
+const TYPE_LABELS = {
+    int: "número inteiro",
+    float: "número decimal",
+    string: "texto (string)",
+    boolean: "booleano (true/false)"
+};
+
+function inferType(value) {
+    if (typeof value === "boolean") {
+        return "boolean";
+    }
+    if (typeof value === "string") {
+        return "string";
+    }
+    return Number.isInteger(value) ? "int" : "float";
+}
+
+// Converte o token digitado em { type, value } ou { error } com mensagem didática.
+function parseValue(raw) {
+    if (/^(true|false)$/i.test(raw)) {
+        if (raw !== raw.toLowerCase()) {
+            return { error: "booleanos são minúsculos: true ou false" };
+        }
+        return { type: "boolean", value: raw === "true" };
+    }
+
+    const stringMatch = raw.match(STRING_REGEX);
+    if (stringMatch) {
+        return { type: "string", value: stringMatch[1] ?? stringMatch[2] };
+    }
+
+    if (COMMA_DECIMAL_REGEX.test(raw)) {
+        return { error: "decimais usam ponto, não vírgula  -  ex: 21.5" };
+    }
+
+    if (FLOAT_REGEX.test(raw)) {
+        return { type: "float", value: parseFloat(raw) };
+    }
+
+    if (INT_REGEX.test(raw)) {
+        return { type: "int", value: parseInt(raw, 10) };
+    }
+
+    if (BARE_WORD_REGEX.test(raw)) {
+        return { error: 'texto (string) vai entre aspas  -  ex: nome = "valor"' };
+    }
+
+    return { error: "valor inválido  -  use número, \"texto\", true ou false" };
+}
 
 export default class ProgrammingConsole {
     constructor(scene, puzzle, options = {}) {
@@ -129,23 +187,56 @@ export default class ProgrammingConsole {
             return;
         }
 
-        const [, name, valueStr] = match;
-        const value = parseInt(valueStr, 10);
+        const [, name, valueToken] = match;
+        const parsed = parseValue(valueToken);
+
+        if (parsed.error) {
+            this.setOutput(parsed.error, COLOR.error);
+            return;
+        }
 
         if (name !== this.puzzle.variable) {
             this.setOutput(`variável desconhecida: ${name}`, COLOR.error);
             return;
         }
 
-        if (value !== this.puzzle.expected) {
-            this.setOutput(`${name} = ${value}  //  carga insuficiente`, COLOR.error);
+        const expectedType = this.puzzle.type ?? inferType(this.puzzle.expected);
+
+        if (!this.typeMatches(expectedType, parsed.type)) {
+            this.setOutput(`tipo errado: ${name} guarda ${TYPE_LABELS[expectedType]}`, COLOR.error);
+            return;
+        }
+
+        if (!this.valueMatches(parsed.value)) {
+            const message = this.puzzle.wrongValueMessage ?? "valor incorreto";
+            this.setOutput(`${name} = ${valueToken}  //  ${message}`, COLOR.error);
             return;
         }
 
         this.solved = true;
-        this.setOutput(`${name} = ${value}  //  GERADOR ATIVADO`, COLOR.success);
+        const success = this.puzzle.successMessage ?? "OK";
+        this.setOutput(`${name} = ${valueToken}  //  ${success}`, COLOR.success);
         this.onSolved?.();
         this.scene.time.delayedCall(900, () => this.close());
+    }
+
+    typeMatches(expected, actual) {
+        if (expected === actual) {
+            return true;
+        }
+        // Um inteiro é aceito onde se espera decimal (21 é um número válido; se o
+        // valor não bater, o erro será de valor, não de tipo).
+        return expected === "float" && actual === "int";
+    }
+
+    valueMatches(value) {
+        const expected = this.puzzle.expected;
+
+        if (typeof expected === "string" && typeof value === "string") {
+            return expected.toLowerCase() === value.toLowerCase();
+        }
+
+        return value === expected;
     }
 
     setOutput(text, color) {

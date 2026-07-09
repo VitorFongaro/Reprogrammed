@@ -26,6 +26,7 @@ export default class IntroScene extends Phaser.Scene {
 
     preload() {
         PlayerCharacter.preload(this);
+        CosmoCompanion.preload(this);
     }
 
     create() {
@@ -262,7 +263,7 @@ export default class IntroScene extends Phaser.Scene {
 
         this.cameras.main.fadeOut(800, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () => {
-            this.scene.start("sprit-test-scene");
+            this.scene.start("cap1-porao");
         });
     }
 }
