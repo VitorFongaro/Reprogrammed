@@ -78,11 +78,13 @@ function parseValue(raw) {
         return { type: "int", value: parseInt(raw, 10) };
     }
 
+    // Texto (string): aceito com aspas ou sem — o teclado ABNT2 trata " e ' como
+    // teclas mortas, então exigir aspas travaria a digitação em muitos teclados.
     if (BARE_WORD_REGEX.test(raw)) {
-        return { error: 'texto (string) vai entre aspas  -  ex: nome = "valor"' };
+        return { type: "string", value: raw };
     }
 
-    return { error: "valor inválido  -  use número, \"texto\", true ou false" };
+    return { error: "valor inválido  -  use número, texto, true ou false" };
 }
 
 export default class ProgrammingConsole {

@@ -10,7 +10,7 @@ const BOX_W = WIDTH - 280;
 const BOX_H = 96;
 
 const TYPE_DELAY = 32;
-const DEFAULT_DEPTH = 500;
+const DEFAULT_DEPTH = 900;
 const DEFAULT_SPEAKER_COLOR = "#4ad6ff";
 
 export default class DialogueBox {

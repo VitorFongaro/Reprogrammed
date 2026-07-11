@@ -2,9 +2,21 @@ import Phaser from "phaser";
 import PlayerCharacter from "../characters/PlayerCharacter";
 import CosmoCompanion from "../characters/CosmoCompanion";
 import poraoBg from "../assets/images/porao/porao_bg.png";
+import poraoMap from "../assets/maps/porao.json";
+import { placeTiledObjects } from "../utils/tiledMap";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
+
+// A imagem do mapa (1280x704) fica centralizada no canvas de 720: offset de 8px.
+const MAP_OFFSET = { x: 0, y: 8 };
+
+// Props do porão (mesmo mapa da PoraoScene), carregados como `prop-<nome>`.
+const PROP_FILES = import.meta.glob("../assets/images/porao/props/*.png", {
+    eager: true,
+    query: "?url",
+    import: "default"
+});
 
 // Posição da androide desativada no depósito (canto esquerdo, junto à prateleira).
 const ANDROID_POS = { x: 236, y: 426 };
@@ -30,6 +42,11 @@ export default class IntroScene extends Phaser.Scene {
         PlayerCharacter.preload(this);
         CosmoCompanion.preload(this);
         this.load.image("porao-bg", poraoBg);
+
+        Object.entries(PROP_FILES).forEach(([path, url]) => {
+            const name = path.split("/").pop().replace(/\.png$/i, "");
+            this.load.image(`prop-${name}`, url);
+        });
     }
 
     create() {
@@ -64,6 +81,9 @@ export default class IntroScene extends Phaser.Scene {
             color: "#6a7186"
         }).setOrigin(0.5).setDepth(-9);
 
+        // Objetos da sala (mesmos da PoraoScene, via Tiled) com y-sort.
+        placeTiledObjects(this, poraoMap, "objetos", MAP_OFFSET);
+
         // Brilho fraco sobre a androide desativada.
         this.lightCone = this.add.graphics();
         this.lightCone.setDepth(-5);
@@ -91,6 +111,8 @@ export default class IntroScene extends Phaser.Scene {
         this.android = this.add.sprite(ANDROID_POS.x, ANDROID_POS.y, PlayerCharacter.rotationKey("south"));
         this.android.setScale(3);
         this.android.setTint(POWERED_OFF_TINT);
+        // Mesma profundidade (base = pés) usada pelo y-sort dos objetos.
+        this.android.setDepth(this.android.y + this.android.displayHeight / 2);
     }
 
     createCosmo() {

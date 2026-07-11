@@ -69,7 +69,8 @@ export default class CosmoCompanion {
             this.directional = false;
         }
 
-        this.sprite.setDepth((target.sprite?.depth ?? 0) - 1);
+        // Flutua sobre os objetos da sala (y-sort chega a ~700), abaixo do diálogo (900).
+        this.sprite.setDepth(options.depth ?? 750);
 
         scene.events.once("shutdown", () => this.destroy());
     }

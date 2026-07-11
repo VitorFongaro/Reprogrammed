@@ -3,6 +3,13 @@ import PuzzleDevice from "../../objects/PuzzleDevice";
 import poraoBg from "../../assets/images/porao/porao_bg.png";
 import poraoMap from "../../assets/maps/porao.json";
 
+// URLs de todos os props do porão (chave `prop-<nome>`), carregados em preload.
+const PROP_FILES = import.meta.glob("../../assets/images/porao/props/*.png", {
+    eager: true,
+    query: "?url",
+    import: "default"
+});
+
 // Capítulo 1, sala 1 — Porão fundo (depósito da Elysium): tutorial de movimento
 // (WASD) e o primeiro puzzle de variável (int) no gerador da parede. Mesma sala
 // da IntroScene — o jogador acorda e ganha controle aqui.
@@ -56,13 +63,19 @@ export default class PoraoScene extends BaseRoomScene {
             nextScene: "cap1-arquivos",
             spawn: SPAWN,
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
-            door: DOOR
+            door: DOOR,
+            ySort: true
         });
     }
 
     preload() {
         super.preload();
         this.load.image("porao-bg", poraoBg);
+
+        Object.entries(PROP_FILES).forEach(([path, url]) => {
+            const name = path.split("/").pop().replace(/\.png$/i, "");
+            this.load.image(`prop-${name}`, url);
+        });
     }
 
     drawBackdrop() {
@@ -85,7 +98,8 @@ export default class PoraoScene extends BaseRoomScene {
     }
 
     onRoomCreate() {
-        // Colisões autoradas no Tiled (client/assets/maps/porao.json, camada "colisao").
+        // Objetos e colisões autorados no Tiled (client/assets/maps/porao.json).
+        this.addObjectsFromTiled(poraoMap, "objetos", MAP_OFFSET);
         this.addCollidersFromTiled(poraoMap, "colisao", MAP_OFFSET);
 
         this.generator = new PuzzleDevice(this, {

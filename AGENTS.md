@@ -52,8 +52,12 @@ cd client && npm install && npm run dev
 cd server && npm install && npm run dev
 ```
 
-Não há suíte de testes nem linter configurados. Valide mudanças **rodando o jogo**
-no navegador (o Vite tem HMR; um F5 recarrega a cena).
+Não há suíte de testes nem linter configurados.
+
+> **Não teste o jogo pelo navegador** (nem via ferramentas de preview/automação de browser).
+> Quem valida rodando o jogo são os próprios desenvolvedores. Entregue a mudança pronta,
+> descreva o que precisa ser testado e deixe o teste manual para o Vitor e o Ryan.
+> O Vite tem HMR; um F5 recarrega a cena.
 
 O canvas Phaser vive em `pages/game.html`, atrás de um `authGuard` que exige login
 (token em `localStorage` como `reprogrammed.auth`). Fluxo de entrada: menu (`GameScene`)

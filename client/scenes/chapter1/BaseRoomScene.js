@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import PlayerCharacter from "../../characters/PlayerCharacter";
 import CosmoCompanion from "../../characters/CosmoCompanion";
 import DialogueBox from "../../ui/DialogueBox";
+import { tiledColliders, placeTiledObjects } from "../../utils/tiledMap";
 
 // Cena-base das salas do capítulo 1: desenha a sala (grade + título + rodapé),
 // cria jogador/Cosmo/diálogo, gerencia interagíveis ([E] no mais próximo) e a
@@ -27,6 +28,8 @@ export default class BaseRoomScene extends Phaser.Scene {
         // Porta customizada ({ x, y }) para salas cuja porta já está desenhada na
         // arte do mapa: o código só renderiza a luz da fechadura e o prompt.
         this.doorPos = config.door ?? null;
+        // Ordena a protagonista por y (passa na frente/atrás de objetos com y-sort).
+        this.ySort = config.ySort ?? false;
     }
 
     preload() {
@@ -56,6 +59,12 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.player.update();
         this.cosmo.update(time, delta);
         this.updatePrompts();
+
+        if (this.ySort) {
+            // Profundidade = base (pés) da protagonista, para casar com os objetos.
+            this.player.sprite.setDepth(this.player.sprite.y + this.player.sprite.displayHeight / 2);
+        }
+
         this.onRoomUpdate(time, delta);
     }
 
@@ -82,21 +91,14 @@ export default class BaseRoomScene extends Phaser.Scene {
     // Colisores vindos de um mapa do Tiled (camada de objetos com retângulos).
     // Edite o .json no Tiled; `offset` converte coordenadas do mapa para a tela.
     addCollidersFromTiled(mapData, layerName = "colisao", offset = { x: 0, y: 0 }) {
-        const layer = mapData.layers?.find(
-            (candidate) => candidate.type === "objectgroup" && candidate.name === layerName
-        );
+        this.addColliders(tiledColliders(mapData, layerName, offset));
+    }
 
-        if (!layer) {
-            console.warn(`Camada de objetos "${layerName}" não encontrada no mapa Tiled.`);
-            return;
-        }
-
-        this.addColliders(layer.objects.map((object) => ({
-            x: object.x + offset.x,
-            y: object.y + offset.y,
-            w: object.width,
-            h: object.height
-        })));
+    // Instancia os objetos (tile objects) de uma camada do Tiled como sprites,
+    // com profundidade por y (y-sort). Os PNGs precisam estar carregados em
+    // preload como `prop-<nome>`.
+    addObjectsFromTiled(mapData, layerName = "objetos", offset = { x: 0, y: 0 }) {
+        placeTiledObjects(this, mapData, layerName, offset);
     }
 
     tryInteract() {
@@ -172,7 +174,7 @@ export default class BaseRoomScene extends Phaser.Scene {
             fontFamily: "VCR",
             fontSize: "18px",
             color: "#4ad6ff"
-        }).setOrigin(0.5).setVisible(false);
+        }).setOrigin(0.5).setDepth(800).setVisible(false);
 
         this.registerInteractable({
             x: this.doorX,

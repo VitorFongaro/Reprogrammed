@@ -65,7 +65,7 @@ export default class PuzzleDevice {
             body.fillRect(left - 8, top + this.h, this.w + 16, 10);
         }
 
-        this.indicator = this.scene.add.graphics();
+        this.indicator = this.scene.add.graphics().setDepth(790);
         this.drawIndicator(OFF_COLOR);
 
         if (this.label) {
@@ -81,7 +81,7 @@ export default class PuzzleDevice {
             fontFamily: "VCR",
             fontSize: "18px",
             color: "#4ad6ff"
-        }).setOrigin(0.5).setVisible(false);
+        }).setOrigin(0.5).setDepth(800).setVisible(false);
 
         this.scene.tweens.add({
             targets: this.prompt,
