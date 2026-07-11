@@ -24,6 +24,9 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.spawn = config.spawn ?? { x: 180, y: HEIGHT / 2 };
         this.doorLabel = config.doorLabel ?? "[E] SEGUIR";
         this.bounds = config.bounds ?? DEFAULT_BOUNDS;
+        // Porta customizada ({ x, y }) para salas cuja porta já está desenhada na
+        // arte do mapa: o código só renderiza a luz da fechadura e o prompt.
+        this.doorPos = config.door ?? null;
     }
 
     preload() {
@@ -64,6 +67,36 @@ export default class BaseRoomScene extends Phaser.Scene {
     registerInteractable(item) {
         this.interactables.push(item);
         return item;
+    }
+
+    // Colisores estáticos invisíveis para objetos desenhados na arte do mapa.
+    // Recebe retângulos { x, y, w, h } (canto superior esquerdo, em px de tela).
+    addColliders(rects) {
+        rects.forEach(({ x, y, w, h }) => {
+            const zone = this.add.zone(x + w / 2, y + h / 2, w, h);
+            this.physics.add.existing(zone, true);
+            this.physics.add.collider(this.player.sprite, zone);
+        });
+    }
+
+    // Colisores vindos de um mapa do Tiled (camada de objetos com retângulos).
+    // Edite o .json no Tiled; `offset` converte coordenadas do mapa para a tela.
+    addCollidersFromTiled(mapData, layerName = "colisao", offset = { x: 0, y: 0 }) {
+        const layer = mapData.layers?.find(
+            (candidate) => candidate.type === "objectgroup" && candidate.name === layerName
+        );
+
+        if (!layer) {
+            console.warn(`Camada de objetos "${layerName}" não encontrada no mapa Tiled.`);
+            return;
+        }
+
+        this.addColliders(layer.objects.map((object) => ({
+            x: object.x + offset.x,
+            y: object.y + offset.y,
+            w: object.width,
+            h: object.height
+        })));
     }
 
     tryInteract() {
@@ -121,14 +154,21 @@ export default class BaseRoomScene extends Phaser.Scene {
             return;
         }
 
-        const { x, y, w, h } = this.bounds;
-        this.doorX = x + w;
-        this.doorY = y + h / 2;
+        if (this.doorPos) {
+            this.doorX = this.doorPos.x;
+            this.doorY = this.doorPos.y;
+        } else {
+            const { x, y, w, h } = this.bounds;
+            this.doorX = x + w;
+            this.doorY = y + h / 2;
+        }
 
         this.doorGraphics = this.add.graphics();
         this.drawDoor();
 
-        this.doorPrompt = this.add.text(this.doorX - 40, this.doorY - DOOR_H / 2 - 28, this.doorLabel, {
+        const promptX = this.doorPos ? this.doorX : this.doorX - 40;
+        const promptY = this.doorPos ? this.doorY + 54 : this.doorY - DOOR_H / 2 - 28;
+        this.doorPrompt = this.add.text(promptX, promptY, this.doorLabel, {
             fontFamily: "VCR",
             fontSize: "18px",
             color: "#4ad6ff"
@@ -146,13 +186,18 @@ export default class BaseRoomScene extends Phaser.Scene {
 
     drawDoor() {
         const color = this.doorUnlocked ? 0x51e36b : 0xff4545;
-        const top = this.doorY - DOOR_H / 2;
 
         this.doorGraphics.clear();
-        this.doorGraphics.fillStyle(0x0c0d14, 1);
-        this.doorGraphics.fillRect(this.doorX - DOOR_W / 2, top, DOOR_W, DOOR_H);
-        this.doorGraphics.lineStyle(2, color, 0.9);
-        this.doorGraphics.strokeRect(this.doorX - DOOR_W / 2, top, DOOR_W, DOOR_H);
+
+        // Porta na arte do mapa: só a luz da fechadura.
+        if (!this.doorPos) {
+            const top = this.doorY - DOOR_H / 2;
+            this.doorGraphics.fillStyle(0x0c0d14, 1);
+            this.doorGraphics.fillRect(this.doorX - DOOR_W / 2, top, DOOR_W, DOOR_H);
+            this.doorGraphics.lineStyle(2, color, 0.9);
+            this.doorGraphics.strokeRect(this.doorX - DOOR_W / 2, top, DOOR_W, DOOR_H);
+        }
+
         // Luz da fechadura.
         this.doorGraphics.fillStyle(color, 1);
         this.doorGraphics.fillCircle(this.doorX, this.doorY, 5);
@@ -188,6 +233,14 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor("#050505");
         this.physics.world.setBounds(x, y, w, h);
 
+        this.drawBackdrop();
+        this.drawHud();
+    }
+
+    // Cenário padrão (grade); salas com mapa em imagem sobrescrevem este método.
+    drawBackdrop() {
+        const { x, y, w, h } = this.bounds;
+
         const background = this.add.graphics();
         background.setDepth(-10);
         background.fillStyle(0x050505, 1);
@@ -203,13 +256,17 @@ export default class BaseRoomScene extends Phaser.Scene {
         for (let gx = x; gx <= x + w; gx += 30) {
             background.lineBetween(gx, y, gx, y + h);
         }
+    }
 
-        this.add.text(WIDTH / 2, 44, this.roomTitle, {
-            fontFamily: "VCR",
-            fontSize: "34px",
-            color: "#f7f7f7",
-            align: "center"
-        }).setOrigin(0.5);
+    drawHud() {
+        if (this.roomTitle) {
+            this.add.text(WIDTH / 2, 44, this.roomTitle, {
+                fontFamily: "VCR",
+                fontSize: "34px",
+                color: "#f7f7f7",
+                align: "center"
+            }).setOrigin(0.5);
+        }
 
         this.statusText = this.add.text(WIDTH / 2, 78, "", {
             fontFamily: "VCR",
@@ -218,12 +275,14 @@ export default class BaseRoomScene extends Phaser.Scene {
             align: "center"
         }).setOrigin(0.5);
 
-        this.add.text(WIDTH / 2, HEIGHT - 28, this.footerHint, {
-            fontFamily: "VCR",
-            fontSize: "20px",
-            color: "#d9d9d9",
-            align: "center"
-        }).setOrigin(0.5);
+        if (this.footerHint) {
+            this.add.text(WIDTH / 2, HEIGHT - 28, this.footerHint, {
+                fontFamily: "VCR",
+                fontSize: "20px",
+                color: "#d9d9d9",
+                align: "center"
+            }).setOrigin(0.5);
+        }
     }
 
     setStatus(text, color = "#7a8099") {

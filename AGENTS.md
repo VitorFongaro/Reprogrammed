@@ -91,6 +91,12 @@ Convenção de sprite de personagem/companheiro: **sheet horizontal**, quadros d
 direção por quadro (ex: Cosmo = frente/costas/esquerda/direita). Versione o `.aseprite`
 fonte junto do `.png` em `assets/sprites/<nome>/`.
 
+**Mapas e colisões (Tiled):** cada sala com mapa em imagem tem um `.json` do Tiled em
+`assets/maps/` (camada de imagem `fundo` + camada de objetos `colisao` com retângulos).
+Edite as colisões abrindo o `.json` no Tiled; a cena carrega via
+`addCollidersFromTiled(mapJson, "colisao", offset)` do `BaseRoomScene`. Objetos avulsos da
+sala (caixotes, barris, etc.) ficam em `assets/images/<sala>/props/` (PNG + `.aseprite`).
+
 ## Não commitar
 
 `.env`, segredos de Supabase/OpenAI, `node_modules/`.

@@ -1,11 +1,13 @@
 import Phaser from "phaser";
 import PlayerCharacter from "../characters/PlayerCharacter";
 import CosmoCompanion from "../characters/CosmoCompanion";
+import poraoBg from "../assets/images/porao/porao_bg.png";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
 
-const FLOOR_Y = 540;
+// Posição da androide desativada no depósito (canto esquerdo, junto à prateleira).
+const ANDROID_POS = { x: 236, y: 426 };
 const POWERED_OFF_TINT = 0x36406a;
 
 // Roteiro da abertura. Cada passo pode disparar um efeito via `onEnter`.
@@ -27,6 +29,7 @@ export default class IntroScene extends Phaser.Scene {
     preload() {
         PlayerCharacter.preload(this);
         CosmoCompanion.preload(this);
+        this.load.image("porao-bg", poraoBg);
     }
 
     create() {
@@ -48,70 +51,44 @@ export default class IntroScene extends Phaser.Scene {
         this.cosmo.update(time, delta);
     }
 
-    // --- Cenário do porão (placeholder com a estética do jogo) ---
+    // --- Cenário do porão (mapa gerado no Aseprite) ---
     drawBasement() {
         this.cameras.main.setBackgroundColor("#050505");
 
-        const g = this.add.graphics();
-        g.setDepth(-10);
-        g.fillStyle(0x050505, 1);
-        g.fillRect(0, 0, WIDTH, HEIGHT);
+        this.add.image(WIDTH / 2, HEIGHT / 2, "porao-bg").setDepth(-10);
 
-        // Chão.
-        g.fillStyle(0x0c0c12, 1);
-        g.fillRect(0, FLOOR_Y, WIDTH, HEIGHT - FLOOR_Y);
-        g.lineStyle(2, 0x2a2f45, 0.7);
-        g.lineBetween(0, FLOOR_Y, WIDTH, FLOOR_Y);
+        // Letreiro da empresa na parede (o emblema faz parte do fundo).
+        this.add.text(470, 92, "E L Y S I U M", {
+            fontFamily: "VCR",
+            fontSize: "16px",
+            color: "#6a7186"
+        }).setOrigin(0.5).setDepth(-9);
 
-        // Racks/caixas ao fundo.
-        g.fillStyle(0x101018, 1);
-        g.lineStyle(1, 0x2a2f45, 0.6);
-        const racks = [
-            { x: 120, w: 150, h: 230 },
-            { x: 300, w: 110, h: 180 },
-            { x: 980, w: 170, h: 250 }
-        ];
-        racks.forEach(({ x, w, h }) => {
-            g.fillRect(x, FLOOR_Y - h, w, h);
-            g.strokeRect(x, FLOOR_Y - h, w, h);
-            for (let y = FLOOR_Y - h + 18; y < FLOOR_Y - 10; y += 26) {
-                g.lineBetween(x + 8, y, x + w - 8, y);
-            }
-        });
-
-        // Cone de luz fraca do teto sobre a androide.
+        // Brilho fraco sobre a androide desativada.
         this.lightCone = this.add.graphics();
         this.lightCone.setDepth(-5);
         this.drawLightCone(0.06);
 
         // Scanlines.
+        const g = this.add.graphics();
+        g.setDepth(-4);
         g.lineStyle(1, 0x000000, 0.35);
         for (let y = 0; y < HEIGHT; y += 4) {
             g.lineBetween(0, y, WIDTH, y);
         }
 
-        this.add.text(WIDTH / 2, 40, "- PORÃO -  SETOR B", {
-            fontFamily: "VCR",
-            fontSize: "22px",
-            color: "#5b6178",
-            align: "center"
-        }).setOrigin(0.5);
     }
 
     drawLightCone(alpha) {
         this.lightCone.clear();
         this.lightCone.fillStyle(0x9fb0ff, alpha);
-        this.lightCone.fillTriangle(
-            WIDTH / 2, 60,
-            WIDTH / 2 - 220, FLOOR_Y,
-            WIDTH / 2 + 220, FLOOR_Y
-        );
+        this.lightCone.fillEllipse(ANDROID_POS.x, ANDROID_POS.y + 34, 200, 80);
     }
 
     createAndroid() {
         PlayerCharacter.createAnimations(this);
 
-        this.android = this.add.sprite(WIDTH / 2, FLOOR_Y - 70, PlayerCharacter.rotationKey("south"));
+        this.android = this.add.sprite(ANDROID_POS.x, ANDROID_POS.y, PlayerCharacter.rotationKey("south"));
         this.android.setScale(3);
         this.android.setTint(POWERED_OFF_TINT);
     }

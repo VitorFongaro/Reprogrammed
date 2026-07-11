@@ -19,6 +19,10 @@ export default class PuzzleDevice {
         this.h = config.h ?? DEFAULT_H;
         this.label = config.label ?? "";
         this.onSolved = config.onSolved;
+        // drawBody: false para máquinas já desenhadas na arte do mapa (desenha só
+        // luz indicadora e prompt). promptY: posição vertical customizada do prompt.
+        this.drawBody = config.drawBody ?? true;
+        this.promptY = config.promptY ?? null;
         this.solved = false;
 
         this.draw();
@@ -45,30 +49,35 @@ export default class PuzzleDevice {
         const left = this.x - this.w / 2;
         const top = this.y - this.h / 2;
 
-        const body = this.scene.add.graphics();
-        body.fillStyle(0x14161f, 1);
-        body.fillRect(left, top, this.w, this.h);
-        body.lineStyle(2, 0x3a3f55, 1);
-        body.strokeRect(left, top, this.w, this.h);
-        // Painéis/ranhuras.
-        body.lineStyle(1, 0x2a2f45, 0.9);
-        for (let py = top + 18; py < top + this.h - 16; py += 18) {
-            body.lineBetween(left + 8, py, left + this.w - 8, py);
+        if (this.drawBody) {
+            const body = this.scene.add.graphics();
+            body.fillStyle(0x14161f, 1);
+            body.fillRect(left, top, this.w, this.h);
+            body.lineStyle(2, 0x3a3f55, 1);
+            body.strokeRect(left, top, this.w, this.h);
+            // Painéis/ranhuras.
+            body.lineStyle(1, 0x2a2f45, 0.9);
+            for (let py = top + 18; py < top + this.h - 16; py += 18) {
+                body.lineBetween(left + 8, py, left + this.w - 8, py);
+            }
+            // Base.
+            body.fillStyle(0x0c0d14, 1);
+            body.fillRect(left - 8, top + this.h, this.w + 16, 10);
         }
-        // Base.
-        body.fillStyle(0x0c0d14, 1);
-        body.fillRect(left - 8, top + this.h, this.w + 16, 10);
 
         this.indicator = this.scene.add.graphics();
         this.drawIndicator(OFF_COLOR);
 
-        this.scene.add.text(this.x, top - 16, this.label, {
-            fontFamily: "VCR",
-            fontSize: "16px",
-            color: "#7a8099"
-        }).setOrigin(0.5);
+        if (this.label) {
+            this.scene.add.text(this.x, top - 16, this.label, {
+                fontFamily: "VCR",
+                fontSize: "16px",
+                color: "#7a8099"
+            }).setOrigin(0.5);
+        }
 
-        this.prompt = this.scene.add.text(this.x, top - 44, "[E] PROGRAMAR", {
+        const promptY = this.promptY ?? top - 44;
+        this.prompt = this.scene.add.text(this.x, promptY, "[E] PROGRAMAR", {
             fontFamily: "VCR",
             fontSize: "18px",
             color: "#4ad6ff"
@@ -76,7 +85,7 @@ export default class PuzzleDevice {
 
         this.scene.tweens.add({
             targets: this.prompt,
-            y: top - 50,
+            y: promptY - 6,
             duration: 600,
             yoyo: true,
             repeat: -1,

@@ -2,6 +2,11 @@ import Phaser from "phaser";
 
 const DEFAULT_SPEED = 220;
 const DEFAULT_SCALE = 3;
+
+// Corpo físico reduzido aos pés (fração do quadro), padrão top-down: a cabeça
+// pode sobrepor objetos, só os pés colidem.
+const BODY_WIDTH_RATIO = 0.4;
+const BODY_HEIGHT_RATIO = 0.2;
 const SPRITE_FILES = import.meta.glob("../assets/sprites/A_cute_android_maid_with/**/*.png", {
     eager: true,
     query: "?url",
@@ -122,6 +127,12 @@ export default class PlayerCharacter {
         this.sprite.setScale(options.scale ?? DEFAULT_SCALE);
         this.sprite.setCollideWorldBounds(options.collideWorldBounds ?? true);
         this.sprite.play("maid-idle-south");
+
+        // Hitbox só nos pés.
+        const bodyW = this.sprite.width * (options.bodyWidthRatio ?? BODY_WIDTH_RATIO);
+        const bodyH = this.sprite.height * (options.bodyHeightRatio ?? BODY_HEIGHT_RATIO);
+        this.sprite.body.setSize(bodyW, bodyH);
+        this.sprite.body.setOffset((this.sprite.width - bodyW) / 2, this.sprite.height - bodyH - 1);
 
         this.keys = scene.input.keyboard.addKeys({
             north: Phaser.Input.Keyboard.KeyCodes.W,

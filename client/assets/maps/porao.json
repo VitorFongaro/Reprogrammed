@@ -1,0 +1,51 @@
+{
+  "compressionlevel": -1,
+  "height": 22,
+  "infinite": false,
+  "layers": [
+    {
+      "id": 1,
+      "image": "../images/porao/porao_bg.png",
+      "name": "fundo",
+      "opacity": 1,
+      "type": "imagelayer",
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "draworder": "topdown",
+      "id": 2,
+      "name": "colisao",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 1, "name": "prateleira-esquerda", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 96, "width": 210, "height": 148 },
+        { "id": 2, "name": "prateleira-direita", "rotation": 0, "type": "", "visible": true, "x": 780, "y": 96, "width": 200, "height": 148 },
+        { "id": 3, "name": "caixote-lona", "rotation": 0, "type": "", "visible": true, "x": 312, "y": 156, "width": 68, "height": 80 },
+        { "id": 4, "name": "barril-esquerdo", "rotation": 0, "type": "", "visible": true, "x": 334, "y": 264, "width": 36, "height": 50 },
+        { "id": 5, "name": "barris-direita", "rotation": 0, "type": "", "visible": true, "x": 1058, "y": 288, "width": 76, "height": 62 },
+        { "id": 6, "name": "pilha-caixotes", "rotation": 0, "type": "", "visible": true, "x": 1044, "y": 330, "width": 142, "height": 130 },
+        { "id": 7, "name": "caixote-canto", "rotation": 0, "type": "", "visible": true, "x": 1150, "y": 500, "width": 90, "height": 84 },
+        { "id": 8, "name": "caixote-central", "rotation": 0, "type": "", "visible": true, "x": 438, "y": 480, "width": 78, "height": 74 },
+        { "id": 9, "name": "armario", "rotation": 0, "type": "", "visible": true, "x": 1188, "y": 180, "width": 52, "height": 130 },
+        { "id": 10, "name": "mesa", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 490, "width": 150, "height": 74 },
+        { "id": 11, "name": "banco", "rotation": 0, "type": "", "visible": true, "x": 250, "y": 528, "width": 24, "height": 24 }
+      ],
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "nextlayerid": 3,
+  "nextobjectid": 12,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tiledversion": "1.10.2",
+  "tileheight": 32,
+  "tilesets": [],
+  "tilewidth": 32,
+  "type": "map",
+  "version": "1.10",
+  "width": 40
+}

@@ -40,4 +40,10 @@ const config = {
     ]
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+// Atalho de desenvolvimento (não entra no build): permite pular cenas pelo
+// console do navegador, ex.: __game.scene.start("cap1-porao").
+if (import.meta.env.DEV) {
+    window.__game = game;
+}
