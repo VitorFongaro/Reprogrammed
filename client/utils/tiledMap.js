@@ -2,6 +2,24 @@
 // (`fundo`) + camadas de objetos (`objetos` para sprites, `colisao` para bloqueio).
 // Compartilhado entre BaseRoomScene e cenas avulsas (ex: IntroScene).
 
+// URLs de todos os props do jogo (assets/images/<sala>/props/*.png), carregados
+// como `prop-<nome do arquivo>`. Nomes de arquivo devem ser únicos entre salas.
+const PROP_FILES = import.meta.glob("../assets/images/*/props/*.png", {
+    eager: true,
+    query: "?url",
+    import: "default"
+});
+
+// Registra todos os props no loader da cena (chamar no preload).
+export function preloadProps(scene) {
+    Object.entries(PROP_FILES).forEach(([path, url]) => {
+        const name = path.split("/").pop().replace(/\.png$/i, "");
+        if (!scene.textures.exists(`prop-${name}`)) {
+            scene.load.image(`prop-${name}`, url);
+        }
+    });
+}
+
 function findObjectLayer(mapData, layerName) {
     const layer = mapData.layers?.find(
         (candidate) => candidate.type === "objectgroup" && candidate.name === layerName

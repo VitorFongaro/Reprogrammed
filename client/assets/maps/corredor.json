@@ -1,0 +1,74 @@
+{
+  "compressionlevel": -1,
+  "width": 40,
+  "height": 22,
+  "infinite": false,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 32,
+  "tiledversion": "1.10.2",
+  "version": "1.10",
+  "type": "map",
+  "nextlayerid": 4,
+  "nextobjectid": 30,
+  "tilesets": [
+    {
+      "columns": 0,
+      "firstgid": 1,
+      "grid": { "height": 1, "orientation": "orthogonal", "width": 1 },
+      "margin": 0,
+      "name": "props",
+      "spacing": 0,
+      "tilecount": 3,
+      "tilewidth": 72,
+      "tileheight": 58,
+      "tiles": [
+        { "id": 0, "image": "../images/porao/props/barril.png", "imagewidth": 40, "imageheight": 58 },
+        { "id": 1, "image": "../images/porao/props/palete.png", "imagewidth": 72, "imageheight": 48 },
+        { "id": 2, "image": "../images/porao/props/caixote.png", "imagewidth": 56, "imageheight": 52 }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "fundo",
+      "type": "imagelayer",
+      "image": "../images/corredor/corredor_bg.png",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": 3,
+      "name": "objetos",
+      "type": "objectgroup",
+      "draworder": "topdown",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        { "id": 1, "gid": 1, "name": "barril", "rotation": 0, "type": "", "visible": true, "x": 200, "y": 380, "width": 40, "height": 58 },
+        { "id": 2, "gid": 2, "name": "palete", "rotation": 0, "type": "", "visible": true, "x": 690, "y": 386, "width": 72, "height": 48 },
+        { "id": 3, "gid": 3, "name": "caixote-no-palete", "rotation": 0, "type": "", "visible": true, "x": 698, "y": 368, "width": 56, "height": 52 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "colisao",
+      "type": "objectgroup",
+      "draworder": "topdown",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        { "id": 20, "name": "barril", "rotation": 0, "type": "", "visible": true, "x": 200, "y": 322, "width": 40, "height": 58 },
+        { "id": 21, "name": "palete-caixote", "rotation": 0, "type": "", "visible": true, "x": 690, "y": 316, "width": 72, "height": 70 }
+      ]
+    }
+  ]
+}

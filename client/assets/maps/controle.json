@@ -1,0 +1,84 @@
+{
+  "compressionlevel": -1,
+  "width": 40,
+  "height": 22,
+  "infinite": false,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 32,
+  "tiledversion": "1.10.2",
+  "version": "1.10",
+  "type": "map",
+  "nextlayerid": 4,
+  "nextobjectid": 40,
+  "tilesets": [
+    {
+      "columns": 0,
+      "firstgid": 1,
+      "grid": { "height": 1, "orientation": "orthogonal", "width": 1 },
+      "margin": 0,
+      "name": "props",
+      "spacing": 0,
+      "tilecount": 6,
+      "tilewidth": 150,
+      "tileheight": 84,
+      "tiles": [
+        { "id": 0, "image": "../images/porao/props/mesa.png", "imagewidth": 150, "imageheight": 84 },
+        { "id": 1, "image": "../images/porao/props/banco.png", "imagewidth": 28, "imageheight": 28 },
+        { "id": 2, "image": "../images/porao/props/barril.png", "imagewidth": 40, "imageheight": 58 },
+        { "id": 3, "image": "../images/porao/props/caixote.png", "imagewidth": 56, "imageheight": 52 },
+        { "id": 4, "image": "../images/porao/props/palete.png", "imagewidth": 72, "imageheight": 48 },
+        { "id": 5, "image": "../images/porao/props/caixote_grande.png", "imagewidth": 88, "imageheight": 80 }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "fundo",
+      "type": "imagelayer",
+      "image": "../images/controle/controle_bg.png",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": 3,
+      "name": "objetos",
+      "type": "objectgroup",
+      "draworder": "topdown",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        { "id": 1, "gid": 1, "name": "mesa", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 574, "width": 150, "height": 84 },
+        { "id": 2, "gid": 2, "name": "banco", "rotation": 0, "type": "", "visible": true, "x": 250, "y": 556, "width": 28, "height": 28 },
+        { "id": 3, "gid": 3, "name": "barril-1", "rotation": 0, "type": "", "visible": true, "x": 1060, "y": 350, "width": 40, "height": 58 },
+        { "id": 4, "gid": 3, "name": "barril-2", "rotation": 0, "type": "", "visible": true, "x": 1104, "y": 364, "width": 40, "height": 58 },
+        { "id": 5, "gid": 5, "name": "palete", "rotation": 0, "type": "", "visible": true, "x": 450, "y": 640, "width": 72, "height": 48 },
+        { "id": 6, "gid": 4, "name": "caixote-no-palete", "rotation": 0, "type": "", "visible": true, "x": 458, "y": 622, "width": 56, "height": 52 },
+        { "id": 7, "gid": 6, "name": "caixote-grande", "rotation": 0, "type": "", "visible": true, "x": 1080, "y": 600, "width": 88, "height": 80 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "colisao",
+      "type": "objectgroup",
+      "draworder": "topdown",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        { "id": 20, "name": "mesa", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 490, "width": 150, "height": 84 },
+        { "id": 21, "name": "banco", "rotation": 0, "type": "", "visible": true, "x": 250, "y": 528, "width": 28, "height": 28 },
+        { "id": 22, "name": "barris", "rotation": 0, "type": "", "visible": true, "x": 1060, "y": 292, "width": 84, "height": 72 },
+        { "id": 23, "name": "palete-caixote", "rotation": 0, "type": "", "visible": true, "x": 450, "y": 570, "width": 72, "height": 70 },
+        { "id": 24, "name": "caixote-grande", "rotation": 0, "type": "", "visible": true, "x": 1080, "y": 520, "width": 88, "height": 80 }
+      ]
+    }
+  ]
+}

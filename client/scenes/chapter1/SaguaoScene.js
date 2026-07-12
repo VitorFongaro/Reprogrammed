@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import PlayerCharacter from "../../characters/PlayerCharacter";
 import CosmoCompanion from "../../characters/CosmoCompanion";
 import DialogueBox from "../../ui/DialogueBox";
+import saguaoBg from "../../assets/images/saguao/saguao_bg.png";
 
 // Capítulo 1, sala 6 — Saguão: cutscene de encerramento. As portas do elevador
 // se abrem para o saguão da Elysium, diálogo de gancho para o capítulo 2 e o
@@ -32,6 +33,7 @@ export default class SaguaoScene extends Phaser.Scene {
     preload() {
         PlayerCharacter.preload(this);
         CosmoCompanion.preload(this);
+        this.load.image("saguao-bg", saguaoBg);
     }
 
     create() {
@@ -52,54 +54,29 @@ export default class SaguaoScene extends Phaser.Scene {
     drawLobby() {
         this.cameras.main.setBackgroundColor("#050505");
 
-        const g = this.add.graphics();
-        g.setDepth(-10);
-        g.fillStyle(0x050505, 1);
-        g.fillRect(0, 0, WIDTH, HEIGHT);
+        // Mapa do saguão (gerado no Aseprite; o emblema está acima das janelas).
+        this.add.image(WIDTH / 2, HEIGHT / 2, "saguao-bg").setDepth(-10);
 
-        // Chão polido do saguão (mais claro que o porão).
-        g.fillStyle(0x11131c, 1);
-        g.fillRect(0, FLOOR_Y, WIDTH, HEIGHT - FLOOR_Y);
-        g.lineStyle(2, 0x3a3f55, 0.8);
-        g.lineBetween(0, FLOOR_Y, WIDTH, FLOOR_Y);
-        g.lineStyle(1, 0x2a2f45, 0.5);
-        for (let x = 80; x < WIDTH; x += 160) {
-            g.lineBetween(x, FLOOR_Y, x - 60, HEIGHT);
-        }
-
-        // Janelas altas ao fundo.
-        g.fillStyle(0x9fb0ff, 0.06);
-        g.lineStyle(1, 0x3a3f55, 0.8);
-        for (let x = 90; x <= WIDTH - 190; x += 240) {
-            g.fillRect(x, 120, 100, FLOOR_Y - 180);
-            g.strokeRect(x, 120, 100, FLOOR_Y - 180);
-        }
-
-        // Logo da empresa na parede do fundo.
-        this.add.text(WIDTH / 2, 200, "E L Y S I U M", {
+        // Letreiro da empresa sob o emblema.
+        this.add.text(WIDTH / 2, 104, "E L Y S I U M", {
             fontFamily: "VCR",
-            fontSize: "52px",
+            fontSize: "24px",
             color: "#4ad6ff"
-        }).setOrigin(0.5).setAlpha(0.75);
+        }).setOrigin(0.5).setAlpha(0.85).setDepth(-9);
 
-        this.add.text(WIDTH / 2, 244, "integração é evolução", {
+        this.add.text(WIDTH / 2, 128, "integração é evolução", {
             fontFamily: "VCR",
-            fontSize: "18px",
+            fontSize: "14px",
             color: "#5b6178"
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(-9);
 
         // Scanlines.
-        g.lineStyle(1, 0x000000, 0.35);
+        const scan = this.add.graphics();
+        scan.setDepth(-4);
+        scan.lineStyle(1, 0x000000, 0.35);
         for (let y = 0; y < HEIGHT; y += 4) {
-            g.lineBetween(0, y, WIDTH, y);
+            scan.lineBetween(0, y, WIDTH, y);
         }
-
-        this.add.text(WIDTH / 2, 40, "- SAGUÃO -  TÉRREO", {
-            fontFamily: "VCR",
-            fontSize: "22px",
-            color: "#5b6178",
-            align: "center"
-        }).setOrigin(0.5);
     }
 
     createAndroid() {

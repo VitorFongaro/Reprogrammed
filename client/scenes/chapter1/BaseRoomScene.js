@@ -2,16 +2,18 @@ import Phaser from "phaser";
 import PlayerCharacter from "../../characters/PlayerCharacter";
 import CosmoCompanion from "../../characters/CosmoCompanion";
 import DialogueBox from "../../ui/DialogueBox";
-import { tiledColliders, placeTiledObjects } from "../../utils/tiledMap";
+import { tiledColliders, placeTiledObjects, preloadProps } from "../../utils/tiledMap";
 
-// Cena-base das salas do capítulo 1: desenha a sala (grade + título + rodapé),
-// cria jogador/Cosmo/diálogo, gerencia interagíveis ([E] no mais próximo) e a
-// porta de saída na parede direita (trancada até `unlockDoor()`).
+// Cena-base das salas do capítulo 1: desenha a sala (mapa em imagem ou grade),
+// cria jogador/Cosmo/diálogo, gerencia interagíveis ([E] no mais próximo), a
+// porta de saída (trancada até `unlockDoor()`) e, quando a config traz `map`,
+// instancia objetos e colisões autorados no Tiled.
 
 const WIDTH = 1280;
 const HEIGHT = 720;
 
 const DEFAULT_BOUNDS = { x: 48, y: 96, w: WIDTH - 96, h: HEIGHT - 144 };
+const DEFAULT_MAP_OFFSET = { x: 0, y: 8 };
 const DOOR_W = 16;
 const DOOR_H = 110;
 const DOOR_RADIUS = 120;
@@ -20,7 +22,7 @@ export default class BaseRoomScene extends Phaser.Scene {
     constructor(key, config = {}) {
         super(key);
         this.roomTitle = config.title ?? "";
-        this.footerHint = config.footer ?? "WASD MOVE  |  E INTERAGE  |  ESPAÇO AVANÇA DIÁLOGO";
+        this.footerHint = config.footer ?? "";
         this.nextSceneKey = config.nextScene ?? null;
         this.spawn = config.spawn ?? { x: 180, y: HEIGHT / 2 };
         this.doorLabel = config.doorLabel ?? "[E] SEGUIR";
@@ -30,11 +32,22 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.doorPos = config.door ?? null;
         // Ordena a protagonista por y (passa na frente/atrás de objetos com y-sort).
         this.ySort = config.ySort ?? false;
+        // Sala com mapa em imagem + Tiled: `bg` (URL do PNG de fundo), `map`
+        // (JSON do Tiled importado) e `mapOffset` (mapa 1280x704 centralizado).
+        this.bgUrl = config.bg ?? null;
+        this.bgKey = config.bgKey ?? `bg-${key}`;
+        this.mapData = config.map ?? null;
+        this.mapOffset = config.mapOffset ?? DEFAULT_MAP_OFFSET;
     }
 
     preload() {
         PlayerCharacter.preload(this);
         CosmoCompanion.preload(this);
+        preloadProps(this);
+
+        if (this.bgUrl && !this.textures.exists(this.bgKey)) {
+            this.load.image(this.bgKey, this.bgUrl);
+        }
     }
 
     create() {
@@ -48,6 +61,11 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.player = new PlayerCharacter(this, this.spawn.x, this.spawn.y);
         this.cosmo = new CosmoCompanion(this, this.player);
         this.dialogue = new DialogueBox(this);
+
+        if (this.mapData) {
+            this.addObjectsFromTiled(this.mapData, "objetos", this.mapOffset);
+            this.addCollidersFromTiled(this.mapData, "colisao", this.mapOffset);
+        }
 
         this.input.keyboard.on("keydown-E", () => this.tryInteract());
 
@@ -239,8 +257,21 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.drawHud();
     }
 
-    // Cenário padrão (grade); salas com mapa em imagem sobrescrevem este método.
+    // Cenário: mapa em imagem (quando config traz `bg`) ou grade padrão.
     drawBackdrop() {
+        if (this.bgUrl) {
+            this.add.image(WIDTH / 2, HEIGHT / 2, this.bgKey).setDepth(-10);
+
+            // Scanlines.
+            const scan = this.add.graphics();
+            scan.setDepth(-4);
+            scan.lineStyle(1, 0x000000, 0.35);
+            for (let sy = 0; sy < HEIGHT; sy += 4) {
+                scan.lineBetween(0, sy, WIDTH, sy);
+            }
+            return;
+        }
+
         const { x, y, w, h } = this.bounds;
 
         const background = this.add.graphics();

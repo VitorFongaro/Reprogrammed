@@ -1,0 +1,88 @@
+{
+  "compressionlevel": -1,
+  "width": 40,
+  "height": 22,
+  "infinite": false,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 32,
+  "tiledversion": "1.10.2",
+  "version": "1.10",
+  "type": "map",
+  "nextlayerid": 4,
+  "nextobjectid": 40,
+  "tilesets": [
+    {
+      "columns": 0,
+      "firstgid": 1,
+      "grid": { "height": 1, "orientation": "orthogonal", "width": 1 },
+      "margin": 0,
+      "name": "props",
+      "spacing": 0,
+      "tilecount": 5,
+      "tilewidth": 110,
+      "tileheight": 134,
+      "tiles": [
+        { "id": 0, "image": "../images/arquivos/props/arquivo.png", "imagewidth": 56, "imageheight": 110 },
+        { "id": 1, "image": "../images/arquivos/props/terminal.png", "imagewidth": 110, "imageheight": 122 },
+        { "id": 2, "image": "../images/porao/props/armario.png", "imagewidth": 56, "imageheight": 134 },
+        { "id": 3, "image": "../images/porao/props/caixote.png", "imagewidth": 56, "imageheight": 52 },
+        { "id": 4, "image": "../images/porao/props/caixote_lona.png", "imagewidth": 72, "imageheight": 86 }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "fundo",
+      "type": "imagelayer",
+      "image": "../images/arquivos/arquivos_bg.png",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": 3,
+      "name": "objetos",
+      "type": "objectgroup",
+      "draworder": "topdown",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        { "id": 1, "gid": 1, "name": "arquivo-1", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 246, "width": 56, "height": 110 },
+        { "id": 2, "gid": 1, "name": "arquivo-2", "rotation": 0, "type": "", "visible": true, "x": 152, "y": 246, "width": 56, "height": 110 },
+        { "id": 3, "gid": 1, "name": "arquivo-3", "rotation": 0, "type": "", "visible": true, "x": 216, "y": 246, "width": 56, "height": 110 },
+        { "id": 4, "gid": 1, "name": "arquivo-4", "rotation": 0, "type": "", "visible": true, "x": 280, "y": 246, "width": 56, "height": 110 },
+        { "id": 5, "gid": 1, "name": "arquivo-5", "rotation": 0, "type": "", "visible": true, "x": 900, "y": 246, "width": 56, "height": 110 },
+        { "id": 6, "gid": 1, "name": "arquivo-6", "rotation": 0, "type": "", "visible": true, "x": 964, "y": 246, "width": 56, "height": 110 },
+        { "id": 7, "gid": 1, "name": "arquivo-7", "rotation": 0, "type": "", "visible": true, "x": 1028, "y": 246, "width": 56, "height": 110 },
+        { "id": 8, "gid": 2, "name": "terminal-central", "rotation": 0, "type": "", "visible": true, "x": 585, "y": 380, "width": 110, "height": 122 },
+        { "id": 9, "gid": 3, "name": "armario", "rotation": 0, "type": "", "visible": true, "x": 1188, "y": 314, "width": 56, "height": 134 },
+        { "id": 10, "gid": 5, "name": "caixote-lona", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 640, "width": 72, "height": 86 },
+        { "id": 11, "gid": 4, "name": "caixote", "rotation": 0, "type": "", "visible": true, "x": 170, "y": 620, "width": 56, "height": 52 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "colisao",
+      "type": "objectgroup",
+      "draworder": "topdown",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        { "id": 20, "name": "arquivos-esquerda", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 136, "width": 248, "height": 110 },
+        { "id": 21, "name": "arquivos-direita", "rotation": 0, "type": "", "visible": true, "x": 900, "y": 136, "width": 184, "height": 110 },
+        { "id": 22, "name": "terminal", "rotation": 0, "type": "", "visible": true, "x": 585, "y": 258, "width": 110, "height": 122 },
+        { "id": 23, "name": "armario", "rotation": 0, "type": "", "visible": true, "x": 1188, "y": 180, "width": 56, "height": 134 },
+        { "id": 24, "name": "caixote-lona", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 554, "width": 72, "height": 86 },
+        { "id": 25, "name": "caixote", "rotation": 0, "type": "", "visible": true, "x": 170, "y": 568, "width": 56, "height": 52 }
+      ]
+    }
+  ]
+}

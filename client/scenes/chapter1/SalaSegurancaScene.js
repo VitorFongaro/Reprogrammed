@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import BaseRoomScene from "./BaseRoomScene";
 import ProgrammingConsole from "../../ui/ProgrammingConsole";
+import segurancaBg from "../../assets/images/seguranca/seguranca_bg.png";
+import segurancaMap from "../../assets/maps/seguranca.json";
 
 // Capítulo 1, sala 4 — Sala de segurança: boss battle contra o ENIAC, um
 // computador central gigante fixo na parede do fundo. Três estágios de puzzle
@@ -87,9 +89,13 @@ const STAGES = [
 export default class SalaSegurancaScene extends BaseRoomScene {
     constructor() {
         super("cap1-seguranca", {
-            title: "- SALA DE SEGURANÇA -",
             nextScene: "cap1-corredor",
-            spawn: { x: 180, y: 480 }
+            spawn: { x: 150, y: 480 },
+            bounds: { x: 34, y: 140, w: 1212, h: 526 },
+            door: { x: 1150, y: 98 },
+            ySort: true,
+            bg: segurancaBg,
+            map: segurancaMap
         });
     }
 
@@ -97,29 +103,17 @@ export default class SalaSegurancaScene extends BaseRoomScene {
         this.stage = 0;
         this.defeated = false;
 
-        this.drawEniac();
+        this.drawEniacLights();
         this.drawIntegrity();
         this.createCore();
         this.playDialogue(ENTRY_SCRIPT);
     }
 
-    // --- ENIAC (máquina gigante na parede do fundo) ---
-    drawEniac() {
-        const { left, top, width, height } = ENIAC;
+    // --- Luzes do ENIAC (o gabinete está na arte do mapa; os soquetes apagados
+    // também — aqui só as válvulas piscantes, por cima). ---
+    drawEniacLights() {
+        const { left, top, width } = ENIAC;
 
-        const body = this.add.graphics();
-        body.fillStyle(0x14161f, 1);
-        body.fillRect(left, top, width, height);
-        body.lineStyle(2, 0x3a3f55, 1);
-        body.strokeRect(left, top, width, height);
-
-        // Divisórias verticais (gabinetes).
-        body.lineStyle(1, 0x2a2f45, 0.9);
-        for (let x = left + 120; x < left + width; x += 120) {
-            body.lineBetween(x, top, x, top + height);
-        }
-
-        // Painel de luzes piscando (válvulas).
         this.lights = [];
         const spacingX = (width - 60) / (LIGHT_COLS - 1);
         for (let row = 0; row < LIGHT_ROWS; row += 1) {
@@ -142,7 +136,6 @@ export default class SalaSegurancaScene extends BaseRoomScene {
                 });
             }
         }
-
     }
 
     drawIntegrity() {
@@ -173,32 +166,22 @@ export default class SalaSegurancaScene extends BaseRoomScene {
         }
     }
 
-    // --- Terminal do núcleo ---
+    // --- Terminal do núcleo (o pedestal e o cabo estão na arte do mapa) ---
     createCore() {
-        const { x, y, w, h } = CORE;
-        const left = x - w / 2;
+        const { x, y, h } = CORE;
         const top = y - h / 2;
-
-        const body = this.add.graphics();
-        body.fillStyle(0x0c0d14, 1);
-        body.fillRect(left, top, w, h);
-        body.lineStyle(2, 0xff4545, 0.8);
-        body.strokeRect(left, top, w, h);
-        // Cabo ligando o núcleo ao ENIAC.
-        body.lineStyle(3, 0x2a2f45, 1);
-        body.lineBetween(x, top, x, ENIAC.top + ENIAC.height);
 
         this.add.text(x, y + h / 2 + 16, "NÚCLEO", {
             fontFamily: "VCR",
             fontSize: "16px",
             color: "#7a8099"
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(790);
 
         this.corePrompt = this.add.text(x, top - 24, "[E] INVADIR", {
             fontFamily: "VCR",
             fontSize: "18px",
             color: "#4ad6ff"
-        }).setOrigin(0.5).setVisible(false);
+        }).setOrigin(0.5).setDepth(800).setVisible(false);
 
         this.tweens.add({
             targets: this.corePrompt,

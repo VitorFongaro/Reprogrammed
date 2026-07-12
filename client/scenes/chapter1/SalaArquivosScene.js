@@ -1,10 +1,14 @@
 import BaseRoomScene from "./BaseRoomScene";
+import arquivosBg from "../../assets/images/arquivos/arquivos_bg.png";
+import arquivosMap from "../../assets/maps/arquivos.json";
 
 // Capítulo 1, sala 2 — Sala de arquivos: sem puzzle próprio; introduz o conceito
 // de variável e é onde o Cosmo dá o nome "Artemis" à androide (nomear a variável).
+// O terminal central é um prop do Tiled; o código só registra a interação.
 
-const TERMINAL = { x: 640, y: 250, w: 110, h: 140 };
-const TERMINAL_RADIUS = 140;
+const TERMINAL = { x: 640, y: 330 };
+const TERMINAL_RADIUS = 150;
+const TERMINAL_PROMPT_Y = 246;
 
 const ENTRY_SCRIPT = [
     { speaker: "COSMO", text: "A sala de arquivos. A Elysium guardava registros de tudo aqui embaixo." },
@@ -15,17 +19,19 @@ const ENTRY_SCRIPT = [
 export default class SalaArquivosScene extends BaseRoomScene {
     constructor() {
         super("cap1-arquivos", {
-            title: "- SALA DE ARQUIVOS -",
             nextScene: "cap1-controle",
-            spawn: { x: 180, y: 450 }
+            spawn: { x: 150, y: 450 },
+            bounds: { x: 34, y: 140, w: 1212, h: 526 },
+            door: { x: 656, y: 98 },
+            ySort: true,
+            bg: arquivosBg,
+            map: arquivosMap
         });
     }
 
     onRoomCreate() {
         this.terminalUsed = false;
-
-        this.drawCabinets();
-        this.createTerminal();
+        this.createTerminalInteraction();
         this.playDialogue(ENTRY_SCRIPT);
     }
 
@@ -45,40 +51,16 @@ export default class SalaArquivosScene extends BaseRoomScene {
         ];
     }
 
-    createTerminal() {
-        const { x, y, w, h } = TERMINAL;
-        const left = x - w / 2;
-        const top = y - h / 2;
-
-        const body = this.add.graphics();
-        body.fillStyle(0x14161f, 1);
-        body.fillRect(left, top, w, h);
-        body.lineStyle(2, 0x3a3f55, 1);
-        body.strokeRect(left, top, w, h);
-        // Tela do terminal.
-        body.fillStyle(0x4ad6ff, 0.14);
-        body.fillRect(left + 12, top + 14, w - 24, 52);
-        body.lineStyle(1, 0x4ad6ff, 0.6);
-        body.strokeRect(left + 12, top + 14, w - 24, 52);
-        // Base.
-        body.fillStyle(0x0c0d14, 1);
-        body.fillRect(left - 8, top + h, w + 16, 10);
-
-        this.add.text(x, top - 16, "ARQUIVO CENTRAL", {
-            fontFamily: "VCR",
-            fontSize: "16px",
-            color: "#7a8099"
-        }).setOrigin(0.5);
-
-        const prompt = this.add.text(x, top - 44, "[E] CONSULTAR", {
+    createTerminalInteraction() {
+        const prompt = this.add.text(TERMINAL.x, TERMINAL_PROMPT_Y, "[E] CONSULTAR", {
             fontFamily: "VCR",
             fontSize: "18px",
             color: "#4ad6ff"
-        }).setOrigin(0.5).setVisible(false);
+        }).setOrigin(0.5).setDepth(800).setVisible(false);
 
         this.tweens.add({
             targets: prompt,
-            y: top - 50,
+            y: TERMINAL_PROMPT_Y - 6,
             duration: 600,
             yoyo: true,
             repeat: -1,
@@ -86,8 +68,8 @@ export default class SalaArquivosScene extends BaseRoomScene {
         });
 
         this.registerInteractable({
-            x,
-            y,
+            x: TERMINAL.x,
+            y: TERMINAL.y,
             radius: TERMINAL_RADIUS,
             promptObj: prompt,
             isAvailable: () => !this.terminalUsed,
@@ -112,28 +94,5 @@ export default class SalaArquivosScene extends BaseRoomScene {
             repeat: 4,
             onComplete: () => this.player.sprite.setAlpha(1)
         });
-    }
-
-    drawCabinets() {
-        // Fileiras de armários de arquivo ao longo da parede superior.
-        const g = this.add.graphics();
-        g.fillStyle(0x101018, 1);
-        g.lineStyle(1, 0x2a2f45, 0.7);
-
-        for (let x = 120; x <= 480; x += 90) {
-            g.fillRect(x, 120, 70, 110);
-            g.strokeRect(x, 120, 70, 110);
-            for (let y = 140; y < 220; y += 26) {
-                g.lineBetween(x + 8, y, x + 62, y);
-            }
-        }
-
-        for (let x = 800; x <= 1120; x += 90) {
-            g.fillRect(x, 120, 70, 110);
-            g.strokeRect(x, 120, 70, 110);
-            for (let y = 140; y < 220; y += 26) {
-                g.lineBetween(x + 8, y, x + 62, y);
-            }
-        }
     }
 }

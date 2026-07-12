@@ -1,0 +1,77 @@
+{
+  "compressionlevel": -1,
+  "width": 40,
+  "height": 22,
+  "infinite": false,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 32,
+  "tiledversion": "1.10.2",
+  "version": "1.10",
+  "type": "map",
+  "nextlayerid": 4,
+  "nextobjectid": 40,
+  "tilesets": [
+    {
+      "columns": 0,
+      "firstgid": 1,
+      "grid": { "height": 1, "orientation": "orthogonal", "width": 1 },
+      "margin": 0,
+      "name": "props",
+      "spacing": 0,
+      "tilecount": 3,
+      "tilewidth": 88,
+      "tileheight": 80,
+      "tiles": [
+        { "id": 0, "image": "../images/porao/props/caixote_grande.png", "imagewidth": 88, "imageheight": 80 },
+        { "id": 1, "image": "../images/porao/props/barril.png", "imagewidth": 40, "imageheight": 58 },
+        { "id": 2, "image": "../images/porao/props/caixote.png", "imagewidth": 56, "imageheight": 52 }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "fundo",
+      "type": "imagelayer",
+      "image": "../images/seguranca/seguranca_bg.png",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": 3,
+      "name": "objetos",
+      "type": "objectgroup",
+      "draworder": "topdown",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        { "id": 1, "gid": 1, "name": "caixote-grande", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 640, "width": 88, "height": 80 },
+        { "id": 2, "gid": 2, "name": "barril", "rotation": 0, "type": "", "visible": true, "x": 190, "y": 600, "width": 40, "height": 58 },
+        { "id": 3, "gid": 3, "name": "caixote", "rotation": 0, "type": "", "visible": true, "x": 1120, "y": 640, "width": 56, "height": 52 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "colisao",
+      "type": "objectgroup",
+      "draworder": "topdown",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        { "id": 20, "name": "eniac", "rotation": 0, "type": "", "visible": true, "x": 220, "y": 122, "width": 840, "height": 162 },
+        { "id": 21, "name": "nucleo", "rotation": 0, "type": "", "visible": true, "x": 592, "y": 269, "width": 96, "height": 123 },
+        { "id": 22, "name": "caixote-grande", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 560, "width": 88, "height": 80 },
+        { "id": 23, "name": "barril", "rotation": 0, "type": "", "visible": true, "x": 190, "y": 542, "width": 40, "height": 58 },
+        { "id": 24, "name": "caixote", "rotation": 0, "type": "", "visible": true, "x": 1120, "y": 588, "width": 56, "height": 52 }
+      ]
+    }
+  ]
+}
