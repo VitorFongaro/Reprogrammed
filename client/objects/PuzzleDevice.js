@@ -1,8 +1,11 @@
 import ProgrammingConsole from "../ui/ProgrammingConsole";
+import BlockProgrammingConsole from "../ui/BlockProgrammingConsole";
 
-// Máquina interagível que abre o ProgrammingConsole com um puzzle de variável.
-// Desenha o corpo, a luz indicadora (vermelha = desligada, verde = ativa) e o
-// prompt "[E] PROGRAMAR", e se registra como interagível na cena (BaseRoomScene).
+// Máquina interagível que abre o console de puzzle de variável. Desenha o corpo,
+// a luz indicadora (vermelha = desligada, verde = ativa) e o prompt "[E] PROGRAMAR",
+// e se registra como interagível na cena (BaseRoomScene).
+// `config.blocks: true` usa o console de PROGRAMAÇÃO EM BLOCOS (arrastar e encaixar);
+// caso contrário, usa o console de texto (digitar `nome = valor`).
 
 const DEFAULT_W = 84;
 const DEFAULT_H = 132;
@@ -27,7 +30,8 @@ export default class PuzzleDevice {
 
         this.draw();
 
-        this.console = new ProgrammingConsole(scene, config.puzzle, {
+        const ConsoleClass = config.blocks ? BlockProgrammingConsole : ProgrammingConsole;
+        this.console = new ConsoleClass(scene, config.puzzle, {
             onSolved: () => this.handleSolved(),
             onClose: () => scene.player.setEnabled(true)
         });

@@ -1,5 +1,6 @@
 import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
+import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import controleBg from "../../assets/images/controle/controle_bg.png";
 import controleMap from "../../assets/maps/controle.json";
 
@@ -15,28 +16,38 @@ const VENTILATION_PUZZLE = {
     title: "VENTILAÇÃO // SETOR",
     briefing: [
         "A ventilação precisa saber qual setor reativar.",
-        "O valor é um texto (string).",
-        "Você está no setor B2."
+        "Monte:  setor  =  valor.",
+        "O valor é um texto (string) — você está no setor B2."
     ],
-    hint: 'dica:  setor = "..."   (aspas opcionais)',
+    hint: 'arraste os blocos para formar:  setor = "B2"',
     variable: "setor",
     expected: "B2",
     successMessage: "VENTILAÇÃO ATIVA",
-    wrongValueMessage: "setor não reconhecido"
+    wrongValueMessage: "setor não reconhecido",
+    blockDistractors: {
+        nome: ["duto", "ar"],
+        op: ["=="],
+        valor: ['"A1"', '"C3"']
+    }
 };
 
 const THERMOSTAT_PUZZLE = {
     title: "TERMOSTATO // NÚCLEO",
     briefing: [
         "O núcleo está superaquecendo.",
-        "Ajuste a temperatura alvo para 21.5 graus.",
-        "Números decimais (float) usam ponto, não vírgula."
+        "Monte:  temperatura  =  valor.",
+        "Alvo: 21.5 graus (float usa ponto, não vírgula)."
     ],
-    hint: "dica:  temperatura = 21.5",
+    hint: "arraste os blocos para formar:  temperatura = 21.5",
     variable: "temperatura",
     expected: 21.5,
     successMessage: "TEMPERATURA AJUSTADA",
-    wrongValueMessage: "fora da faixa segura"
+    wrongValueMessage: "fora da faixa segura",
+    blockDistractors: {
+        nome: ["nucleo", "calor"],
+        op: ["=="],
+        valor: ["21", "22.5", '"21.5"']
+    }
 };
 
 const ENTRY_SCRIPT = [
@@ -62,6 +73,11 @@ export default class SalaControleScene extends BaseRoomScene {
         });
     }
 
+    preload() {
+        super.preload();
+        BlockProgrammingConsole.preload(this);
+    }
+
     onRoomCreate() {
         this.ventilation = new PuzzleDevice(this, {
             x: VENT.x,
@@ -70,6 +86,7 @@ export default class SalaControleScene extends BaseRoomScene {
             h: VENT.h,
             drawBody: false,
             promptY: DEVICE_PROMPT_Y,
+            blocks: true,
             puzzle: VENTILATION_PUZZLE,
             onSolved: () => this.checkAllSolved()
         });
@@ -81,6 +98,7 @@ export default class SalaControleScene extends BaseRoomScene {
             h: THERMO.h,
             drawBody: false,
             promptY: DEVICE_PROMPT_Y,
+            blocks: true,
             puzzle: THERMOSTAT_PUZZLE,
             onSolved: () => this.checkAllSolved()
         });

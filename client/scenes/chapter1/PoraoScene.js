@@ -1,5 +1,6 @@
 import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
+import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import poraoBg from "../../assets/images/porao/porao_bg.png";
 import poraoMap from "../../assets/maps/porao.json";
 
@@ -20,14 +21,20 @@ const GENERATOR_PUZZLE = {
     title: "GERADOR // NÚCLEO",
     briefing: [
         "O gerador está sem carga.",
-        "Declare uma variável para armazenar a energia",
-        "e atribua o valor exigido: 100 (número inteiro)."
+        "Monte a instrução em blocos, na ordem:",
+        "variável  =  valor   (energia recebe 100, inteiro)."
     ],
-    hint: "dica:  nome = valor   (ex: energia = 100)",
+    hint: "arraste os blocos para formar:  energia = 100",
     variable: "energia",
     expected: 100,
     successMessage: "GERADOR ATIVADO",
-    wrongValueMessage: "carga insuficiente"
+    wrongValueMessage: "carga insuficiente: o valor não é 100",
+    // Blocos extras (distratores) por categoria, além dos corretos.
+    blockDistractors: {
+        nome: ["voltagem", "sensor"],
+        op: ["=="],
+        valor: ["50", "\"100\""]
+    }
 };
 
 const ENTRY_SCRIPT = [
@@ -56,6 +63,11 @@ export default class PoraoScene extends BaseRoomScene {
         });
     }
 
+    preload() {
+        super.preload();
+        BlockProgrammingConsole.preload(this);
+    }
+
     drawBackdrop() {
         super.drawBackdrop();
 
@@ -75,6 +87,7 @@ export default class PoraoScene extends BaseRoomScene {
             h: GENERATOR.h,
             drawBody: false,
             promptY: GENERATOR.y + GENERATOR.h / 2 + 22,
+            blocks: true,
             puzzle: GENERATOR_PUZZLE,
             onSolved: () => this.handleGeneratorSolved()
         });

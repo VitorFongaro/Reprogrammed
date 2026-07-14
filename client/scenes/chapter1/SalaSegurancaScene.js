@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import BaseRoomScene from "./BaseRoomScene";
-import ProgrammingConsole from "../../ui/ProgrammingConsole";
+import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import segurancaBg from "../../assets/images/seguranca/seguranca_bg.png";
 import segurancaMap from "../../assets/maps/seguranca.json";
 
@@ -33,11 +33,16 @@ const STAGES = [
                 "As válvulas do ENIAC operam a 190 volts.",
                 "Dobre a voltagem para sobrecarregar o circuito."
             ],
-            hint: "dica:  número inteiro, o dobro de 190",
+            hint: "monte:  voltagem = 380  (inteiro, o dobro de 190)",
             variable: "voltagem",
             expected: 380,
             successMessage: "CIRCUITO SOBRECARREGADO",
-            wrongValueMessage: "voltagem insuficiente"
+            wrongValueMessage: "voltagem insuficiente",
+            blockDistractors: {
+                nome: ["corrente", "valvula"],
+                op: ["=="],
+                valor: ["190", "760", '"380"']
+            }
         },
         afterScript: [
             { speaker: "ENIAC", color: ENIAC_COLOR, text: "ANOMALIA... VÁLVULAS EM FALHA." },
@@ -52,11 +57,16 @@ const STAGES = [
                 "Injete o seu nome no registro de operadores.",
                 "Lembre: texto vai entre aspas."
             ],
-            hint: 'dica:  nome = "..."',
+            hint: 'monte:  nome = "Artemis"  (texto vai entre aspas)',
             variable: "nome",
             expected: "Artemis",
             successMessage: "OPERADOR RECONHECIDO",
-            wrongValueMessage: "operador desconhecido"
+            wrongValueMessage: "operador desconhecido",
+            blockDistractors: {
+                nome: ["operador", "unidade"],
+                op: ["=="],
+                valor: ['"ENIAC"', '"Cosmo"']
+            }
         },
         afterScript: [
             { speaker: "ENIAC", color: ENIAC_COLOR, text: "OPERADOR... ARTEMIS...? REGISTRO CORROMPIDO." },
@@ -72,11 +82,16 @@ const STAGES = [
                 "true (travada) ou false (destravada).",
                 "Desative-a."
             ],
-            hint: "dica:  travaMestra = false",
+            hint: "monte:  travaMestra = false  (booleano)",
             variable: "travaMestra",
             expected: false,
             successMessage: "TRAVA MESTRA DESATIVADA",
-            wrongValueMessage: "trava ainda ativa"
+            wrongValueMessage: "trava ainda ativa",
+            blockDistractors: {
+                nome: ["trava", "sistema"],
+                op: ["=="],
+                valor: ["true", '"false"']
+            }
         },
         afterScript: [
             { speaker: "ENIAC", color: ENIAC_COLOR, text: "CUSTÓDIA... ENCERRADA... ......" },
@@ -97,6 +112,11 @@ export default class SalaSegurancaScene extends BaseRoomScene {
             bg: segurancaBg,
             map: segurancaMap
         });
+    }
+
+    preload() {
+        super.preload();
+        BlockProgrammingConsole.preload(this);
     }
 
     onRoomCreate() {
@@ -207,7 +227,7 @@ export default class SalaSegurancaScene extends BaseRoomScene {
         let solvedThisRun = false;
 
         this.player.setEnabled(false);
-        this.console = new ProgrammingConsole(this, stageData.puzzle, {
+        this.console = new BlockProgrammingConsole(this, stageData.puzzle, {
             onSolved: () => {
                 solvedThisRun = true;
             },

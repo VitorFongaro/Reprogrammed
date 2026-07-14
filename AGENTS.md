@@ -22,9 +22,11 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   - `IntroScene` (`"intro-scene"`) — cena de abertura no porão; diálogo com efeito máquina de escrever; a androide acorda e segue para o capítulo 1.
   - `SpritTestScene` (`"sprit-test-scene"`) — sala de teste jogável (WASD; ESC volta ao menu), usada como sandbox de dev.
   - `scenes/chapter1/` — capítulo 1 (variáveis; porão → saguão): `PoraoScene` (int), `SalaArquivosScene` (nomeação da Artemis), `SalaControleScene` (string/float), `SalaSegurancaScene` (boss ENIAC, boolean), `CorredorScene` (transmissão da Lua) e `SaguaoScene` (cutscene final). Todas estendem `BaseRoomScene`, exceto a `SaguaoScene`. Chaves de cena: `"cap1-*"`.
-- `ui/` — `ProgrammingConsole` (terminal de puzzle de variável; valida nome, tipo e valor — int/float/string/boolean) e `DialogueBox` (diálogo reutilizável com máquina de escrever).
-  - Objeto `puzzle` esperado pelo console: `{ title, briefing[], hint, variable, expected, type?, successMessage?, wrongValueMessage? }` (o `type` é inferido de `expected` quando omitido).
-- `objects/PuzzleDevice.js` — máquina interagível que abre o console com um puzzle e acende a luz indicadora ao resolver.
+- `ui/` — consoles de puzzle e `DialogueBox` (diálogo reutilizável com máquina de escrever):
+  - `ProgrammingConsole` — puzzle de variável por **texto**: o jogador digita `nome = valor`; valida nome, tipo e valor (int/float/string/boolean).
+  - `BlockProgrammingConsole` — mesmo puzzle em **blocos**: o jogador arrasta blocos para três encaixes em sequência (`[variável] [=] [valor]`), no estilo dos cards do menu (`GameScene`). Deriva a solução do mesmo objeto `puzzle`; blocos extras (distratores) vêm em `puzzle.blockDistractors = { nome[], op[], valor[] }`. Chame `BlockProgrammingConsole.preload(scene)` no `preload` da cena (carrega o sheet `assets/sprites/blocks/`).
+  - Objeto `puzzle` esperado por ambos os consoles: `{ title, briefing[], hint, variable, expected, type?, successMessage?, wrongValueMessage?, blockDistractors? }` (o `type` é inferido de `expected` quando omitido).
+- `objects/PuzzleDevice.js` — máquina interagível que abre o console com um puzzle e acende a luz indicadora ao resolver. Por padrão usa o console de texto; `config.blocks: true` usa o `BlockProgrammingConsole`.
 - `characters/` — entidades do jogo:
   - `PlayerCharacter` — protagonista jogável (movimento WASD, animações 8 direções carregadas via `import.meta.glob`).
   - `CosmoCompanion` — companheiro que flutua no ombro da protagonista; sprite de 4 direções
@@ -94,6 +96,13 @@ usado até agora é gerar por script Lua em modo batch:
 Convenção de sprite de personagem/companheiro: **sheet horizontal**, quadros de 32×32, uma
 direção por quadro (ex: Cosmo = frente/costas/esquerda/direita). Versione o `.aseprite`
 fonte junto do `.png` em `assets/sprites/<nome>/`.
+
+**Blocos do puzzle:** `assets/sprites/blocks/` tem o sheet `blocks.png` (3 quadros de 152×48:
+nome/ciano, operador/âmbar, valor/azul) gerado pelo script `gera.lua`
+(`<aseprite> -b -script-param out=blocks -script gera.lua`). Só o **chassi** (pílula com
+encaixe soquete/pino) é desenhado no Aseprite; o **rótulo** de cada bloco é sobreposto em
+runtime pelo `BlockProgrammingConsole` com a fonte VCR, então o mesmo chassi serve a
+qualquer texto. Para novas categorias/cores, edite `PALETTE` no `gera.lua` e regere.
 
 **Mapas e colisões (Tiled):** cada sala com mapa em imagem tem um `.json` do Tiled em
 `assets/maps/` (camada de imagem `fundo` + camada de objetos `colisao` com retângulos).
