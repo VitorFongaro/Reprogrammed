@@ -98,11 +98,15 @@ direção por quadro (ex: Cosmo = frente/costas/esquerda/direita). Versione o `.
 fonte junto do `.png` em `assets/sprites/<nome>/`.
 
 **Blocos do puzzle:** `assets/sprites/blocks/` tem o sheet `blocks.png` (3 quadros de 152×48:
-nome/ciano, operador/âmbar, valor/azul) gerado pelo script `gera.lua`
-(`<aseprite> -b -script-param out=blocks -script gera.lua`). Só o **chassi** (pílula com
-encaixe soquete/pino) é desenhado no Aseprite; o **rótulo** de cada bloco é sobreposto em
-runtime pelo `BlockProgrammingConsole` com a fonte VCR, então o mesmo chassi serve a
-qualquer texto. Para novas categorias/cores, edite `PALETTE` no `gera.lua` e regere.
+nome/ciano, operador/âmbar, valor/azul). O chassi do bloco é desenhado no Aseprite
+(`chassi.aseprite`, fonte editável do dev); `gera.py` parte do `chassi-fonte.png` (export do
+chassi), **remove o texto pintado**, **recolore em 3 tons** por categoria (troca só a matiz,
+preserva a sombra) e usa **9-slice** para esticar o chassi 32×32 até 152×48 sem distorcer os
+cantos. O **rótulo** de cada bloco é sobreposto em runtime pelo `BlockProgrammingConsole` com
+a fonte VCR, então o mesmo chassi serve a qualquer texto. Fluxo:
+`<aseprite> -b chassi.aseprite --save-as chassi-fonte.png && python gera.py`. Para trocar
+o desenho do bloco, edite `chassi.aseprite`; para as cores das categorias, ajuste
+`CATEGORY_HUES` no `gera.py`.
 
 **Mapas e colisões (Tiled):** cada sala com mapa em imagem tem um `.json` do Tiled em
 `assets/maps/` (camada de imagem `fundo` + camada de objetos `colisao` com retângulos).

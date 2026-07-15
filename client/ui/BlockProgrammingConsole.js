@@ -28,7 +28,7 @@ const FRAME = { nome: 0, op: 1, valor: 2 };
 
 // Encaixes (linha central) e prateleira (blocos disponíveis embaixo).
 const SLOT_Y = PANEL_Y + 236;
-const SLOT_SPACING = 146;                 // < BLOCK_W: pino e soquete se sobrepõem.
+const SLOT_SPACING = 156;                 // largura do bloco (152) + respiro.
 const SLOT_CENTER_X = WIDTH / 2;
 const TRAY_Y = PANEL_Y + 372;
 const TRAY_SPACING_X = 160;
@@ -289,10 +289,10 @@ export default class BlockProgrammingConsole {
         container.setSize(BLOCK_W, BLOCK_H);
 
         const image = this.scene.add.image(0, 0, "blocks", FRAME[piece.category]).setOrigin(0.5);
-        const label = this.scene.add.text(-4, -2, piece.label, {
+        const label = this.scene.add.text(0, -1, piece.label, {
             fontFamily: "VCR",
             fontSize: "22px",
-            color: "#0a0d16"
+            color: "#ffffff"
         }).setOrigin(0.5);
 
         // Área de arraste: retângulo invisível cobrindo o bloco inteiro (mesmo
