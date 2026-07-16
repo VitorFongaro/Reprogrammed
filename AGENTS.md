@@ -21,17 +21,22 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   - `OptionsScene` (`"options-scene"`) — opções (Tela, Áudio, Controles, Legenda); sliders de volume integrados à API.
   - `IntroScene` (`"intro-scene"`) — cena de abertura no porão; diálogo com efeito máquina de escrever; a androide acorda e segue para o capítulo 1.
   - `SpritTestScene` (`"sprit-test-scene"`) — sala de teste jogável (WASD; ESC volta ao menu), usada como sandbox de dev.
-  - `scenes/chapter1/` — capítulo 1 (variáveis; porão → saguão): `PoraoScene` (int), `SalaArquivosScene` (nomeação da Artemis), `SalaControleScene` (string/float), `SalaSegurancaScene` (boss ENIAC, boolean), `CorredorScene` (transmissão da Lua) e `SaguaoScene` (cutscene final). Todas estendem `BaseRoomScene`, exceto a `SaguaoScene`. Chaves de cena: `"cap1-*"`.
+  - `scenes/chapter1/` — capítulo 1 (variáveis; porão → saguão): `PoraoScene` (int), `SalaArquivosScene` (nomeação da Artemis), `SalaControleScene` (string/float), `SalaSegurancaScene` (antessala do boss: `[E]` no núcleo abre a batalha), `BattleScene` (`"cap1-batalha"` — combate por turnos estilo Undertale: ATACAR causa dano igual à variável `forca`, REPROGRAMAR cria/dobra a `forca` no console de blocos, ANALISAR descreve o boss; o turno do ENIAC alterna bullet hell na caixa com WASD e sequência de defesa em blocos com tempo limite; aberta via `scene.launch` + `pause`, devolve com `scene.resume(..., { victory: true })`), `CorredorScene` (transmissão da Lua) e `SaguaoScene` (cutscene final). Todas estendem `BaseRoomScene`, exceto a `SaguaoScene` e a `BattleScene`. Chaves de cena: `"cap1-*"`.
 - `ui/` — consoles de puzzle e `DialogueBox` (diálogo reutilizável com máquina de escrever):
   - `ProgrammingConsole` — puzzle de variável por **texto**: o jogador digita `nome = valor`; valida nome, tipo e valor (int/float/string/boolean).
-  - `BlockProgrammingConsole` — mesmo puzzle em **blocos**: o jogador arrasta blocos para três encaixes em sequência (`[variável] [=] [valor]`), no estilo dos cards do menu (`GameScene`). Deriva a solução do mesmo objeto `puzzle`; blocos extras (distratores) vêm em `puzzle.blockDistractors = { nome[], op[], valor[] }`. Chame `BlockProgrammingConsole.preload(scene)` no `preload` da cena (carrega o sheet `assets/sprites/blocks/`).
-  - Objeto `puzzle` esperado por ambos os consoles: `{ title, briefing[], hint, variable, expected, type?, successMessage?, wrongValueMessage?, blockDistractors? }` (o `type` é inferido de `expected` quando omitido).
+  - `BlockProgrammingConsole` — mesmo puzzle em **blocos**: o jogador arrasta blocos para encaixes em sequência (`[variável] [=] [valor]`), no estilo dos cards do menu (`GameScene`). Deriva a solução do mesmo objeto `puzzle`; blocos extras (distratores) vêm em `puzzle.blockDistractors = { nome[], op[], valor[] }`. Sequências customizadas (ex. `forca = forca * 2`, 5 encaixes) vêm em `puzzle.blockSequence = [{ category, label }]`; `options.singleAttempt: true` congela e fecha no primeiro erro (modo combate — errar consome o turno); `options.timeLimitMs` adiciona contagem regressiva (estourar o tempo = falha). Chame `BlockProgrammingConsole.preload(scene)` no `preload` da cena (carrega o sheet `assets/sprites/blocks/`).
+  - `BattleMenu` — menu de ações do combate por turnos (botões estilo Undertale; A/D ou setas + E/Enter, ou mouse). Usado na `BattleScene`.
+  - Objeto `puzzle` esperado por ambos os consoles: `{ title, briefing[], hint, variable, expected, type?, successMessage?, wrongValueMessage?, blockDistractors?, blockSequence? }` (o `type` é inferido de `expected` quando omitido).
 - `objects/PuzzleDevice.js` — máquina interagível que abre o console com um puzzle e acende a luz indicadora ao resolver. Por padrão usa o console de texto; `config.blocks: true` usa o `BlockProgrammingConsole`.
 - `characters/` — entidades do jogo:
   - `PlayerCharacter` — protagonista jogável (movimento WASD, animações 8 direções carregadas via `import.meta.glob`).
   - `CosmoCompanion` — companheiro que flutua no ombro da protagonista; sprite de 4 direções
     (`assets/sprites/cosmo/`) que acompanha a direção da Artemis, com fallback para um
     placeholder gerado em runtime caso a textura não seja pré-carregada.
+  - `EniacBoss` — boss da `SalaSegurancaScene`: unidade-sentinela do ENIAC, sprite animado
+    (`assets/sprites/boss/`, sheet horizontal de 6 quadros 60×60) em idle contínuo; expõe
+    `hit()` (reação ao perder um estágio), `attackAnim(cb)` (telegrafa o turno de ataque)
+    e `powerDown()` (derrota). `EniacBoss.preload(scene)`.
 - `assets/` — `fonts/` (VCR_OSD_MONO), `cursors/`, `sprites/`, `audio/`, `icons/`, `images/`.
 - `pages/`, `scripts/`, `styles/` — páginas HTML auxiliares e auth fora do canvas Phaser.
 

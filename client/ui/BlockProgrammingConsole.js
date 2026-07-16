@@ -11,6 +11,12 @@ import blocksUrl from "../assets/sprites/blocks/blocks.png";
 // A solução é derivada do MESMO objeto `puzzle` do console de texto
 // (variable/expected/type). Blocos extras (distratores) podem vir em
 // `puzzle.blockDistractors = { nome: [], op: [], valor: [] }`.
+//
+// Sequências customizadas (ex.: forca = forca * 2, com 5 encaixes) vêm em
+// `puzzle.blockSequence = [{ category, label }]`; sem ela, a sequência padrão
+// [variável] [=] [valor] é derivada de variable/expected. `options.singleAttempt`
+// congela e fecha o console no primeiro erro (modo combate: errar consome o turno).
+// `options.timeLimitMs` adiciona contagem regressiva; estourar o tempo = falha.
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -48,11 +54,7 @@ const COLOR = {
     success: "#51e36b"
 };
 
-const SLOT_DEFS = [
-    { category: "nome", caption: "variável" },
-    { category: "op", caption: "operador" },
-    { category: "valor", caption: "valor" }
-];
+const SLOT_CAPTIONS = { nome: "variável", op: "operador", valor: "valor" };
 
 const TYPE_LABELS = {
     int: "número inteiro",
@@ -106,6 +108,8 @@ export default class BlockProgrammingConsole {
         this.puzzle = puzzle;
         this.onSolved = options.onSolved;
         this.onClose = options.onClose;
+        this.singleAttempt = options.singleAttempt ?? false;
+        this.timeLimitMs = options.timeLimitMs ?? null;
 
         this.isOpen = false;
         this.solved = false;
@@ -113,21 +117,27 @@ export default class BlockProgrammingConsole {
         this.buildModel();
     }
 
-    // Monta a solução (3 encaixes) e a lista de blocos disponíveis (solução +
-    // distratores), embaralhada para posicionar na prateleira.
+    // Monta a solução (encaixes em sequência) e a lista de blocos disponíveis
+    // (solução + distratores), embaralhada para posicionar na prateleira.
     buildModel() {
-        const solutionLabels = {
-            nome: this.puzzle.variable,
-            op: "=",
-            valor: formatExpected(this.puzzle)
-        };
+        const sequence = this.puzzle.blockSequence ?? [
+            { category: "nome", label: this.puzzle.variable },
+            { category: "op", label: "=" },
+            { category: "valor", label: formatExpected(this.puzzle) }
+        ];
 
-        this.slots = SLOT_DEFS.map((def, index) => ({
+        // Espaçamento dinâmico: sequências longas (5 encaixes) ainda cabem no painel.
+        const spacing = Math.min(
+            SLOT_SPACING,
+            Math.floor((PANEL_W - PAD * 2 - BLOCK_W) / Math.max(sequence.length - 1, 1))
+        );
+
+        this.slots = sequence.map((entry, index) => ({
             index,
-            category: def.category,
-            caption: def.caption,
-            expected: solutionLabels[def.category],
-            x: SLOT_CENTER_X + (index - 1) * SLOT_SPACING,
+            category: entry.category,
+            caption: entry.caption ?? SLOT_CAPTIONS[entry.category],
+            expected: entry.label,
+            x: SLOT_CENTER_X + (index - (sequence.length - 1) / 2) * spacing,
             y: SLOT_Y,
             piece: null
         }));
@@ -136,10 +146,12 @@ export default class BlockProgrammingConsole {
         const pieces = [];
         let id = 0;
 
-        SLOT_DEFS.forEach((def) => {
-            pieces.push({ id: id++, category: def.category, label: solutionLabels[def.category] });
-            (distractors[def.category] ?? []).forEach((label) => {
-                pieces.push({ id: id++, category: def.category, label });
+        sequence.forEach((entry) => {
+            pieces.push({ id: id++, category: entry.category, label: entry.label });
+        });
+        Object.entries(distractors).forEach(([category, labels]) => {
+            labels.forEach((label) => {
+                pieces.push({ id: id++, category, label });
             });
         });
 
@@ -165,6 +177,16 @@ export default class BlockProgrammingConsole {
         this.isOpen = true;
         this.build();
 
+        if (this.timeLimitMs) {
+            this.deadline = this.scene.time.now + this.timeLimitMs;
+            this.timerEvent = this.scene.time.addEvent({
+                delay: 100,
+                loop: true,
+                callback: () => this.updateTimer()
+            });
+            this.updateTimer();
+        }
+
         // Registra o ESC no próximo tick (não captura a tecla [E] que abriu).
         this.scene.time.delayedCall(0, () => {
             if (!this.isOpen) return;
@@ -183,6 +205,8 @@ export default class BlockProgrammingConsole {
             this.scene.input.keyboard.off("keydown", this.escHandler);
             this.escHandler = null;
         }
+        this.timerEvent?.remove();
+        this.timerEvent = null;
         this.pieces.forEach((piece) => this.stopFloat(piece));
         this.container?.destroy();
         this.container = null;
@@ -245,11 +269,22 @@ export default class BlockProgrammingConsole {
         const footer = this.scene.add.text(
             SLOT_CENTER_X,
             PANEL_Y + PANEL_H - 22,
-            "arraste os blocos para os encaixes",
+            this.singleAttempt
+                ? "monte com cuidado — uma única tentativa por turno"
+                : "arraste os blocos para os encaixes",
             { fontFamily: "VCR", fontSize: "16px", color: COLOR.dim }
         ).setOrigin(0.5, 1);
 
         this.container.add([backdrop, panel, title, escHint, briefing, this.outputText, footer]);
+
+        if (this.timeLimitMs) {
+            this.timerText = this.scene.add.text(PANEL_X + PANEL_W - PAD, PANEL_Y + 56, "", {
+                fontFamily: "VCR",
+                fontSize: "20px",
+                color: "#ffb347"
+            }).setOrigin(1, 0);
+            this.container.add(this.timerText);
+        }
 
         this.slotGraphics = this.scene.add.graphics();
         this.container.add(this.slotGraphics);
@@ -410,6 +445,29 @@ export default class BlockProgrammingConsole {
         });
     }
 
+    // Contagem regressiva (defesa no combate): estourar o tempo conta como falha.
+    updateTimer() {
+        if (!this.isOpen || this.solved) {
+            return;
+        }
+
+        const remaining = Math.max(0, this.deadline - this.scene.time.now);
+        const seconds = remaining / 1000;
+        this.timerText?.setText(`TEMPO: ${seconds.toFixed(1)}s`)
+            .setColor(seconds <= 5 ? "#ff4545" : "#ffb347");
+
+        if (remaining <= 0) {
+            this.timerEvent?.remove();
+            this.timerEvent = null;
+            this.pieces.forEach((piece) => {
+                this.stopFloat(piece);
+                piece.dragArea.disableInteractive();
+            });
+            this.setOutput("TEMPO ESGOTADO", COLOR.error);
+            this.scene.time.delayedCall(1200, () => this.close());
+        }
+    }
+
     checkSolution() {
         if (this.slots.some((slot) => !slot.piece)) return;
 
@@ -422,30 +480,31 @@ export default class BlockProgrammingConsole {
         }
     }
 
-    // Mensagem específica para o PRIMEIRO encaixe errado (na ordem nome→op→valor),
-    // em vez de um aviso genérico: nome errado, operador errado, tipo errado ou
-    // valor errado.
+    // Mensagem específica para o PRIMEIRO encaixe errado (na ordem da sequência),
+    // em vez de um aviso genérico: variável errada, operador errado, tipo errado
+    // ou valor errado.
     diagnose(wrongSlots) {
         const slot = this.slots.find((s) => wrongSlots.includes(s));
         const got = slot.piece.label;
 
         if (slot.category === "nome") {
-            return `nome de variável incorreto: "${got}" não é o pedido`;
+            return `variável incorreta: "${got}" não é a pedida aqui`;
         }
         if (slot.category === "op") {
-            return "operador incorreto: a atribuição usa  =";
+            return `operador incorreto: aqui vai  ${slot.expected}`;
         }
 
-        const expectedType = this.puzzle.type ?? inferType(this.puzzle.expected);
-        const gotType = labelType(got);
-        if (!typeMatches(expectedType, gotType)) {
-            return `tipo errado: ${this.puzzle.variable} guarda ${TYPE_LABELS[expectedType]}`;
+        const expectedType = labelType(slot.expected);
+        if (!typeMatches(expectedType, labelType(got))) {
+            return `tipo errado: aqui vai ${TYPE_LABELS[expectedType]}`;
         }
         return this.puzzle.wrongValueMessage ?? "valor incorreto";
     }
 
     handleSuccess() {
         this.solved = true;
+        this.timerEvent?.remove();
+        this.timerEvent = null;
         this.setOutput(this.puzzle.successMessage ?? "OK", COLOR.success);
         this.pieces.forEach((piece) => {
             this.stopFloat(piece);
@@ -468,6 +527,20 @@ export default class BlockProgrammingConsole {
 
     handleFailure(wrongSlots) {
         this.setOutput(this.diagnose(wrongSlots), COLOR.error);
+
+        // Modo combate (tentativa única): o erro consome o turno — congela os
+        // blocos, deixa o diagnóstico na tela e fecha sem resolver.
+        if (this.singleAttempt) {
+            this.timerEvent?.remove();
+            this.timerEvent = null;
+            this.pieces.forEach((piece) => {
+                this.stopFloat(piece);
+                piece.dragArea.disableInteractive();
+            });
+            this.scene.time.delayedCall(1400, () => this.close());
+            return;
+        }
+
         wrongSlots.forEach((slot) => {
             const piece = slot.piece;
             slot.piece = null;

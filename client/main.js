@@ -7,6 +7,7 @@ import PoraoScene from './scenes/chapter1/PoraoScene';
 import SalaArquivosScene from './scenes/chapter1/SalaArquivosScene';
 import SalaControleScene from './scenes/chapter1/SalaControleScene';
 import SalaSegurancaScene from './scenes/chapter1/SalaSegurancaScene';
+import BattleScene from './scenes/chapter1/BattleScene';
 import CorredorScene from './scenes/chapter1/CorredorScene';
 import SaguaoScene from './scenes/chapter1/SaguaoScene';
 
@@ -35,6 +36,7 @@ const config = {
         SalaArquivosScene,
         SalaControleScene,
         SalaSegurancaScene,
+        BattleScene,
         CorredorScene,
         SaguaoScene
     ]
