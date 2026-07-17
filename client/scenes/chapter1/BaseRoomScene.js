@@ -79,8 +79,8 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.updatePrompts();
 
         if (this.ySort) {
-            // Profundidade = base (pés) da protagonista, para casar com os objetos.
-            this.player.sprite.setDepth(this.player.sprite.y + this.player.sprite.displayHeight / 2);
+            // Profundidade = pés visíveis da protagonista, para casar com os objetos.
+            this.player.sprite.setDepth(this.player.feetY);
         }
 
         this.onRoomUpdate(time, delta);

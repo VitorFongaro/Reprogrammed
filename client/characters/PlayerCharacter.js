@@ -3,10 +3,13 @@ import Phaser from "phaser";
 const DEFAULT_SPEED = 220;
 const DEFAULT_SCALE = 3;
 
-// Corpo físico reduzido aos pés (fração do quadro), padrão top-down: a cabeça
-// pode sobrepor objetos, só os pés colidem.
-const BODY_WIDTH_RATIO = 0.4;
-const BODY_HEIGHT_RATIO = 0.2;
+// A arte da personagem ocupa só o miolo do quadro 60x60 (pés em y≈44..47,
+// largura x=20..41; o resto é transparente). O corpo físico — só os pés, padrão
+// top-down — ancora nos PÉS DA ARTE (ART_FEET_Y), não no fundo do quadro;
+// ancorar no quadro deixava a colisão flutuando ~40px abaixo dos pés visíveis.
+const ART_FEET_Y = 47;
+const BODY_WIDTH = 18;
+const BODY_HEIGHT = 12;
 const SPRITE_FILES = import.meta.glob("../assets/sprites/A_cute_android_maid_with/**/*.png", {
     eager: true,
     query: "?url",
@@ -128,11 +131,11 @@ export default class PlayerCharacter {
         this.sprite.setCollideWorldBounds(options.collideWorldBounds ?? true);
         this.sprite.play("maid-idle-south");
 
-        // Hitbox só nos pés.
-        const bodyW = this.sprite.width * (options.bodyWidthRatio ?? BODY_WIDTH_RATIO);
-        const bodyH = this.sprite.height * (options.bodyHeightRatio ?? BODY_HEIGHT_RATIO);
+        // Hitbox só nos pés da arte (ver ART_FEET_Y no topo do arquivo).
+        const bodyW = options.bodyWidth ?? BODY_WIDTH;
+        const bodyH = options.bodyHeight ?? BODY_HEIGHT;
         this.sprite.body.setSize(bodyW, bodyH);
-        this.sprite.body.setOffset((this.sprite.width - bodyW) / 2, this.sprite.height - bodyH - 1);
+        this.sprite.body.setOffset((this.sprite.width - bodyW) / 2, ART_FEET_Y - bodyH);
 
         this.keys = scene.input.keyboard.addKeys({
             north: Phaser.Input.Keyboard.KeyCodes.W,
@@ -146,6 +149,12 @@ export default class PlayerCharacter {
         scene.input.keyboard.on("keydown", this.keydownHandler);
         scene.input.keyboard.on("keyup", this.keyupHandler);
         scene.events.once("shutdown", () => this.destroy());
+    }
+
+    // Posição y dos pés visíveis, em coordenadas de mundo (para o y-sort da sala
+    // usar a mesma referência da colisão, e não o fundo transparente do quadro).
+    get feetY() {
+        return this.sprite.y + (ART_FEET_Y - this.sprite.height / 2) * this.sprite.scaleY;
     }
 
     setEnabled(value) {
