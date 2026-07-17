@@ -29,7 +29,7 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   - Objeto `puzzle` esperado por ambos os consoles: `{ title, briefing[], hint, variable, expected, type?, successMessage?, wrongValueMessage?, blockDistractors?, blockSequence? }` (o `type` é inferido de `expected` quando omitido).
 - `objects/PuzzleDevice.js` — máquina interagível que abre o console com um puzzle e acende a luz indicadora ao resolver. Por padrão usa o console de texto; `config.blocks: true` usa o `BlockProgrammingConsole`.
 - `characters/` — entidades do jogo:
-  - `PlayerCharacter` — protagonista jogável (movimento WASD, animações 8 direções carregadas via `import.meta.glob`).
+  - `PlayerCharacter` — protagonista jogável (movimento WASD; corrida segurando Shift — mesma animação de passos acelerada + velocidade maior; animações 8 direções carregadas via `import.meta.glob`).
   - `CosmoCompanion` — companheiro que flutua no ombro da protagonista; sprite de 4 direções
     (`assets/sprites/cosmo/`) que acompanha a direção da Artemis, com fallback para um
     placeholder gerado em runtime caso a textura não seja pré-carregada.

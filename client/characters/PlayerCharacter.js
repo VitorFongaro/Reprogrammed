@@ -1,6 +1,11 @@
 import Phaser from "phaser";
 
 const DEFAULT_SPEED = 220;
+// Corrida (segurando Shift): mais velocidade e a mesma animação de passos
+// acelerada via timeScale. Se um dia houver um ciclo de corrida dedicado,
+// basta trocar a animação em playMoveAnimation.
+const DEFAULT_RUN_SPEED = 330;
+const RUN_ANIM_TIMESCALE = 1.6;
 const DEFAULT_SCALE = 3;
 
 // A arte da personagem ocupa só o miolo do quadro 60x60 (pés em y≈44..47,
@@ -120,6 +125,7 @@ export default class PlayerCharacter {
     constructor(scene, x, y, options = {}) {
         this.scene = scene;
         this.speed = options.speed ?? DEFAULT_SPEED;
+        this.runSpeed = options.runSpeed ?? DEFAULT_RUN_SPEED;
         this.lastDirection = "south";
         this.directionQueue = [];
         this.enabled = true;
@@ -141,7 +147,8 @@ export default class PlayerCharacter {
             north: Phaser.Input.Keyboard.KeyCodes.W,
             west: Phaser.Input.Keyboard.KeyCodes.A,
             south: Phaser.Input.Keyboard.KeyCodes.S,
-            east: Phaser.Input.Keyboard.KeyCodes.D
+            east: Phaser.Input.Keyboard.KeyCodes.D,
+            run: Phaser.Input.Keyboard.KeyCodes.SHIFT
         });
 
         this.keydownHandler = (event) => this.trackPressedDirection(event.code);
@@ -182,9 +189,12 @@ export default class PlayerCharacter {
         }
 
         const velocity = DIRECTION_VELOCITY[direction];
+        const running = this.keys.run.isDown;
+        const speed = running ? this.runSpeed : this.speed;
 
         this.lastDirection = direction;
-        this.sprite.setVelocity(velocity.x * this.speed, velocity.y * this.speed);
+        this.sprite.anims.timeScale = running ? RUN_ANIM_TIMESCALE : 1;
+        this.sprite.setVelocity(velocity.x * speed, velocity.y * speed);
         this.playMoveAnimation(direction);
     }
 
@@ -218,6 +228,8 @@ export default class PlayerCharacter {
     }
 
     playIdleAnimation() {
+        this.sprite.anims.timeScale = 1;
+
         if (this.lastDirection === "south") {
             this.sprite.play("maid-idle-south", true);
             return;
