@@ -4,6 +4,11 @@
 const WIDTH = 1280;
 const HEIGHT = 720;
 
+// Pulo de diálogo para TESTES (TAB fecha o roteiro inteiro, executando os
+// onEnter restantes e o onComplete). Ativo só no dev server (`npm run dev`);
+// não entra no build. Para liberar aos jogadores, troque por `true`.
+const SKIP_ENABLED = import.meta.env.DEV;
+
 const BOX_X = 140;
 const BOX_Y = 596;
 const BOX_W = WIDTH - 280;
@@ -19,6 +24,11 @@ export default class DialogueBox {
         this.depth = options.depth ?? DEFAULT_DEPTH;
         this.typeDelay = options.typeDelay ?? TYPE_DELAY;
         this.isOpen = false;
+
+        if (SKIP_ENABLED) {
+            // Impede o TAB de mudar o foco da página enquanto o jogo roda.
+            scene.input.keyboard.addCapture("TAB");
+        }
 
         scene.events.once("shutdown", () => this.teardown());
     }
@@ -40,6 +50,11 @@ export default class DialogueBox {
         this.scene.input.keyboard.on("keydown-SPACE", this.advanceHandler);
         this.scene.input.keyboard.on("keydown-ENTER", this.advanceHandler);
         this.scene.input.on("pointerdown", this.advanceHandler);
+
+        if (SKIP_ENABLED) {
+            this.skipHandler = () => this.skipAll();
+            this.scene.input.keyboard.on("keydown-TAB", this.skipHandler);
+        }
 
         this.advance();
     }
@@ -66,7 +81,7 @@ export default class DialogueBox {
             wordWrap: { width: BOX_W - 44 }
         });
 
-        this.hintText = this.scene.add.text(BOX_X + BOX_W - 22, BOX_Y + BOX_H - 12, "[ESPAÇO]", {
+        this.hintText = this.scene.add.text(BOX_X + BOX_W - 22, BOX_Y + BOX_H - 12, SKIP_ENABLED ? "[ESPAÇO]   [TAB] pular" : "[ESPAÇO]", {
             fontFamily: "VCR",
             fontSize: "16px",
             color: "#5b6178"
@@ -141,6 +156,18 @@ export default class DialogueBox {
         });
     }
 
+    // Pula o roteiro inteiro (TAB, modo dev): executa os onEnter das falas
+    // restantes para preservar os efeitos e encerra com o onComplete normal.
+    skipAll() {
+        if (!this.isOpen) {
+            return;
+        }
+        for (let i = this.stepIndex + 1; i < this.script.length; i += 1) {
+            this.script[i].onEnter?.();
+        }
+        this.finish();
+    }
+
     finish() {
         const onComplete = this.onComplete;
         this.teardown();
@@ -159,6 +186,11 @@ export default class DialogueBox {
             this.scene.input.keyboard.off("keydown-ENTER", this.advanceHandler);
             this.scene.input.off("pointerdown", this.advanceHandler);
             this.advanceHandler = null;
+        }
+
+        if (this.skipHandler) {
+            this.scene.input.keyboard.off("keydown-TAB", this.skipHandler);
+            this.skipHandler = null;
         }
 
         this.typewriter?.remove();
