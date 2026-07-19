@@ -80,7 +80,14 @@ O canvas Phaser vive em `pages/game.html`, atrás de um `authGuard` que exige lo
 - **Salas de capítulo:** estendem `BaseRoomScene` e implementam `onRoomCreate`/`onRoomUpdate`
   (não sobrescreva `create`/`update`). Objetos interagíveis se registram via
   `registerInteractable(...)` (o `[E]` age no mais próximo em alcance); a porta de saída
-  abre com `unlockDoor()` e leva à `nextScene` da config.
+  abre com `unlockDoor()` e leva à `nextScene` da config. O modo de **reprogramação
+  remota** (`[R]`, estilo câmara lenta de Luna Nights) desacelera o tempo (física, timers,
+  tweens e animações), destaca os alvos registrados via `registerReprogrammable(...)`
+  (`{ x, y, w, h, label, isAvailable, onReprogram }`) e permite alternar com ←/→ e abrir o
+  console com E sem ir até a máquina; a Artemis segue em tempo normal (WASD compensado),
+  deixando um rastro de imagens residuais; o modo tem duração limitada e recarga
+  (`REPROGRAM_DURATION`/`REPROGRAM_COOLDOWN`, em ms reais) — o `PuzzleDevice` se
+  registra automaticamente.
 - **Entidades** (personagens/companheiros): classe própria em `characters/`, expondo
   `update(time, delta)` e limpando recursos em `scene.events.once("shutdown", ...)`.
 - Parâmetros ajustáveis (velocidade, offsets, etc.) ficam como **constantes no topo do

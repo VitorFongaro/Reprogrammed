@@ -46,19 +46,33 @@ export default class PuzzleDevice {
             radius: config.radius ?? DEFAULT_RADIUS,
             promptObj: this.prompt,
             isAvailable: () => !this.solved,
-            onInteract: () => {
-                scene.player.setEnabled(false);
-                if (this.introScript && !this.introPlayed) {
-                    this.introPlayed = true;
-                    scene.playDialogue(this.introScript, () => {
-                        scene.player.setEnabled(false);
-                        this.console.open();
-                    });
-                    return;
-                }
-                this.console.open();
-            }
+            onInteract: () => this.openConsole()
         });
+
+        // Alvo do modo de reprogramação remota ([R]): mesma abertura de console,
+        // sem precisar chegar perto da máquina.
+        scene.registerReprogrammable?.({
+            x: this.x,
+            y: this.y,
+            w: this.w,
+            h: this.h,
+            label: config.label || config.puzzle?.title || "SISTEMA",
+            isAvailable: () => !this.solved,
+            onReprogram: () => this.openConsole()
+        });
+    }
+
+    openConsole() {
+        this.scene.player.setEnabled(false);
+        if (this.introScript && !this.introPlayed) {
+            this.introPlayed = true;
+            this.scene.playDialogue(this.introScript, () => {
+                this.scene.player.setEnabled(false);
+                this.console.open();
+            });
+            return;
+        }
+        this.console.open();
     }
 
     draw() {

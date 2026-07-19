@@ -18,6 +18,18 @@ const DOOR_W = 16;
 const DOOR_H = 110;
 const DOOR_RADIUS = 120;
 
+// Modo de REPROGRAMAÇÃO REMOTA (estilo câmara lenta de Touhou Luna Nights):
+// [R] desacelera o tempo e destaca os alvos registrados via
+// registerReprogrammable(...). A Artemis continua se movendo em TEMPO NORMAL
+// (WASD, com rastro de imagens residuais); [←]/[→] alternam o alvo e [E] abre
+// o console à distância — dá até para desativar torretas atirando. Fator < 1 =
+// mais lento.
+const REPROGRAM_SLOW = 0.2;
+const REPROGRAM_DURATION = 5000;   // duração do modo (ms REAIS — o clock da cena fica lento).
+const REPROGRAM_COOLDOWN = 6000;   // recarga após o uso (ms reais).
+const AFTERIMAGE_INTERVAL = 110;   // ms reais entre imagens residuais.
+const AFTERIMAGE_FADE = 220;       // fade do rastro (alonga junto com a câmara lenta).
+
 export default class BaseRoomScene extends Phaser.Scene {
     constructor(key, config = {}) {
         super(key);
@@ -52,6 +64,10 @@ export default class BaseRoomScene extends Phaser.Scene {
 
     create() {
         this.interactables = [];
+        this.reprogrammables = [];
+        this.reprogramMode = false;
+        this.reprogramCooldownLeft = 0;
+        this.afterimageAccumulator = 0;
         this.doorUnlocked = false;
         this.transitioning = false;
 
@@ -68,6 +84,17 @@ export default class BaseRoomScene extends Phaser.Scene {
         }
 
         this.input.keyboard.on("keydown-E", () => this.tryInteract());
+        this.input.keyboard.on("keydown", (event) => this.handleReprogramKey(event));
+
+        // Restaura a dilatação temporal se a sala fechar/reiniciar com o modo
+        // ativo: anims é global e Clock/tweens persistem num scene.restart.
+        // NÃO tocar em physics.world aqui — o plugin de física desliga antes
+        // deste handler (world já é null) e o mundo é recriado na próxima cena.
+        this.events.once("shutdown", () => {
+            this.anims.globalTimeScale = 1;
+            this.time.timeScale = 1;
+            this.tweens.timeScale = 1;
+        });
 
         this.cameras.main.fadeIn(500, 0, 0, 0);
         this.onRoomCreate();
@@ -77,6 +104,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.player.update();
         this.cosmo.update(time, delta);
         this.updatePrompts();
+        this.updateReprogramState(delta);
 
         if (this.ySort) {
             // Profundidade = pés visíveis da protagonista, para casar com os objetos.
@@ -120,7 +148,9 @@ export default class BaseRoomScene extends Phaser.Scene {
     }
 
     tryInteract() {
-        if (!this.player.enabled || this.transitioning) {
+        // No modo de reprogramação o [E] confirma o alvo selecionado (ver
+        // handleReprogramKey), não o interagível mais próximo.
+        if (!this.player.enabled || this.transitioning || this.reprogramMode) {
             return;
         }
 
@@ -151,9 +181,240 @@ export default class BaseRoomScene extends Phaser.Scene {
     }
 
     updatePrompts() {
-        const nearest = this.player.enabled && !this.transitioning ? this.nearestAvailable() : null;
+        const nearest = this.player.enabled && !this.transitioning && !this.reprogramMode
+            ? this.nearestAvailable()
+            : null;
         this.interactables.forEach((item) => {
             item.promptObj?.setVisible(item === nearest);
+        });
+    }
+
+    // --- Reprogramação remota ([R]: tempo desacelerado + seleção de alvo) ---
+    // Formato do alvo: { x, y, w, h, label, isAvailable(), onReprogram() }.
+    registerReprogrammable(item) {
+        this.reprogrammables.push(item);
+        return item;
+    }
+
+    availableReprogrammables() {
+        return this.reprogrammables.filter((item) => item.isAvailable());
+    }
+
+    canEnterReprogramMode() {
+        return this.player.enabled
+            && !this.transitioning
+            && this.reprogramCooldownLeft <= 0
+            && this.availableReprogrammables().length > 0;
+    }
+
+    // Tique do modo/recarga com delta REAL (os timers da cena ficam
+    // desacelerados durante o modo, então duração e recarga são contadas aqui).
+    updateReprogramState(delta) {
+        if (this.reprogramMode) {
+            this.reprogramTimeLeft -= delta;
+            if (this.reprogramTimeLeft <= 0) {
+                this.exitReprogramMode();
+            } else {
+                const seconds = this.reprogramTimeLeft / 1000;
+                this.reprogramTimerText
+                    ?.setText(`${seconds.toFixed(1)}s`)
+                    .setColor(seconds <= 1.5 ? "#ff4545" : "#4ad6ff");
+                this.updateAfterimages(delta);
+            }
+        } else if (this.reprogramCooldownLeft > 0) {
+            this.reprogramCooldownLeft = Math.max(0, this.reprogramCooldownLeft - delta);
+        }
+
+        if (!this.reprogramHint) {
+            return;
+        }
+
+        if (this.reprogramMode) {
+            this.reprogramHint.setVisible(false);
+        } else if (this.reprogramCooldownLeft > 0) {
+            this.reprogramHint.setVisible(true)
+                .setText(`recarregando [R]... ${(this.reprogramCooldownLeft / 1000).toFixed(1)}s`)
+                .setColor("#5b6178");
+        } else {
+            this.reprogramHint.setVisible(this.canEnterReprogramMode())
+                .setText("[R] reprogramação remota")
+                .setColor("#4ad6ff");
+        }
+    }
+
+    // Clock/tweens/anims usam multiplicador (< 1 = mais lento); o mundo arcade
+    // usa divisor (2 = metade da velocidade), por isso o inverso.
+    setTimeDilation(factor) {
+        this.time.timeScale = factor;
+        this.tweens.timeScale = factor;
+        this.anims.globalTimeScale = factor;
+        this.physics.world.timeScale = 1 / factor;
+    }
+
+    handleReprogramKey(event) {
+        if (!this.reprogramMode) {
+            if (event.code === "KeyR" && this.canEnterReprogramMode()) {
+                this.enterReprogramMode();
+            }
+            return;
+        }
+
+        // WASD segue livre para o movimento; as SETAS alternam o alvo.
+        switch (event.code) {
+            case "ArrowLeft":
+                this.cycleReprogramTarget(-1);
+                return;
+            case "ArrowRight":
+                this.cycleReprogramTarget(1);
+                return;
+            case "KeyE":
+            case "Enter":
+                this.confirmReprogram();
+                return;
+            case "KeyR":
+            case "Escape":
+                this.exitReprogramMode();
+        }
+    }
+
+    enterReprogramMode() {
+        this.reprogramMode = true;
+        this.reprogramIndex = 0;
+        this.reprogramTimeLeft = REPROGRAM_DURATION;
+        this.afterimageAccumulator = 0;
+        this.setTimeDilation(REPROGRAM_SLOW);
+        // A Artemis fica FORA da câmara lenta (estilo Luna Nights): compensa a
+        // dilatação na velocidade e na animação dela.
+        this.player.setTimeCompensation(1 / REPROGRAM_SLOW);
+        this.buildReprogramOverlay();
+        this.renderReprogramOverlay();
+        this.setStatus("> REPROGRAMAÇÃO REMOTA — TEMPO DESACELERADO", "#4ad6ff");
+    }
+
+    // Sai do modo; com `target`, abre o console dele (o tempo volta ao normal
+    // antes — o puzzle acontece fora da câmara lenta).
+    exitReprogramMode(target = null) {
+        this.reprogramMode = false;
+        this.reprogramCooldownLeft = REPROGRAM_COOLDOWN;
+        this.setTimeDilation(1);
+        this.player.setTimeCompensation(1);
+        this.reprogramContainer?.destroy();
+        this.reprogramContainer = null;
+        this.reprogramLabels = null;
+        this.reprogramTimerText = null;
+        this.setStatus("");
+
+        if (target) {
+            target.onReprogram();
+        }
+    }
+
+    cycleReprogramTarget(direction) {
+        const total = this.availableReprogrammables().length;
+        if (total === 0) {
+            return;
+        }
+        this.reprogramIndex = Phaser.Math.Wrap(this.reprogramIndex + direction, 0, total);
+        this.renderReprogramOverlay();
+    }
+
+    confirmReprogram() {
+        const target = this.availableReprogrammables()[this.reprogramIndex];
+        if (target) {
+            this.exitReprogramMode(target);
+        }
+    }
+
+    buildReprogramOverlay() {
+        this.reprogramContainer = this.add.container(0, 0).setDepth(940);
+
+        const backdrop = this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x03060c, 0.45);
+        this.reprogramGraphics = this.add.graphics();
+
+        const hint = this.add.text(
+            WIDTH / 2,
+            HEIGHT - 56,
+            "WASD mover   [←]/[→] alternar alvo   [E] reprogramar   [R] cancelar",
+            { fontFamily: "VCR", fontSize: "18px", color: "#e7e9f2" }
+        ).setOrigin(0.5);
+
+        // Contagem regressiva da duração do modo (atualizada no update).
+        this.reprogramTimerText = this.add.text(WIDTH / 2, 116, "", {
+            fontFamily: "VCR",
+            fontSize: "22px",
+            color: "#4ad6ff"
+        }).setOrigin(0.5);
+
+        this.reprogramContainer.add([backdrop, this.reprogramGraphics, hint, this.reprogramTimerText]);
+        this.reprogramLabels = [];
+    }
+
+    // Rastro da Artemis na câmara lenta (estilo Touhou): silhuetas ciano que
+    // ficam para trás enquanto ela se move. Roda no update com delta REAL (os
+    // timers da cena estão desacelerados); o fade usa tween, que também está
+    // lento — por isso o rastro persiste um pouco e some rápido ao sair do modo.
+    updateAfterimages(delta) {
+        const body = this.player.sprite.body;
+        if (!body || (body.velocity.x === 0 && body.velocity.y === 0)) {
+            this.afterimageAccumulator = 0;
+            return;
+        }
+
+        this.afterimageAccumulator += delta;
+        if (this.afterimageAccumulator < AFTERIMAGE_INTERVAL) {
+            return;
+        }
+        this.afterimageAccumulator = 0;
+
+        const sprite = this.player.sprite;
+        const ghost = this.add.image(sprite.x, sprite.y, sprite.texture.key)
+            .setScale(sprite.scaleX, sprite.scaleY)
+            .setDepth(sprite.depth - 1)
+            .setAlpha(0.45);
+        ghost.setTintFill(0x4ad6ff);
+
+        this.tweens.add({
+            targets: ghost,
+            alpha: 0,
+            duration: AFTERIMAGE_FADE,
+            onComplete: () => ghost.destroy()
+        });
+    }
+
+    renderReprogramOverlay() {
+        const targets = this.availableReprogrammables();
+        if (targets.length === 0) {
+            this.exitReprogramMode();
+            return;
+        }
+        this.reprogramIndex = Phaser.Math.Wrap(this.reprogramIndex, 0, targets.length);
+
+        this.reprogramGraphics.clear();
+        this.reprogramLabels.forEach((label) => label.destroy());
+        this.reprogramLabels = [];
+
+        targets.forEach((target, index) => {
+            const selected = index === this.reprogramIndex;
+            const pad = 10;
+            const left = target.x - target.w / 2 - pad;
+            const top = target.y - target.h / 2 - pad;
+            const w = target.w + pad * 2;
+            const h = target.h + pad * 2;
+
+            this.reprogramGraphics.lineStyle(selected ? 3 : 2, selected ? 0xf7f7f7 : 0x4ad6ff, selected ? 1 : 0.55);
+            this.reprogramGraphics.strokeRect(left, top, w, h);
+            if (selected) {
+                this.reprogramGraphics.fillStyle(0x4ad6ff, 0.1);
+                this.reprogramGraphics.fillRect(left, top, w, h);
+            }
+
+            const label = this.add.text(target.x, top - 12, target.label, {
+                fontFamily: "VCR",
+                fontSize: selected ? "17px" : "14px",
+                color: selected ? "#ffffff" : "#4ad6ff"
+            }).setOrigin(0.5, 1);
+            this.reprogramContainer.add(label);
+            this.reprogramLabels.push(label);
         });
     }
 
@@ -307,6 +568,13 @@ export default class BaseRoomScene extends Phaser.Scene {
             color: "#7a8099",
             align: "center"
         }).setOrigin(0.5);
+
+        // Dica do modo remoto — visível quando há alvo disponível (ver update).
+        this.reprogramHint = this.add.text(WIDTH - 28, HEIGHT - 28, "[R] reprogramação remota", {
+            fontFamily: "VCR",
+            fontSize: "16px",
+            color: "#5b6178"
+        }).setOrigin(1, 0.5).setDepth(900).setVisible(false);
 
         if (this.footerHint) {
             this.add.text(WIDTH / 2, HEIGHT - 28, this.footerHint, {

@@ -126,6 +126,7 @@ export default class PlayerCharacter {
         this.scene = scene;
         this.speed = options.speed ?? DEFAULT_SPEED;
         this.runSpeed = options.runSpeed ?? DEFAULT_RUN_SPEED;
+        this.timeCompensation = 1;
         this.lastDirection = "south";
         this.directionQueue = [];
         this.enabled = true;
@@ -164,6 +165,13 @@ export default class PlayerCharacter {
         return this.sprite.y + (ART_FEET_Y - this.sprite.height / 2) * this.sprite.scaleY;
     }
 
+    // Compensação de dilatação temporal (modo de reprogramação remota): com o
+    // mundo em câmara lenta, multiplica a velocidade e o ritmo da animação para
+    // a Artemis continuar se movendo em tempo normal (estilo Luna Nights).
+    setTimeCompensation(factor) {
+        this.timeCompensation = factor;
+    }
+
     setEnabled(value) {
         this.enabled = value;
 
@@ -190,10 +198,10 @@ export default class PlayerCharacter {
 
         const velocity = DIRECTION_VELOCITY[direction];
         const running = this.keys.run.isDown;
-        const speed = running ? this.runSpeed : this.speed;
+        const speed = (running ? this.runSpeed : this.speed) * this.timeCompensation;
 
         this.lastDirection = direction;
-        this.sprite.anims.timeScale = running ? RUN_ANIM_TIMESCALE : 1;
+        this.sprite.anims.timeScale = (running ? RUN_ANIM_TIMESCALE : 1) * this.timeCompensation;
         this.sprite.setVelocity(velocity.x * speed, velocity.y * speed);
         this.playMoveAnimation(direction);
     }
@@ -228,7 +236,7 @@ export default class PlayerCharacter {
     }
 
     playIdleAnimation() {
-        this.sprite.anims.timeScale = 1;
+        this.sprite.anims.timeScale = this.timeCompensation;
 
         if (this.lastDirection === "south") {
             this.sprite.play("maid-idle-south", true);
