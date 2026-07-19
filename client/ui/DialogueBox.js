@@ -4,8 +4,8 @@
 const WIDTH = 1280;
 const HEIGHT = 720;
 
-// Pulo de diálogo para TESTES (TAB fecha o roteiro inteiro, executando os
-// onEnter restantes e o onComplete). Ativo só no dev server (`npm run dev`);
+// Pulo de diálogo para TESTES (a tecla P fecha o roteiro inteiro, executando
+// os onEnter restantes e o onComplete). Ativo só no dev server (`npm run dev`);
 // não entra no build. Para liberar aos jogadores, troque por `true`.
 const SKIP_ENABLED = import.meta.env.DEV;
 
@@ -24,11 +24,6 @@ export default class DialogueBox {
         this.depth = options.depth ?? DEFAULT_DEPTH;
         this.typeDelay = options.typeDelay ?? TYPE_DELAY;
         this.isOpen = false;
-
-        if (SKIP_ENABLED) {
-            // Impede o TAB de mudar o foco da página enquanto o jogo roda.
-            scene.input.keyboard.addCapture("TAB");
-        }
 
         scene.events.once("shutdown", () => this.teardown());
     }
@@ -52,8 +47,14 @@ export default class DialogueBox {
         this.scene.input.on("pointerdown", this.advanceHandler);
 
         if (SKIP_ENABLED) {
-            this.skipHandler = () => this.skipAll();
-            this.scene.input.keyboard.on("keydown-TAB", this.skipHandler);
+            // Listener genérico + event.code (mesmo padrão do BattleMenu e do
+            // PlayerCharacter, que funcionam em todas as cenas).
+            this.skipHandler = (event) => {
+                if (event.code === "KeyP") {
+                    this.skipAll();
+                }
+            };
+            this.scene.input.keyboard.on("keydown", this.skipHandler);
         }
 
         this.advance();
@@ -81,7 +82,7 @@ export default class DialogueBox {
             wordWrap: { width: BOX_W - 44 }
         });
 
-        this.hintText = this.scene.add.text(BOX_X + BOX_W - 22, BOX_Y + BOX_H - 12, SKIP_ENABLED ? "[ESPAÇO]   [TAB] pular" : "[ESPAÇO]", {
+        this.hintText = this.scene.add.text(BOX_X + BOX_W - 22, BOX_Y + BOX_H - 12, SKIP_ENABLED ? "[ESPAÇO]   [P] pular" : "[ESPAÇO]", {
             fontFamily: "VCR",
             fontSize: "16px",
             color: "#5b6178"
@@ -156,7 +157,7 @@ export default class DialogueBox {
         });
     }
 
-    // Pula o roteiro inteiro (TAB, modo dev): executa os onEnter das falas
+    // Pula o roteiro inteiro (tecla P, modo dev): executa os onEnter das falas
     // restantes para preservar os efeitos e encerra com o onComplete normal.
     skipAll() {
         if (!this.isOpen) {
@@ -189,7 +190,7 @@ export default class DialogueBox {
         }
 
         if (this.skipHandler) {
-            this.scene.input.keyboard.off("keydown-TAB", this.skipHandler);
+            this.scene.input.keyboard.off("keydown", this.skipHandler);
             this.skipHandler = null;
         }
 

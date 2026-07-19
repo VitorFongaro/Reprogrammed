@@ -136,11 +136,16 @@ export default class IntroScene extends Phaser.Scene {
             wordWrap: { width: boxW - 44 }
         }).setDepth(21);
 
-        this.hintText = this.add.text(boxX + boxW - 22, boxY + boxH - 12, "[ESPAÇO]", {
-            fontFamily: "VCR",
-            fontSize: "16px",
-            color: "#5b6178"
-        }).setOrigin(1, 1).setDepth(21).setVisible(false);
+        this.hintText = this.add.text(
+            boxX + boxW - 22,
+            boxY + boxH - 12,
+            import.meta.env.DEV ? "[ESPAÇO]   [P] pular" : "[ESPAÇO]",
+            {
+                fontFamily: "VCR",
+                fontSize: "16px",
+                color: "#5b6178"
+            }
+        ).setOrigin(1, 1).setDepth(21).setVisible(false);
 
         this.tweens.add({
             targets: this.hintText,
@@ -158,6 +163,15 @@ export default class IntroScene extends Phaser.Scene {
         this.input.on("pointerdown", onAdvance);
 
         this.input.keyboard.on("keydown-ESC", () => this.scene.start("game-scene"));
+
+        // Pulo da intro para testes (P, modo dev) — mesmo atalho do DialogueBox.
+        if (import.meta.env.DEV) {
+            this.input.keyboard.on("keydown", (event) => {
+                if (event.code === "KeyP") {
+                    this.finish();
+                }
+            });
+        }
     }
 
     handleAdvanceKey() {
