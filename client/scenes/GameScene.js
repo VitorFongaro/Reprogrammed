@@ -1,7 +1,11 @@
 import Phaser from "phaser";
+import wordmark from "../assets/images/reprogrammed-wordmark.png";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
+// Proporção original do wordmark (1518x183) preservada na largura exibida.
+const WORDMARK_HEIGHT = 48;
+const WORDMARK_WIDTH = WORDMARK_HEIGHT * (1518 / 183);
 const CARD_WIDTH = 178;
 const CARD_HEIGHT = 220;
 const LOWER_DIVIDER_Y = 470;
@@ -41,6 +45,10 @@ export default class GameScene extends Phaser.Scene {
         super("game-scene");
     }
 
+    preload() {
+        this.load.image("menu-wordmark", wordmark);
+    }
+
     create() {
         this.cards = [];
         this.activeCard = null;
@@ -63,13 +71,8 @@ export default class GameScene extends Phaser.Scene {
         background.lineBetween(0, 86, WIDTH, 86);
         background.lineBetween(0, LOWER_DIVIDER_Y, WIDTH, LOWER_DIVIDER_Y);
 
-        this.add.text(WIDTH / 2, 44, "- MENU -", {
-            fontFamily: "VCR",
-            fontSize: "34px",
-            color: "#f7f7f7",
-            align: "center"
-        }).setOrigin(0.5);
-
+        this.add.image(WIDTH / 2, 44, "menu-wordmark")
+            .setDisplaySize(WORDMARK_WIDTH, WORDMARK_HEIGHT);
     }
 
     drawDropZone() {

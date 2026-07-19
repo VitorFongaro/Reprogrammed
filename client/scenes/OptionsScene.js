@@ -1,8 +1,31 @@
 import Phaser from "phaser";
+import keyboardLetters from "../assets/icons/keys/keyboard-letters.png";
+import keyboardExtras from "../assets/icons/keys/keyboard-extras.png";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
 const TABS = ["Tela", "Controles", "Áudio", "Legenda"];
+
+// Sheet "Keyboard Letters and Symbols": grid 8 colunas x 14 linhas de 16x16px.
+// Linhas 0-6 = glifo branco, linhas 7-13 repetem em azul-claro (não usadas aqui).
+// Frame = linha * 8 + coluna.
+const KEY_SHEET_COLS = 8;
+const KEY_FRAME = {
+    A: 2 * KEY_SHEET_COLS + 0,
+    D: 2 * KEY_SHEET_COLS + 3,
+    E: 2 * KEY_SHEET_COLS + 4,
+    P: 3 * KEY_SHEET_COLS + 7,
+    R: 4 * KEY_SHEET_COLS + 1,
+    S: 4 * KEY_SHEET_COLS + 2,
+    W: 4 * KEY_SHEET_COLS + 6
+};
+
+// Sheet "Keyboard Extras": grid 4 colunas x 8 linhas de 32x16px (teclas largas:
+// TAB, ESC, SHIFT, ENTER, SPACE, etc). Linhas 0-3 = glifo branco (usadas aqui).
+const EXTRA_SHEET_COLS = 4;
+const EXTRA_FRAME = {
+    SHIFT: 1 * EXTRA_SHEET_COLS + 0
+};
 const API_BASE_URL = window.REPROGRAMMED_API_URL || "http://localhost:3000";
 const AUTH_STORAGE_KEY = "reprogrammed.auth";
 const MIN_VOLUME = 1;
@@ -15,6 +38,11 @@ const VOLUME_TRACK_WIDTH = 366;
 export default class OptionsScene extends Phaser.Scene {
     constructor() {
         super("options-scene");
+    }
+
+    preload() {
+        this.load.spritesheet("key-letters", keyboardLetters, { frameWidth: 16, frameHeight: 16 });
+        this.load.spritesheet("key-extras", keyboardExtras, { frameWidth: 32, frameHeight: 16 });
     }
 
     create() {
@@ -209,21 +237,34 @@ export default class OptionsScene extends Phaser.Scene {
     }
 
     renderControlsTab() {
-        const bindings = [
-            { key: "W", action: "CIMA" },
-            { key: "A", action: "ESQUERDA" },
-            { key: "S", action: "BAIXO" },
-            { key: "D", action: "DIREITA" },
-            { key: "E", action: "INTERAGIR" }
+        // Duas colunas: movimento à esquerda, ações à direita — usa a largura
+        // toda do painel em vez de empilhar tudo colado na borda esquerda.
+        const movementBindings = [
+            { texture: "key-letters", frame: KEY_FRAME.W, action: "CIMA" },
+            { texture: "key-letters", frame: KEY_FRAME.A, action: "ESQUERDA" },
+            { texture: "key-letters", frame: KEY_FRAME.S, action: "BAIXO" },
+            { texture: "key-letters", frame: KEY_FRAME.D, action: "DIREITA" }
         ];
 
-        const rowSpacing = 62;
-        const startY = -((bindings.length - 1) * rowSpacing) / 2 + 8;
+        const actionBindings = [
+            { texture: "key-letters", frame: KEY_FRAME.E, action: "INTERAGIR" },
+            { texture: "key-letters", frame: KEY_FRAME.R, action: "REPROGRAMAR REMOTO" },
+            { texture: "key-extras", frame: EXTRA_FRAME.SHIFT, action: "CORRER", wide: true },
+            { texture: "key-letters", frame: KEY_FRAME.P, action: "PULAR DIÁLOGO" }
+        ];
 
+        const rowSpacing = 70;
+        const startY = -((movementBindings.length - 1) * rowSpacing) / 2 + 8;
+
+        this.renderBindingColumn(movementBindings, -300, -256, startY, rowSpacing);
+        this.renderBindingColumn(actionBindings, 70, 145, startY, rowSpacing);
+    }
+
+    renderBindingColumn(bindings, iconX, labelX, startY, rowSpacing) {
         bindings.forEach((binding, index) => {
             const y = startY + rowSpacing * index;
-            this.panelContent.add(this.createKeyCap(-320, y, binding.key));
-            this.panelContent.add(this.add.text(-262, y, binding.action, {
+            this.panelContent.add(this.createKeyCap(iconX, y, binding.texture, binding.frame, binding.wide));
+            this.panelContent.add(this.add.text(labelX, y, binding.action, {
                 fontFamily: "VCR",
                 fontSize: "22px",
                 color: "#d9d9d9"
@@ -231,17 +272,12 @@ export default class OptionsScene extends Phaser.Scene {
         });
     }
 
-    createKeyCap(x, y, text) {
-        const cap = this.add.container(x, y);
-        const box = this.add.rectangle(0, 0, 46, 46, 0x111111, 1)
-            .setStrokeStyle(2, 0xf7f7f7, 0.95);
-        const label = this.add.text(0, -1, text, {
-            fontFamily: "VCR",
-            fontSize: "24px",
-            color: "#f7f7f7"
-        }).setOrigin(0.5);
-        cap.add([box, label]);
-        return cap;
+    // Teclas normais (key-letters) são quadradas; teclas largas (key-extras,
+    // ex. SHIFT) mantêm a mesma altura mas ficam com o dobro da largura.
+    createKeyCap(x, y, texture, frame, wide = false) {
+        const height = 48;
+        const width = wide ? height * 2 : height;
+        return this.add.image(x, y, texture, frame).setDisplaySize(width, height);
     }
 
     renderAudioTab() {

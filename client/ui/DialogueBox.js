@@ -4,10 +4,9 @@
 const WIDTH = 1280;
 const HEIGHT = 720;
 
-// Pulo de diálogo para TESTES (a tecla P fecha o roteiro inteiro, executando
-// os onEnter restantes e o onComplete). Ativo só no dev server (`npm run dev`);
-// não entra no build. Para liberar aos jogadores, troque por `true`.
-const SKIP_ENABLED = import.meta.env.DEV;
+// Pulo de diálogo (tecla P): fecha o roteiro inteiro, executando os onEnter
+// restantes e o onComplete. Controle oficial do jogo (ver aba Controles).
+const SKIP_ENABLED = true;
 
 const BOX_X = 140;
 const BOX_Y = 596;
