@@ -18,14 +18,12 @@ const ENIAC_COLOR = "#ff4545";
 const ENTRY_SCRIPT = [
     { speaker: "ENIAC", color: ENIAC_COLOR, text: "UNIDADE NÃO AUTORIZADA DETECTADA." },
     { speaker: "ENIAC", color: ENIAC_COLOR, text: "ESTE SETOR ESTÁ SOB MINHA CUSTÓDIA DESDE 1946." },
-    { speaker: "COSMO", text: "Um ENIAC... primeira geração. Ele controla a trava mestra do saguão." },
-    { speaker: "COSMO", text: "Vamos derrubá-lo por dentro. Invada o núcleo — e lembre: no combate, você pode REPROGRAMAR o próprio ataque." }
+    { speaker: "COSMO", text: "Um ENIAC. Ele guarda a trava mestra do saguão — invada o núcleo e derrube-o por dentro." }
 ];
 
 const VICTORY_SCRIPT = [
     { speaker: "ENIAC", color: ENIAC_COLOR, text: "CUSTÓDIA... ENCERRADA... ......" },
-    { speaker: "COSMO", text: "Conseguimos. O caminho pro saguão está livre." },
-    { speaker: "COSMO", text: "Espera... com o ENIAC fora, o bloqueio de sinal caiu um nível. Estou recebendo algo—" }
+    { speaker: "COSMO", text: "Caminho livre. Espera... com o ENIAC fora, o bloqueio de sinal caiu — estou recebendo algo—" }
 ];
 
 export default class SalaSegurancaScene extends BaseRoomScene {
@@ -100,7 +98,12 @@ export default class SalaSegurancaScene extends BaseRoomScene {
 
     startBattle() {
         this.player.setEnabled(false);
-        this.scene.launch("cap1-batalha");
+        // O config vazio usa os padrões da BattleScene (= ENIAC). Precisa ser
+        // passado explicitamente: o Phaser RETÉM o data do launch anterior
+        // quando o launch vem sem dados — sem isso, depois da sentinela o boss
+        // herdaria o config dela (padrão de ataque errado e returnScene preso
+        // na arena).
+        this.scene.launch("cap1-batalha", { config: {} });
         this.scene.pause();
     }
 

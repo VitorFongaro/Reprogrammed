@@ -16,10 +16,10 @@ const VENTILATION_PUZZLE = {
     title: "VENTILAÇÃO // SETOR",
     briefing: [
         "A ventilação precisa saber qual setor reativar.",
-        "Monte:  setor  =  valor.",
-        "O valor é um texto (string) — você está no setor B2."
+        "Guarde na variável setor o código de onde você",
+        "está: B2 — um texto (string)."
     ],
-    hint: 'arraste os blocos para formar:  setor = "B2"',
+    hint: 'monte na ordem:  setor  =  "B2"',
     variable: "setor",
     expected: "B2",
     successMessage: "VENTILAÇÃO ATIVA",
@@ -35,10 +35,10 @@ const THERMOSTAT_PUZZLE = {
     title: "TERMOSTATO // NÚCLEO",
     briefing: [
         "O núcleo está superaquecendo.",
-        "Monte:  temperatura  =  valor.",
-        "Alvo: 21.5 graus (float usa ponto, não vírgula)."
+        "Ajuste a variável temperatura para o alvo",
+        "seguro: 21.5 graus (decimal usa ponto)."
     ],
-    hint: "arraste os blocos para formar:  temperatura = 21.5",
+    hint: "monte na ordem:  temperatura  =  21.5",
     variable: "temperatura",
     expected: 21.5,
     successMessage: "TEMPERATURA AJUSTADA",
@@ -51,19 +51,17 @@ const THERMOSTAT_PUZZLE = {
 };
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Controle ambiental. Se reativarmos os sistemas daqui, o caminho até a segurança abre." },
-    { speaker: "COSMO", text: "Dois painéis na parede, dois tipos de valor: texto e número com ponto decimal." }
+    { speaker: "COSMO", text: "Controle ambiental: dois painéis, dois tipos de valor — texto e número decimal. Reative os dois." }
 ];
 
 const SOLVED_SCRIPT = [
-    { speaker: "COSMO", text: "Ar circulando, núcleo estável. Você aprende rápido." },
-    { speaker: "COSMO", text: "Cuidado agora. A sala de segurança fica à frente — e algo antigo vive nela." }
+    { speaker: "COSMO", text: "Sistemas estáveis. À frente fica o setor de treinamento da segurança — vá preparada." }
 ];
 
 export default class SalaControleScene extends BaseRoomScene {
     constructor() {
         super("cap1-controle", {
-            nextScene: "cap1-seguranca",
+            nextScene: "cap1-treinamento",
             spawn: { x: 150, y: 430 },
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
             door: { x: 640, y: 98 },

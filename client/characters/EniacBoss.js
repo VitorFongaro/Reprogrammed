@@ -35,13 +35,25 @@ export default class EniacBoss {
 
         this.baseX = x;
         this.defeated = false;
+        // Tint base opcional (ex.: sentinela de treino em ciano) — restaurado
+        // após os flashes de hit/ataque.
+        this.baseTint = options.tint ?? null;
 
         this.sprite = scene.add.sprite(x, y, "eniac-boss", 0)
             .setScale(options.scale ?? DEFAULT_SCALE)
             .setDepth(options.depth ?? 1);
         this.sprite.play(IDLE_KEY);
+        this.restoreTint();
 
         scene.events.once("shutdown", () => this.destroy());
+    }
+
+    restoreTint() {
+        if (this.baseTint) {
+            this.sprite.setTint(this.baseTint);
+        } else {
+            this.sprite.clearTint();
+        }
     }
 
     // Reação ao perder um estágio: flash vermelho + tremida horizontal.
@@ -52,7 +64,7 @@ export default class EniacBoss {
         this.sprite.setTintFill(0xff4545);
         this.scene.time.delayedCall(100, () => {
             if (!this.defeated) {
-                this.sprite.clearTint();
+                this.restoreTint();
             }
         });
         this.scene.tweens.add({
@@ -76,7 +88,7 @@ export default class EniacBoss {
         this.sprite.setTintFill(0xffb347);
         this.scene.time.delayedCall(140, () => {
             if (!this.defeated) {
-                this.sprite.clearTint();
+                this.restoreTint();
             }
         });
         this.scene.tweens.add({

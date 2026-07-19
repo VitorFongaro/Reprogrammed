@@ -17,6 +17,8 @@ import blocksUrl from "../assets/sprites/blocks/blocks.png";
 // [variável] [=] [valor] é derivada de variable/expected. `options.singleAttempt`
 // congela e fecha o console no primeiro erro (modo combate: errar consome o turno).
 // `options.timeLimitMs` adiciona contagem regressiva; estourar o tempo = falha.
+// O briefing descreve só o OBJETIVO; a estrutura do código sai no botão [DICA]
+// (texto de `puzzle.hint`, na voz do Cosmo, sob demanda).
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -258,7 +260,7 @@ export default class BlockProgrammingConsole {
             { fontFamily: "VCR", fontSize: "20px", color: COLOR.text, lineSpacing: 8 }
         );
 
-        this.outputText = this.scene.add.text(SLOT_CENTER_X, SLOT_Y + 64, this.puzzle.hint ?? "", {
+        this.outputText = this.scene.add.text(SLOT_CENTER_X, SLOT_Y + 64, "", {
             fontFamily: "VCR",
             fontSize: "18px",
             color: COLOR.dim,
@@ -285,6 +287,16 @@ export default class BlockProgrammingConsole {
             }).setOrigin(1, 0);
             this.container.add(this.timerText);
         }
+
+        const hintButton = this.scene.add.text(PANEL_X + PAD, PANEL_Y + PANEL_H - 22, "[ DICA ]", {
+            fontFamily: "VCR",
+            fontSize: "16px",
+            color: COLOR.accent
+        }).setOrigin(0, 1).setInteractive({ useHandCursor: true });
+        hintButton.on("pointerover", () => hintButton.setColor("#ffffff"));
+        hintButton.on("pointerout", () => hintButton.setColor(COLOR.accent));
+        hintButton.on("pointerdown", () => this.showHint());
+        this.container.add(hintButton);
 
         this.slotGraphics = this.scene.add.graphics();
         this.container.add(this.slotGraphics);
@@ -443,6 +455,14 @@ export default class BlockProgrammingConsole {
                 if (!this.solved && !piece.slot) this.startFloat(piece);
             }
         });
+    }
+
+    // Dica sob demanda, na voz do Cosmo (o briefing não entrega a estrutura).
+    showHint() {
+        if (this.solved || !this.puzzle.hint) {
+            return;
+        }
+        this.setOutput(`COSMO: ${this.puzzle.hint}`, COLOR.accent);
     }
 
     // Contagem regressiva (defesa no combate): estourar o tempo conta como falha.

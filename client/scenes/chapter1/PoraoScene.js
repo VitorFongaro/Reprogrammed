@@ -21,10 +21,10 @@ const GENERATOR_PUZZLE = {
     title: "GERADOR // NÚCLEO",
     briefing: [
         "O gerador está sem carga.",
-        "Monte a instrução em blocos, na ordem:",
-        "variável  =  valor   (energia recebe 100, inteiro)."
+        "Ele só religa com uma variável chamada energia",
+        "guardando a carga total: 100."
     ],
-    hint: "arraste os blocos para formar:  energia = 100",
+    hint: "monte na ordem:  energia  =  100",
     variable: "energia",
     expected: 100,
     successMessage: "GERADOR ATIVADO",
@@ -37,16 +37,21 @@ const GENERATOR_PUZZLE = {
     }
 };
 
+// Cosmo explica a mecânica de blocos ANTES do primeiro console abrir (o painel
+// em si só descreve o objetivo; a estrutura vem daqui e do botão [DICA]).
+const PUZZLE_INTRO_SCRIPT = [
+    { speaker: "COSMO", text: "Uma variável é um espaço na memória: um NOME que guarda um VALOR." },
+    { speaker: "COSMO", text: "Arraste os blocos na ordem: o nome, o sinal de =, e o valor. Se travar, clique em [DICA]." }
+];
+
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Seus servos ainda estão calibrando. Tente se mover — W, A, S, D." },
-    { speaker: "COSMO", text: "Está vendo aquele gerador na parede? Sem energia, nenhuma porta deste andar abre." },
-    { speaker: "COSMO", text: "Chegue perto dele e aperte [E]. Eu te guio no resto." }
+    { speaker: "COSMO", text: "Sistemas online. Mova-se com WASD — e segure Shift para correr." },
+    { speaker: "COSMO", text: "Sem energia, nenhuma porta abre. Vá ao gerador na parede e aperte [E]." }
 ];
 
 const SOLVED_SCRIPT = [
-    { speaker: "COSMO", text: "Ouviu o zumbido? Energia de volta." },
-    { speaker: "COSMO", text: "Você acabou de criar uma variável: um espaço na memória com um nome e um valor." },
-    { speaker: "COSMO", text: "A porta destravou. A sala de arquivos fica logo depois dela." }
+    { speaker: "COSMO", text: "Energia de volta — você criou sua primeira variável." },
+    { speaker: "COSMO", text: "Porta destravada. A sala de arquivos é logo adiante." }
 ];
 
 export default class PoraoScene extends BaseRoomScene {
@@ -89,6 +94,7 @@ export default class PoraoScene extends BaseRoomScene {
             promptY: GENERATOR.y + GENERATOR.h / 2 + 22,
             blocks: true,
             puzzle: GENERATOR_PUZZLE,
+            introScript: PUZZLE_INTRO_SCRIPT,
             onSolved: () => this.handleGeneratorSolved()
         });
 

@@ -6,6 +6,8 @@ import BlockProgrammingConsole from "../ui/BlockProgrammingConsole";
 // e se registra como interagível na cena (BaseRoomScene).
 // `config.blocks: true` usa o console de PROGRAMAÇÃO EM BLOCOS (arrastar e encaixar);
 // caso contrário, usa o console de texto (digitar `nome = valor`).
+// `config.introScript` (roteiro de DialogueBox) toca UMA vez antes da primeira
+// abertura do console — o Cosmo explicando a mecânica em vez do texto do painel.
 
 const DEFAULT_W = 84;
 const DEFAULT_H = 132;
@@ -26,6 +28,8 @@ export default class PuzzleDevice {
         // luz indicadora e prompt). promptY: posição vertical customizada do prompt.
         this.drawBody = config.drawBody ?? true;
         this.promptY = config.promptY ?? null;
+        this.introScript = config.introScript ?? null;
+        this.introPlayed = false;
         this.solved = false;
 
         this.draw();
@@ -44,6 +48,14 @@ export default class PuzzleDevice {
             isAvailable: () => !this.solved,
             onInteract: () => {
                 scene.player.setEnabled(false);
+                if (this.introScript && !this.introPlayed) {
+                    this.introPlayed = true;
+                    scene.playDialogue(this.introScript, () => {
+                        scene.player.setEnabled(false);
+                        this.console.open();
+                    });
+                    return;
+                }
                 this.console.open();
             }
         });

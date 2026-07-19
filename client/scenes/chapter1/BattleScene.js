@@ -123,9 +123,35 @@ const DEFENSE_PUZZLES = [
     }
 ];
 
+// Configuração padrão (boss ENIAC). Outras cenas podem lançar a batalha com
+// overrides: scene.launch("cap1-batalha", { config: { name, maxHp, ... } }) —
+// é assim que a sentinela de treino reusa esta cena com números mais brandos.
+//
+// IMPORTANTE: SEMPRE lance com um objeto de dados ({ config: {} } no mínimo).
+// O Phaser retém o settings.data do launch anterior quando o launch vem sem
+// dados — um launch "seco" herdaria o config do combate anterior.
+const DEFAULT_CONFIG = {
+    name: "ENIAC",
+    maxHp: BOSS_MAX_HP,
+    returnScene: "cap1-seguranca",
+    defenseEnabled: true,
+    dodgeDuration: DODGE_DURATION,
+    projectileInterval: PROJECTILE_INTERVAL,
+    projectileSpeed: PROJECTILE_SPEED,
+    bossTint: null,
+    analysisLine: "ENIAC — UNIDADE DE CUSTÓDIA, 1946.",
+    // Padrão do bullet hell: "rain" (chuva vertical, ENIAC) ou "sweep"
+    // (varredura lateral em fileiras com brecha, sentinela).
+    dodgePattern: "rain"
+};
+
 export default class BattleScene extends Phaser.Scene {
     constructor() {
         super("cap1-batalha");
+    }
+
+    init(data) {
+        this.config = { ...DEFAULT_CONFIG, ...(data?.config ?? {}) };
     }
 
     preload() {
@@ -134,7 +160,7 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     create() {
-        this.bossHp = BOSS_MAX_HP;
+        this.bossHp = this.config.maxHp;
         this.hp = PLAYER_MAX_HP;
         this.forca = null;
         this.bossAttackIndex = 0;
@@ -143,7 +169,10 @@ export default class BattleScene extends Phaser.Scene {
 
         this.drawBackdrop();
         this.createTextures();
-        this.boss = new EniacBoss(this, BOSS_POS.x, BOSS_POS.y, { scale: BOSS_POS.scale });
+        this.boss = new EniacBoss(this, BOSS_POS.x, BOSS_POS.y, {
+            scale: BOSS_POS.scale,
+            tint: this.config.bossTint
+        });
         this.drawBox();
         this.drawHud();
         this.createSoul();
@@ -167,7 +196,7 @@ export default class BattleScene extends Phaser.Scene {
         });
 
         this.cameras.main.fadeIn(400, 0, 0, 0);
-        this.setBattleStatus("O ENIAC BLOQUEIA O CAMINHO", "#7a8099");
+        this.setBattleStatus(`${this.config.name} :: COMBATE INICIADO`, "#7a8099");
         this.time.delayedCall(700, () => this.playerTurn());
     }
 
@@ -186,10 +215,13 @@ export default class BattleScene extends Phaser.Scene {
             this.soul.body.setVelocity(0, 0);
         }
 
-        // Projéteis que cruzaram a caixa somem na borda de baixo.
+        // Projéteis que cruzaram a caixa somem nas bordas (baixo na chuva,
+        // lados na varredura).
         if (this.projectiles) {
             this.projectiles.getChildren().slice().forEach((proj) => {
-                if (proj.y > BOX.y + BOX.h / 2 - 6) {
+                const outY = proj.y > BOX.y + BOX.h / 2 - 6;
+                const outX = proj.x < BOX.x - BOX.w / 2 - 24 || proj.x > BOX.x + BOX.w / 2 + 24;
+                if (outY || outX) {
                     proj.destroy();
                 }
             });
@@ -227,7 +259,7 @@ export default class BattleScene extends Phaser.Scene {
 
     drawHud() {
         // HP do boss (topo).
-        this.add.text(WIDTH / 2, 36, "ENIAC", {
+        this.add.text(WIDTH / 2, 36, this.config.name, {
             fontFamily: "VCR",
             fontSize: "20px",
             color: "#ff4545"
@@ -273,14 +305,14 @@ export default class BattleScene extends Phaser.Scene {
     updateBossHp() {
         const w = 320;
         const x = WIDTH / 2 - w / 2;
-        const ratio = this.bossHp / BOSS_MAX_HP;
+        const ratio = this.bossHp / this.config.maxHp;
 
         this.bossHpGraphics.clear();
         this.bossHpGraphics.lineStyle(1, 0xff4545, 0.7);
         this.bossHpGraphics.strokeRect(x, 52, w, 12);
         this.bossHpGraphics.fillStyle(0xff4545, 0.9);
         this.bossHpGraphics.fillRect(x + 1, 53, (w - 2) * ratio, 10);
-        this.bossHpText.setText(`${this.bossHp}/${BOSS_MAX_HP}`);
+        this.bossHpText.setText(`${this.bossHp}/${this.config.maxHp}`);
     }
 
     updateHpBar() {
@@ -420,8 +452,8 @@ export default class BattleScene extends Phaser.Scene {
             : "Dica: REPROGRAMAR dobra a força (forca = forca * 2).";
 
         this.analysisText.setText([
-            "ENIAC — UNIDADE DE CUSTÓDIA, 1946.",
-            `INTEGRIDADE: ${this.bossHp}/${BOSS_MAX_HP}`,
+            this.config.analysisLine,
+            `INTEGRIDADE: ${this.bossHp}/${this.config.maxHp}`,
             forcaLine,
             hintLine
         ].join("\n")).setVisible(true);
@@ -434,7 +466,9 @@ export default class BattleScene extends Phaser.Scene {
 
     // --- Turno do ENIAC: bullet hell OU sequência de defesa com tempo ---
     bossTurn() {
-        const useDodge = this.bossAttackIndex === 0 || Math.random() < 0.5;
+        const useDodge = !this.config.defenseEnabled
+            || this.bossAttackIndex === 0
+            || Math.random() < 0.5;
         this.bossAttackIndex += 1;
 
         if (useDodge) {
@@ -445,7 +479,7 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     dodgeTurn() {
-        this.setBattleStatus("> TURNO DO ENIAC — DESVIE COM WASD!", "#ff4545");
+        this.setBattleStatus(`> TURNO DE ${this.config.name} — DESVIE COM WASD!`, "#ff4545");
         this.soul.body.reset(BOX.x, BOX.y);
         this.soul.setVisible(true);
         this.dodgeActive = true;
@@ -455,11 +489,11 @@ export default class BattleScene extends Phaser.Scene {
                 return;
             }
             this.spawnTimer = this.time.addEvent({
-                delay: PROJECTILE_INTERVAL,
+                delay: this.config.projectileInterval,
                 loop: true,
-                callback: () => this.spawnProjectile()
+                callback: () => this.spawnAttack()
             });
-            this.dodgeTimer = this.time.delayedCall(DODGE_DURATION, () => this.endDodge());
+            this.dodgeTimer = this.time.delayedCall(this.config.dodgeDuration, () => this.endDodge());
         });
     }
 
@@ -480,6 +514,39 @@ export default class BattleScene extends Phaser.Scene {
         this.soul?.setVisible(false);
     }
 
+    spawnAttack() {
+        if (this.config.dodgePattern === "sweep") {
+            this.spawnSweepWave();
+        } else {
+            this.spawnProjectile();
+        }
+    }
+
+    // Varredura (sentinela): uma fileira vertical de fragmentos entra por um dos
+    // lados da caixa (alternando) e cruza na horizontal; a brecha de 2 fileiras
+    // é a passagem — o desvio é vertical, o oposto da chuva do ENIAC.
+    spawnSweepWave() {
+        const fromLeft = (this.sweepCount ?? 0) % 2 === 0;
+        this.sweepCount = (this.sweepCount ?? 0) + 1;
+
+        const spacing = 36;
+        const top = BOX.y - BOX.h / 2 + 16;
+        const rows = Math.floor((BOX.h - 32) / spacing) + 1;
+        const gapStart = Phaser.Math.Between(0, rows - 2);
+        const speed = Phaser.Math.Between(this.config.projectileSpeed.min, this.config.projectileSpeed.max);
+        const x = fromLeft ? BOX.x - BOX.w / 2 + 10 : BOX.x + BOX.w / 2 - 10;
+
+        for (let row = 0; row < rows; row += 1) {
+            if (row === gapStart || row === gapStart + 1) {
+                continue;
+            }
+            const proj = this.projectiles.create(x, top + row * spacing, "eniac-bit");
+            proj.setDepth(28);
+            proj.body.setVelocity(fromLeft ? speed : -speed, 0);
+            this.tweens.add({ targets: proj, angle: 360, duration: 900, repeat: -1 });
+        }
+    }
+
     spawnProjectile() {
         const left = BOX.x - BOX.w / 2 + 14;
         const right = BOX.x + BOX.w / 2 - 14;
@@ -496,7 +563,7 @@ export default class BattleScene extends Phaser.Scene {
         proj.setDepth(28);
         proj.body.setVelocity(
             Phaser.Math.Between(-PROJECTILE_DRIFT, PROJECTILE_DRIFT),
-            Phaser.Math.Between(PROJECTILE_SPEED.min, PROJECTILE_SPEED.max)
+            Phaser.Math.Between(this.config.projectileSpeed.min, this.config.projectileSpeed.max)
         );
         this.tweens.add({ targets: proj, angle: 360, duration: 900, repeat: -1 });
     }
@@ -525,7 +592,7 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     defenseTurn() {
-        this.setBattleStatus("> O ENIAC LANÇA UMA SEQUÊNCIA HOSTIL — DEFENDA-SE!", "#ff4545");
+        this.setBattleStatus("> SEQUÊNCIA HOSTIL A CAMINHO — DEFENDA-SE!", "#ff4545");
         const puzzle = Phaser.Utils.Array.GetRandom(DEFENSE_PUZZLES);
 
         this.boss.attackAnim(() => {
@@ -577,7 +644,7 @@ export default class BattleScene extends Phaser.Scene {
 
         this.time.delayedCall(2200, () => {
             this.hp = PLAYER_MAX_HP;
-            this.bossHp = BOSS_MAX_HP;
+            this.bossHp = this.config.maxHp;
             this.forca = null;
             this.bossAttackIndex = 0;
             this.invulnUntil = 0;
@@ -594,11 +661,11 @@ export default class BattleScene extends Phaser.Scene {
         this.stopDodge();
         this.boss.powerDown();
         this.cameras.main.shake(600, 0.006);
-        this.setBattleStatus("> ENIAC DESLIGADO", "#51e36b");
+        this.setBattleStatus(`> ${this.config.name} OFFLINE`, "#51e36b");
 
         this.time.delayedCall(1800, () => {
             this.scene.stop();
-            this.scene.resume("cap1-seguranca", { victory: true });
+            this.scene.resume(this.config.returnScene, { victory: true });
         });
     }
 }
