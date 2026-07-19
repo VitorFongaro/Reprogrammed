@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import EniacBoss from "../../characters/EniacBoss";
 import BattleMenu from "../../ui/BattleMenu";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
+import projetilUrl from "../../assets/sprites/projetil/projetil.png";
 
 // Tela de COMBATE POR TURNOS contra o ENIAC (estilo Undertale), aberta pela
 // SalaSegurancaScene via scene.launch + pause. Layout: boss no topo (com barra
@@ -157,6 +158,9 @@ export default class BattleScene extends Phaser.Scene {
     preload() {
         EniacBoss.preload(this);
         BlockProgrammingConsole.preload(this);
+        if (!this.textures.exists("projetil")) {
+            this.load.spritesheet("projetil", projetilUrl, { frameWidth: 32, frameHeight: 32 });
+        }
     }
 
     create() {
@@ -351,14 +355,14 @@ export default class BattleScene extends Phaser.Scene {
             g.destroy();
         }
 
-        if (!this.textures.exists("eniac-bit")) {
-            const g = this.add.graphics();
-            g.fillStyle(0xff4545, 1);
-            g.fillRect(3, 3, 8, 8);
-            g.lineStyle(2, 0x7a1020, 1);
-            g.strokeRect(3, 3, 8, 8);
-            g.generateTexture("eniac-bit", 14, 14);
-            g.destroy();
+        // Projétil animado do dev (assets/sprites/projetil, 8 quadros 32x32).
+        if (!this.anims.exists("projetil-anim")) {
+            this.anims.create({
+                key: "projetil-anim",
+                frames: this.anims.generateFrameNumbers("projetil", { start: 0, end: 7 }),
+                frameRate: 12,
+                repeat: -1
+            });
         }
     }
 
@@ -540,10 +544,11 @@ export default class BattleScene extends Phaser.Scene {
             if (row === gapStart || row === gapStart + 1) {
                 continue;
             }
-            const proj = this.projectiles.create(x, top + row * spacing, "eniac-bit");
-            proj.setDepth(28);
+            const proj = this.projectiles.create(x, top + row * spacing, "projetil");
+            proj.setDepth(28).setScale(0.75);
+            proj.play("projetil-anim");
+            proj.body.setSize(20, 20, true);
             proj.body.setVelocity(fromLeft ? speed : -speed, 0);
-            this.tweens.add({ targets: proj, angle: 360, duration: 900, repeat: -1 });
         }
     }
 
@@ -558,14 +563,15 @@ export default class BattleScene extends Phaser.Scene {
         const proj = this.projectiles.create(
             Phaser.Math.Clamp(px, left, right),
             BOX.y - BOX.h / 2 + 12,
-            "eniac-bit"
+            "projetil"
         );
-        proj.setDepth(28);
+        proj.setDepth(28).setScale(0.75);
+        proj.play("projetil-anim");
+        proj.body.setSize(20, 20, true);
         proj.body.setVelocity(
             Phaser.Math.Between(-PROJECTILE_DRIFT, PROJECTILE_DRIFT),
             Phaser.Math.Between(this.config.projectileSpeed.min, this.config.projectileSpeed.max)
         );
-        this.tweens.add({ targets: proj, angle: 360, duration: 900, repeat: -1 });
     }
 
     handleProjectileHit(proj) {

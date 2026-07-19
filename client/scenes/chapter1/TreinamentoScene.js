@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
+import armaUrl from "../../assets/sprites/arma/arma.png";
+import projetilUrl from "../../assets/sprites/projetil/projetil.png";
 
 // Capítulo 1, sala de treinamento (sala 4 do fluxo do capítulo): mecânicas de
 // DESVIAR e DESATIVAR. Uma barreira de laser corta a sala num ciclo (atravesse
@@ -91,6 +93,12 @@ export default class TreinamentoScene extends BaseRoomScene {
     preload() {
         super.preload();
         BlockProgrammingConsole.preload(this);
+        if (!this.textures.exists("arma")) {
+            this.load.image("arma", armaUrl);
+        }
+        if (!this.textures.exists("projetil")) {
+            this.load.spritesheet("projetil", projetilUrl, { frameWidth: 32, frameHeight: 32 });
+        }
     }
 
     onRoomCreate() {
@@ -101,7 +109,7 @@ export default class TreinamentoScene extends BaseRoomScene {
         this.laserActive = false;  // feixe ligado neste instante.
         this.turretsOn = true;
 
-        this.createBulletTexture();
+        this.createProjectileAnim();
         this.drawHpBar();
         this.createLaser();
         this.createTurrets();
@@ -238,23 +246,25 @@ export default class TreinamentoScene extends BaseRoomScene {
     }
 
     // --- Torretas ---
-    createBulletTexture() {
-        if (this.textures.exists("eniac-bit")) {
-            return;
+    createProjectileAnim() {
+        if (!this.anims.exists("projetil-anim")) {
+            this.anims.create({
+                key: "projetil-anim",
+                frames: this.anims.generateFrameNumbers("projetil", { start: 0, end: 7 }),
+                frameRate: 12,
+                repeat: -1
+            });
         }
-        const g = this.add.graphics();
-        g.fillStyle(0xff4545, 1);
-        g.fillRect(3, 3, 8, 8);
-        g.lineStyle(2, 0x7a1020, 1);
-        g.strokeRect(3, 3, 8, 8);
-        g.generateTexture("eniac-bit", 14, 14);
-        g.destroy();
     }
 
     createTurrets() {
-        const turretY = this.bounds.y + 10;
-        this.turretGraphics = this.add.graphics().setDepth(700);
-        this.drawTurrets();
+        const turretY = this.bounds.y + 16;
+
+        // Sprite da arma (assets/sprites/arma) aponta para baixo por padrão;
+        // no tiro, gira para mirar na Artemis.
+        this.turretSprites = TURRETS_X.map((tx) =>
+            this.add.image(tx, turretY, "arma").setScale(2).setDepth(700)
+        );
 
         this.bullets = this.physics.add.group();
         this.physics.add.overlap(this.player.sprite, this.bullets, (_, bullet) => {
@@ -265,27 +275,11 @@ export default class TreinamentoScene extends BaseRoomScene {
         this.fireTimer = this.time.addEvent({
             delay: FIRE_INTERVAL,
             loop: true,
-            callback: () => this.fireTurrets(turretY)
+            callback: () => this.fireTurrets()
         });
     }
 
-    drawTurrets() {
-        const turretY = this.bounds.y + 10;
-        const g = this.turretGraphics;
-        const color = this.turretsOn ? 0xff4545 : 0x3a3f55;
-
-        g.clear();
-        TURRETS_X.forEach((tx) => {
-            g.fillStyle(0x14161f, 1);
-            g.fillRect(tx - 18, turretY - 10, 36, 24);
-            g.lineStyle(2, color, 1);
-            g.strokeRect(tx - 18, turretY - 10, 36, 24);
-            g.fillStyle(color, 1);
-            g.fillRect(tx - 4, turretY + 14, 8, 12);   // cano.
-        });
-    }
-
-    fireTurrets(turretY) {
+    fireTurrets() {
         if (!this.turretsOn || !this.player.enabled || this.downed) {
             return;
         }
@@ -293,12 +287,22 @@ export default class TreinamentoScene extends BaseRoomScene {
             return;
         }
 
-        TURRETS_X.forEach((tx) => {
-            const bullet = this.bullets.create(tx, turretY + 28, "eniac-bit");
+        this.turretSprites.forEach((turret) => {
+            const angle = Phaser.Math.Angle.Between(
+                turret.x, turret.y, this.player.sprite.x, this.player.sprite.y
+            );
+            // O cano aponta para baixo (90°); gira a diferença para mirar.
+            turret.setRotation(angle - Math.PI / 2);
+
+            const bullet = this.bullets.create(
+                turret.x + Math.cos(angle) * 26,
+                turret.y + Math.sin(angle) * 26,
+                "projetil"
+            );
             bullet.setDepth(750);
-            const angle = Phaser.Math.Angle.Between(tx, turretY, this.player.sprite.x, this.player.sprite.y);
+            bullet.play("projetil-anim");
+            bullet.body.setSize(20, 20, true);
             bullet.body.setVelocity(Math.cos(angle) * BULLET_SPEED, Math.sin(angle) * BULLET_SPEED);
-            this.tweens.add({ targets: bullet, angle: 360, duration: 900, repeat: -1 });
         });
     }
 
@@ -307,7 +311,11 @@ export default class TreinamentoScene extends BaseRoomScene {
         this.fireTimer?.remove();
         this.fireTimer = null;
         this.bullets?.clear(true, true);
-        this.drawTurrets();
+        // Armas apagadas, de volta à posição de descanso.
+        this.turretSprites.forEach((turret) => {
+            turret.setTint(0x555a66);
+            turret.setRotation(0);
+        });
     }
 
     // --- Painéis de desativação ---
