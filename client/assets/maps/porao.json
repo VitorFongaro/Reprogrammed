@@ -11,7 +11,7 @@
   "version": "1.10",
   "type": "map",
   "nextlayerid": 4,
-  "nextobjectid": 30,
+  "nextobjectid": 60,
   "tilesets": [
     {
       "columns": 0,
@@ -20,21 +20,27 @@
       "margin": 0,
       "name": "props",
       "spacing": 0,
-      "tilecount": 11,
-      "tilewidth": 220,
-      "tileheight": 150,
+      "tilecount": 17,
+      "tilewidth": 92,
+      "tileheight": 136,
       "tiles": [
-        { "id": 0, "image": "../images/porao/props/caixote.png", "imagewidth": 56, "imageheight": 52 },
-        { "id": 1, "image": "../images/porao/props/caixote_grande.png", "imagewidth": 88, "imageheight": 80 },
-        { "id": 2, "image": "../images/porao/props/caixote_lona.png", "imagewidth": 72, "imageheight": 86 },
-        { "id": 3, "image": "../images/porao/props/barril.png", "imagewidth": 40, "imageheight": 58 },
-        { "id": 4, "image": "../images/porao/props/prateleira.png", "imagewidth": 220, "imageheight": 150 },
-        { "id": 5, "image": "../images/porao/props/mesa.png", "imagewidth": 150, "imageheight": 84 },
-        { "id": 6, "image": "../images/porao/props/banco.png", "imagewidth": 28, "imageheight": 28 },
-        { "id": 7, "image": "../images/porao/props/armario.png", "imagewidth": 56, "imageheight": 134 },
-        { "id": 8, "image": "../images/porao/props/ventilador.png", "imagewidth": 56, "imageheight": 56 },
-        { "id": 9, "image": "../images/porao/props/dreno.png", "imagewidth": 44, "imageheight": 44 },
-        { "id": 10, "image": "../images/porao/props/palete.png", "imagewidth": 72, "imageheight": 48 }
+        { "id": 0, "image": "../images/porao/props/prateleira_vazia.png", "imagewidth": 92, "imageheight": 110 },
+        { "id": 1, "image": "../images/porao/props/prateleira_cheia.png", "imagewidth": 92, "imageheight": 136 },
+        { "id": 2, "image": "../images/porao/props/caixote_amarelo.png", "imagewidth": 48, "imageheight": 60 },
+        { "id": 3, "image": "../images/porao/props/caixote_aberto.png", "imagewidth": 48, "imageheight": 44 },
+        { "id": 4, "image": "../images/porao/props/caixote_alto.png", "imagewidth": 36, "imageheight": 62 },
+        { "id": 5, "image": "../images/porao/props/barril_azul.png", "imagewidth": 36, "imageheight": 58 },
+        { "id": 6, "image": "../images/porao/props/mesa_madeira.png", "imagewidth": 60, "imageheight": 74 },
+        { "id": 7, "image": "../images/porao/props/cadeira.png", "imagewidth": 32, "imageheight": 72 },
+        { "id": 8, "image": "../images/porao/props/papeis.png", "imagewidth": 30, "imageheight": 38 },
+        { "id": 9, "image": "../images/porao/props/bancada.png", "imagewidth": 64, "imageheight": 60 },
+        { "id": 10, "image": "../images/porao/props/armario_fechado.png", "imagewidth": 40, "imageheight": 116 },
+        { "id": 11, "image": "../images/porao/props/armario_aberto.png", "imagewidth": 40, "imageheight": 116 },
+        { "id": 12, "image": "../images/porao/props/cilindro_grande.png", "imagewidth": 32, "imageheight": 64 },
+        { "id": 13, "image": "../images/porao/props/cilindro_pequeno.png", "imagewidth": 32, "imageheight": 52 },
+        { "id": 14, "image": "../images/porao/props/prancheta.png", "imagewidth": 64, "imageheight": 56 },
+        { "id": 15, "image": "../images/porao/props/placa_perigo.png", "imagewidth": 50, "imageheight": 44 },
+        { "id": 16, "image": "../images/porao/props/placa_radiacao.png", "imagewidth": 50, "imageheight": 44 }
       ]
     }
   ],
@@ -59,20 +65,33 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 1, "gid": 5, "name": "prateleira-esq", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 246, "width": 220, "height": 150 },
-        { "id": 2, "gid": 5, "name": "prateleira-dir", "rotation": 0, "type": "", "visible": true, "x": 780, "y": 246, "width": 220, "height": 150 },
-        { "id": 3, "gid": 3, "name": "caixote-lona", "rotation": 0, "type": "", "visible": true, "x": 312, "y": 236, "width": 72, "height": 86 },
-        { "id": 4, "gid": 4, "name": "barril-esq", "rotation": 0, "type": "", "visible": true, "x": 336, "y": 308, "width": 40, "height": 58 },
-        { "id": 5, "gid": 2, "name": "pilha-grande", "rotation": 0, "type": "", "visible": true, "x": 1044, "y": 440, "width": 88, "height": 80 },
-        { "id": 6, "gid": 1, "name": "pilha-pequeno", "rotation": 0, "type": "", "visible": true, "x": 1130, "y": 440, "width": 56, "height": 52 },
-        { "id": 7, "gid": 4, "name": "barril-dir-1", "rotation": 0, "type": "", "visible": true, "x": 1060, "y": 358, "width": 40, "height": 58 },
-        { "id": 8, "gid": 4, "name": "barril-dir-2", "rotation": 0, "type": "", "visible": true, "x": 1100, "y": 370, "width": 40, "height": 58 },
-        { "id": 9, "gid": 2, "name": "caixote-canto", "rotation": 0, "type": "", "visible": true, "x": 1150, "y": 580, "width": 88, "height": 80 },
-        { "id": 10, "gid": 1, "name": "caixote-central", "rotation": 0, "type": "", "visible": true, "x": 440, "y": 542, "width": 56, "height": 52 },
-        { "id": 11, "gid": 8, "name": "armario", "rotation": 0, "type": "", "visible": true, "x": 1188, "y": 314, "width": 56, "height": 134 },
-        { "id": 12, "gid": 6, "name": "mesa", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 574, "width": 150, "height": 84 },
-        { "id": 13, "gid": 7, "name": "banco", "rotation": 0, "type": "", "visible": true, "x": 250, "y": 556, "width": 28, "height": 28 },
-        { "id": 14, "gid": 10, "name": "dreno", "rotation": 0, "type": "", "visible": true, "x": 620, "y": 494, "width": 44, "height": 44 }
+        { "id": 1, "gid": 15, "name": "prancheta", "rotation": 0, "type": "", "visible": true, "x": 80, "y": 118, "width": 64, "height": 56 },
+        { "id": 2, "gid": 16, "name": "placa-perigo", "rotation": 0, "type": "", "visible": true, "x": 950, "y": 70, "width": 50, "height": 44 },
+        { "id": 3, "gid": 17, "name": "placa-radiacao", "rotation": 0, "type": "", "visible": true, "x": 1190, "y": 70, "width": 50, "height": 44 },
+
+        { "id": 4, "gid": 10, "name": "bancada", "rotation": 0, "type": "", "visible": true, "x": 880, "y": 200, "width": 64, "height": 60 },
+        { "id": 5, "gid": 11, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 1100, "y": 215, "width": 40, "height": 116 },
+        { "id": 6, "gid": 12, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 1145, "y": 215, "width": 40, "height": 116 },
+        { "id": 7, "gid": 13, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 1185, "y": 210, "width": 32, "height": 64 },
+        { "id": 8, "gid": 14, "name": "cilindro-pequeno", "rotation": 0, "type": "", "visible": true, "x": 1214, "y": 206, "width": 32, "height": 52 },
+
+        { "id": 9, "gid": 1, "name": "prateleira-vazia-1", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 390, "width": 92, "height": 110 },
+        { "id": 10, "gid": 1, "name": "prateleira-vazia-2", "rotation": 0, "type": "", "visible": true, "x": 185, "y": 390, "width": 92, "height": 110 },
+        { "id": 11, "gid": 2, "name": "prateleira-cheia-1", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 620, "width": 92, "height": 136 },
+        { "id": 12, "gid": 2, "name": "prateleira-cheia-2", "rotation": 0, "type": "", "visible": true, "x": 185, "y": 620, "width": 92, "height": 136 },
+
+        { "id": 13, "gid": 5, "name": "caixote-alto", "rotation": 0, "type": "", "visible": true, "x": 606, "y": 440, "width": 36, "height": 62 },
+        { "id": 14, "gid": 3, "name": "caixote-1", "rotation": 0, "type": "", "visible": true, "x": 646, "y": 440, "width": 48, "height": 60 },
+        { "id": 15, "gid": 3, "name": "caixote-2", "rotation": 0, "type": "", "visible": true, "x": 698, "y": 440, "width": 48, "height": 60 },
+        { "id": 16, "gid": 4, "name": "caixote-aberto", "rotation": 0, "type": "", "visible": true, "x": 750, "y": 440, "width": 48, "height": 44 },
+
+        { "id": 17, "gid": 6, "name": "barril-1", "rotation": 0, "type": "", "visible": true, "x": 450, "y": 500, "width": 36, "height": 58 },
+        { "id": 18, "gid": 6, "name": "barril-2", "rotation": 0, "type": "", "visible": true, "x": 590, "y": 612, "width": 36, "height": 58 },
+        { "id": 19, "gid": 6, "name": "barril-3", "rotation": 0, "type": "", "visible": true, "x": 925, "y": 470, "width": 36, "height": 58 },
+
+        { "id": 20, "gid": 8, "name": "cadeira", "rotation": 0, "type": "", "visible": true, "x": 1070, "y": 600, "width": 32, "height": 72 },
+        { "id": 21, "gid": 7, "name": "mesa", "rotation": 0, "type": "", "visible": true, "x": 1110, "y": 600, "width": 60, "height": 74 },
+        { "id": 22, "gid": 9, "name": "papeis", "rotation": 0, "type": "", "visible": true, "x": 1185, "y": 625, "width": 30, "height": 38 }
       ]
     },
     {
@@ -85,17 +104,28 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 20, "name": "prateleira-esq", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 96, "width": 220, "height": 150 },
-        { "id": 21, "name": "prateleira-dir", "rotation": 0, "type": "", "visible": true, "x": 780, "y": 96, "width": 220, "height": 150 },
-        { "id": 22, "name": "caixote-lona", "rotation": 0, "type": "", "visible": true, "x": 312, "y": 150, "width": 72, "height": 86 },
-        { "id": 23, "name": "barril-esq", "rotation": 0, "type": "", "visible": true, "x": 336, "y": 250, "width": 40, "height": 58 },
-        { "id": 24, "name": "pilha", "rotation": 0, "type": "", "visible": true, "x": 1044, "y": 360, "width": 142, "height": 108 },
-        { "id": 25, "name": "barris-dir", "rotation": 0, "type": "", "visible": true, "x": 1060, "y": 300, "width": 80, "height": 70 },
-        { "id": 26, "name": "caixote-canto", "rotation": 0, "type": "", "visible": true, "x": 1150, "y": 500, "width": 88, "height": 80 },
-        { "id": 27, "name": "caixote-central", "rotation": 0, "type": "", "visible": true, "x": 440, "y": 490, "width": 56, "height": 52 },
-        { "id": 28, "name": "armario", "rotation": 0, "type": "", "visible": true, "x": 1188, "y": 180, "width": 56, "height": 134 },
-        { "id": 29, "name": "mesa", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 490, "width": 150, "height": 84 },
-        { "id": 30, "name": "banco", "rotation": 0, "type": "", "visible": true, "x": 250, "y": 528, "width": 28, "height": 28 }
+        { "id": 40, "name": "bancada", "rotation": 0, "type": "", "visible": true, "x": 880, "y": 165, "width": 64, "height": 35 },
+        { "id": 41, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 1100, "y": 175, "width": 40, "height": 40 },
+        { "id": 42, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 1145, "y": 175, "width": 40, "height": 40 },
+        { "id": 43, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 1185, "y": 180, "width": 32, "height": 30 },
+        { "id": 44, "name": "cilindro-pequeno", "rotation": 0, "type": "", "visible": true, "x": 1214, "y": 180, "width": 32, "height": 26 },
+
+        { "id": 45, "name": "prateleira-vazia-1", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 340, "width": 92, "height": 50 },
+        { "id": 46, "name": "prateleira-vazia-2", "rotation": 0, "type": "", "visible": true, "x": 185, "y": 340, "width": 92, "height": 50 },
+        { "id": 47, "name": "prateleira-cheia-1", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 560, "width": 92, "height": 60 },
+        { "id": 48, "name": "prateleira-cheia-2", "rotation": 0, "type": "", "visible": true, "x": 185, "y": 560, "width": 92, "height": 60 },
+
+        { "id": 49, "name": "caixote-alto", "rotation": 0, "type": "", "visible": true, "x": 606, "y": 400, "width": 36, "height": 40 },
+        { "id": 50, "name": "caixote-1", "rotation": 0, "type": "", "visible": true, "x": 646, "y": 400, "width": 48, "height": 40 },
+        { "id": 51, "name": "caixote-2", "rotation": 0, "type": "", "visible": true, "x": 698, "y": 400, "width": 48, "height": 40 },
+        { "id": 52, "name": "caixote-aberto", "rotation": 0, "type": "", "visible": true, "x": 750, "y": 410, "width": 48, "height": 30 },
+
+        { "id": 53, "name": "barril-1", "rotation": 0, "type": "", "visible": true, "x": 450, "y": 465, "width": 36, "height": 35 },
+        { "id": 54, "name": "barril-2", "rotation": 0, "type": "", "visible": true, "x": 590, "y": 577, "width": 36, "height": 35 },
+        { "id": 55, "name": "barril-3", "rotation": 0, "type": "", "visible": true, "x": 925, "y": 435, "width": 36, "height": 35 },
+
+        { "id": 56, "name": "cadeira", "rotation": 0, "type": "", "visible": true, "x": 1070, "y": 570, "width": 32, "height": 30 },
+        { "id": 57, "name": "mesa", "rotation": 0, "type": "", "visible": true, "x": 1110, "y": 555, "width": 60, "height": 45 }
       ]
     }
   ]
