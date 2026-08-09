@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import GameScene from './scenes/GameScene';
 import OptionsScene from './scenes/OptionsScene';
+import PauseMenuScene from './scenes/PauseMenuScene';
 import IntroScene from './scenes/IntroScene';
 import SpritTestScene from './scenes/SpritTestScene';
 import PoraoScene from './scenes/chapter1/PoraoScene';
@@ -42,7 +43,9 @@ const config = {
         SalaSegurancaScene,
         BattleScene,
         CorredorScene,
-        SaguaoScene
+        SaguaoScene,
+        // Overlays por último: renderizam por cima das salas (ver bringToTop).
+        PauseMenuScene
     ]
 };
 

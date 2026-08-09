@@ -45,7 +45,10 @@ export default class OptionsScene extends Phaser.Scene {
         this.load.spritesheet("key-extras", keyboardExtras, { frameWidth: 32, frameHeight: 16 });
     }
 
-    create() {
+    create(data) {
+        // `returnTo` é a cena que reabre no VOLTAR (o menu de pausa, quando as
+        // opções são abertas durante o jogo). Sem ele, volta ao menu principal.
+        this.returnTo = data?.returnTo ?? null;
         this.activeTab = "Tela";
         this.tabButtons = [];
         this.settings = {
@@ -53,6 +56,10 @@ export default class OptionsScene extends Phaser.Scene {
             sfx_volume: 80
         };
         this.settingsMessage = "";
+
+        // Aberta por cima de uma sala pausada (via pausa), esta cena precisa
+        // renderizar acima dela — as salas vêm depois na lista do main.js.
+        this.scene.bringToTop();
 
         this.drawBackground();
         this.drawHeader();
@@ -128,7 +135,19 @@ export default class OptionsScene extends Phaser.Scene {
         hitArea.setInteractive();
         hitArea.on("pointerover", () => backBox.setFillStyle(0x2a2a2a, 1));
         hitArea.on("pointerout", () => backBox.setFillStyle(0x0b0b0b, 0.92));
-        hitArea.on("pointerdown", () => this.scene.start("game-scene"));
+        hitArea.on("pointerdown", () => this.goBack());
+    }
+
+    goBack() {
+        // Aberta pelo menu de pausa (que ficou dormindo com a sala pausada por
+        // baixo): acorda a pausa em vez de largar o jogador no menu principal.
+        if (this.returnTo && this.scene.isSleeping(this.returnTo)) {
+            this.scene.stop();
+            this.scene.wake(this.returnTo);
+            return;
+        }
+
+        this.scene.start("game-scene");
     }
 
     drawTabs() {

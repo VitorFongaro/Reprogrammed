@@ -63,11 +63,15 @@ export default class SentinelaScene extends BaseRoomScene {
         this.createChallengePrompt();
 
         // A BattleScene devolve o controle via scene.resume(..., { victory: true }).
-        this.events.once("resume", (_scene, data) => {
+        // Precisa ser `on` (não `once`): o menu de pausa também retoma a sala,
+        // e um `once` seria gasto por ele antes do fim do combate.
+        const onResume = (_scene, data) => {
             if (data?.victory) {
                 this.handleVictory();
             }
-        });
+        };
+        this.events.on("resume", onResume);
+        this.events.once("shutdown", () => this.events.off("resume", onResume));
 
         this.playDialogue(ENTRY_SCRIPT);
     }

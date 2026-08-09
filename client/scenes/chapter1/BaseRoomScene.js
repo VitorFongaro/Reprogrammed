@@ -84,7 +84,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         }
 
         this.input.keyboard.on("keydown-E", () => this.tryInteract());
-        this.input.keyboard.on("keydown", (event) => this.handleReprogramKey(event));
+        this.input.keyboard.on("keydown", (event) => this.handleRoomKey(event));
 
         // Restaura a dilatação temporal se a sala fechar/reiniciar com o modo
         // ativo: anims é global e Clock/tweens persistem num scene.restart.
@@ -251,14 +251,25 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.physics.world.timeScale = 1 / factor;
     }
 
-    handleReprogramKey(event) {
-        if (!this.reprogramMode) {
-            if (event.code === "KeyR" && this.canEnterReprogramMode()) {
-                this.enterReprogramMode();
-            }
+    // Teclas gerais da sala. No modo remoto tudo vai para handleReprogramKey
+    // (lá o ESC cancela o modo); fora dele, ESC abre a pausa e [R] entra no modo.
+    handleRoomKey(event) {
+        if (this.reprogramMode) {
+            this.handleReprogramKey(event);
             return;
         }
 
+        if (event.code === "Escape") {
+            this.openPauseMenu();
+            return;
+        }
+
+        if (event.code === "KeyR" && this.canEnterReprogramMode()) {
+            this.enterReprogramMode();
+        }
+    }
+
+    handleReprogramKey(event) {
         // WASD segue livre para o movimento; as SETAS alternam o alvo.
         switch (event.code) {
             case "ArrowLeft":
@@ -416,6 +427,25 @@ export default class BaseRoomScene extends Phaser.Scene {
             this.reprogramContainer.add(label);
             this.reprogramLabels.push(label);
         });
+    }
+
+    // --- Menu de pausa (ESC) ---
+    // Só andando: diálogo, console de puzzle e transição de sala desabilitam o
+    // controle da Artemis, e em combate a sala já está pausada (o teclado nem
+    // chega aqui). O modo remoto é tratado antes, em handleRoomKey.
+    canPause() {
+        return Boolean(this.player?.enabled) && !this.transitioning;
+    }
+
+    openPauseMenu() {
+        if (!this.canPause()) {
+            return;
+        }
+
+        // Data explícito: o Phaser retém o data do launch anterior quando o
+        // launch vem sem dados (mesmo cuidado do launch da BattleScene).
+        this.scene.launch("pause-menu", { roomScene: this.scene.key });
+        this.scene.pause();
     }
 
     // --- Diálogo (desabilita o jogador enquanto fala) ---

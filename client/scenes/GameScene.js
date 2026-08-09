@@ -286,7 +286,9 @@ export default class GameScene extends Phaser.Scene {
         if (card.item.id === "options") {
             this.statusText.setText("ABRINDO CONFIGURAÇÕES");
             this.time.delayedCall(350, () => {
-                this.scene.start("options-scene");
+                // Data explícito: sem ele o Phaser retém o data do start
+                // anterior e o VOLTAR tentaria acordar o menu de pausa.
+                this.scene.start("options-scene", { returnTo: null });
             });
             return;
         }
