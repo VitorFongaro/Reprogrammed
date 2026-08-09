@@ -1,5 +1,6 @@
 import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
+import SaveComputer from "../../objects/SaveComputer";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import poraoBg from "../../assets/images/porao/porao_bg.png";
 import poraoMap from "../../assets/maps/porao.json";
@@ -16,6 +17,10 @@ const GENERATOR = { x: 1046, y: 75, w: 92, h: 110 };
 
 // Porta dupla desenhada na arte (parede do fundo, centro).
 const DOOR = { x: 656, y: 98 };
+
+// Estação de salvamento, ao lado da mesa de trabalho (canto inferior esquerdo).
+// `y` é a base do móvel, para o y-sort casar com os outros objetos da sala.
+const SAVE_STATION = { x: 310, y: 572 };
 
 const GENERATOR_PUZZLE = {
     title: "GERADOR // NÚCLEO",
@@ -71,6 +76,7 @@ export default class PoraoScene extends BaseRoomScene {
     preload() {
         super.preload();
         BlockProgrammingConsole.preload(this);
+        SaveComputer.preload(this);
     }
 
     drawBackdrop() {
@@ -96,6 +102,13 @@ export default class PoraoScene extends BaseRoomScene {
             puzzle: GENERATOR_PUZZLE,
             introScript: PUZZLE_INTRO_SCRIPT,
             onSolved: () => this.handleGeneratorSolved()
+        });
+
+        // Ponto de salvamento (só o design por enquanto: sem `onSave`, a tela
+        // avisa que o sistema de arquivo ainda não está conectado).
+        this.saveStation = new SaveComputer(this, {
+            x: SAVE_STATION.x,
+            y: SAVE_STATION.y
         });
 
         this.playDialogue(ENTRY_SCRIPT);
