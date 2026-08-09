@@ -42,6 +42,8 @@ local LIGHT_POOLS = {
 
 local WALL_SHADOW_H = 16   -- sombra projetada pela parede do fundo.
 
+-- O piso já teve manchas de umidade/óleo espalhadas por aqui; foram removidas
+-- porque, sem objeto nenhum em cima, liam como sombras soltas no chão.
 math.randomseed(7)
 
 local function clamp(v, lo, hi)
@@ -114,23 +116,7 @@ for y = FLOOR.y, FLOOR.y + WALL_SHADOW_H do
     end
 end
 
--- 3) Manchas de umidade/óleo (quebram a uniformidade do piso novo).
-for _ = 1, 9 do
-    local cx = math.random(FLOOR.x + 60, FLOOR.x + FLOOR.w - 60)
-    local cy = math.random(FLOOR.y + 60, FLOOR.y + FLOOR.h - 60)
-    local r = math.random(16, 44)
-    local depth = 0.8 + math.random() * 0.1
-    for y = -r, r do
-        for x = -r, r do
-            local d = math.sqrt(x * x + y * y) / r
-            if d <= 1 and (d < 0.75 or math.random() > (d - 0.75) * 4) then
-                light(cx + x, cy + y, depth + (1 - depth) * d)
-            end
-        end
-    end
-end
-
--- 4) Poças de luz das luminárias.
+-- 3) Poças de luz das luminárias.
 for _, pool in ipairs(LIGHT_POOLS) do
     for y = -pool.ry, pool.ry do
         for x = -pool.rx, pool.rx do
@@ -142,7 +128,7 @@ for _, pool in ipairs(LIGHT_POOLS) do
     end
 end
 
--- 5) Vinheta (mesma curva do fundo original, só sobre o piso repintado).
+-- 4) Vinheta (mesma curva do fundo original, só sobre o piso repintado).
 local vcx, vcy = base.width / 2, base.height * 0.42
 local maxd = math.sqrt(vcx * vcx + vcy * vcy)
 for y = FLOOR.y, FLOOR.y + FLOOR.h - 1 do

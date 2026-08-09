@@ -73,8 +73,8 @@
         { "id": 4, "gid": 18, "name": "gerador", "rotation": 0, "type": "", "visible": true, "x": 1000, "y": 210, "width": 96, "height": 90 },
         { "id": 5, "gid": 11, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 1100, "y": 215, "width": 40, "height": 116 },
         { "id": 6, "gid": 12, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 1145, "y": 215, "width": 40, "height": 116 },
-        { "id": 7, "gid": 13, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 1185, "y": 210, "width": 32, "height": 64 },
-        { "id": 8, "gid": 14, "name": "cilindro-pequeno", "rotation": 0, "type": "", "visible": true, "x": 1214, "y": 206, "width": 32, "height": 52 },
+        { "id": 7, "gid": 13, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 1185, "y": 192, "width": 32, "height": 64 },
+        { "id": 8, "gid": 14, "name": "cilindro-pequeno", "rotation": 0, "type": "", "visible": true, "x": 1214, "y": 180, "width": 32, "height": 52 },
 
         { "id": 9, "gid": 1, "name": "prateleira-vazia-1", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 390, "width": 92, "height": 110 },
         { "id": 10, "gid": 1, "name": "prateleira-vazia-2", "rotation": 0, "type": "", "visible": true, "x": 185, "y": 390, "width": 92, "height": 110 },
@@ -109,8 +109,8 @@
         { "id": 40, "name": "gerador", "rotation": 0, "type": "", "visible": true, "x": 1000, "y": 165, "width": 96, "height": 45 },
         { "id": 41, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 1100, "y": 175, "width": 40, "height": 40 },
         { "id": 42, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 1145, "y": 175, "width": 40, "height": 40 },
-        { "id": 43, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 1185, "y": 180, "width": 32, "height": 30 },
-        { "id": 44, "name": "cilindro-pequeno", "rotation": 0, "type": "", "visible": true, "x": 1214, "y": 180, "width": 32, "height": 26 },
+        { "id": 43, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 1185, "y": 162, "width": 32, "height": 30 },
+        { "id": 44, "name": "cilindro-pequeno", "rotation": 0, "type": "", "visible": true, "x": 1214, "y": 154, "width": 32, "height": 26 },
 
         { "id": 45, "name": "prateleira-vazia-1", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 340, "width": 92, "height": 50 },
         { "id": 46, "name": "prateleira-vazia-2", "rotation": 0, "type": "", "visible": true, "x": 185, "y": 340, "width": 92, "height": 50 },
