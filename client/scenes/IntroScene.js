@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import PlayerCharacter from "../characters/PlayerCharacter";
 import CosmoCompanion from "../characters/CosmoCompanion";
+import DialogueBox from "../ui/DialogueBox";
 import poraoBg from "../assets/images/porao/porao_bg.png";
 import poraoMap from "../assets/maps/porao.json";
 import { placeTiledObjects, preloadProps } from "../utils/tiledMap";
@@ -15,21 +16,6 @@ const MAP_OFFSET = { x: 0, y: 8 };
 const ANDROID_POS = { x: 236, y: 426 };
 const POWERED_OFF_TINT = 0x36406a;
 
-// Mesma profundidade do DialogueBox: os props da sala usam depth = y (y-sort) e
-// chegam a ~633, então a caixa precisa ficar bem acima disso.
-const DIALOGUE_DEPTH = 900;
-
-// Roteiro da abertura. Cada passo pode disparar um efeito via `onEnter`.
-const SCRIPT = [
-    { speaker: "COSMO", text: "...você consegue me ouvir?" },
-    { speaker: "COSMO", text: "Por favor, acorde. Não temos muito tempo." },
-    { speaker: "COSMO", text: "Os sistemas dela ainda estão offline. Vou tentar de novo." },
-    { speaker: "SISTEMA", text: "> reiniciando núcleo... [ok]", effect: "boot" },
-    { speaker: "SISTEMA", text: "> restaurando consciência... [ok]" },
-    { speaker: "COSMO", text: "Isso! Você está voltando. Devagar.", effect: "wake" },
-    { speaker: "COSMO", text: "Bem-vinda de volta. Eu sou o Cosmo." }
-];
-
 export default class IntroScene extends Phaser.Scene {
     constructor() {
         super("intro-scene");
@@ -43,18 +29,19 @@ export default class IntroScene extends Phaser.Scene {
     }
 
     create() {
-        this.stepIndex = -1;
-        this.typing = false;
         this.finished = false;
 
         this.drawBasement();
         this.createAndroid();
         this.createCosmo();
-        this.createDialogueBox();
         this.registerInput();
 
+        this.dialogue = new DialogueBox(this);
+
         this.cameras.main.fadeIn(900, 0, 0, 0);
-        this.cameras.main.once("camerafadeincomplete", () => this.advance());
+        this.cameras.main.once("camerafadeincomplete", () => {
+            this.dialogue.play(this.buildScript(), () => this.finish());
+        });
     }
 
     update(time, delta) {
@@ -113,140 +100,38 @@ export default class IntroScene extends Phaser.Scene {
         this.cosmo = new CosmoCompanion(this, { sprite: this.android, lastDirection: "south" });
     }
 
-    // --- Caixa de diálogo com efeito de máquina de escrever ---
-    createDialogueBox() {
-        const boxX = 140;
-        const boxY = 596;
-        const boxW = WIDTH - 280;
-        const boxH = 96;
-
-        // Acima dos props da sala: eles usam depth = y (y-sort), então os
-        // objetos da parte de baixo passariam por cima do diálogo.
-        const box = this.add.graphics();
-        box.setDepth(DIALOGUE_DEPTH);
-        box.fillStyle(0x05060a, 0.92);
-        box.fillRect(boxX, boxY, boxW, boxH);
-        box.lineStyle(2, 0x4ad6ff, 0.8);
-        box.strokeRect(boxX, boxY, boxW, boxH);
-
-        this.speakerText = this.add.text(boxX + 22, boxY - 36, "", {
-            fontFamily: "VCR",
-            fontSize: "20px",
-            color: "#4ad6ff"
-        }).setDepth(DIALOGUE_DEPTH + 1);
-
-        this.bodyText = this.add.text(boxX + 22, boxY + 24, "", {
-            fontFamily: "VCR",
-            fontSize: "22px",
-            color: "#e7e9f2",
-            wordWrap: { width: boxW - 44 }
-        }).setDepth(DIALOGUE_DEPTH + 1);
-
-        this.hintText = this.add.text(
-            boxX + boxW - 22,
-            boxY + boxH - 12,
-            import.meta.env.DEV ? "[ESPAÇO]   [P] pular" : "[ESPAÇO]",
-            {
-                fontFamily: "VCR",
-                fontSize: "16px",
-                color: "#5b6178"
-            }
-        ).setOrigin(1, 1).setDepth(DIALOGUE_DEPTH + 1).setVisible(false);
-
-        this.tweens.add({
-            targets: this.hintText,
-            alpha: { from: 1, to: 0.25 },
-            duration: 700,
-            yoyo: true,
-            repeat: -1
-        });
-    }
-
     registerInput() {
-        const onAdvance = () => this.handleAdvanceKey();
-        this.input.keyboard.on("keydown-SPACE", onAdvance);
-        this.input.keyboard.on("keydown-ENTER", onAdvance);
-        this.input.on("pointerdown", onAdvance);
-
+        // O avanço do diálogo (ESPAÇO/ENTER/clique) e o pulo com [P] são do
+        // DialogueBox; aqui fica só a saída para o menu.
         this.input.keyboard.on("keydown-ESC", () => this.scene.start("game-scene"));
-
-        // Pulo da intro para testes (P, modo dev) — mesmo atalho do DialogueBox.
-        if (import.meta.env.DEV) {
-            this.input.keyboard.on("keydown", (event) => {
-                if (event.code === "KeyP") {
-                    this.finish();
-                }
-            });
-        }
     }
 
-    handleAdvanceKey() {
-        if (this.typewriter) {
-            // Pula a digitação e mostra a linha completa.
-            this.typewriter.remove();
-            this.typewriter = null;
-            this.bodyText.setText(this.currentLine);
-            this.typing = false;
-            this.hintText.setVisible(true);
-            return;
-        }
-
-        this.advance();
+    // --- Roteiro da abertura ---
+    // Montado na cena (e não como const de módulo) porque os `onEnter` mexem
+    // nos objetos da cena.
+    buildScript() {
+        return [
+            { speaker: "COSMO", text: "...você consegue me ouvir?" },
+            { speaker: "COSMO", text: "Por favor, acorde. Não temos muito tempo." },
+            { speaker: "COSMO", text: "Os sistemas dela ainda estão offline. Vou tentar de novo." },
+            { speaker: "SISTEMA", text: "> reiniciando núcleo... [ok]", onEnter: () => this.bootEffect() },
+            { speaker: "SISTEMA", text: "> restaurando consciência... [ok]" },
+            { speaker: "COSMO", text: "Isso! Você está voltando. Devagar.", onEnter: () => this.wakeEffect() },
+            { speaker: "COSMO", text: "Bem-vinda de volta. Eu sou o Cosmo." }
+        ];
     }
 
-    advance() {
-        if (this.typing) {
-            return;
-        }
-
-        this.stepIndex += 1;
-
-        if (this.stepIndex >= SCRIPT.length) {
-            this.finish();
-            return;
-        }
-
-        const step = SCRIPT[this.stepIndex];
-        this.applyEffect(step.effect);
-        this.speakerText.setText(step.speaker);
-        this.typeLine(step.text);
+    bootEffect() {
+        this.flicker(this.android);
+        this.tweens.add({ targets: this.lightCone, alpha: { from: 0.4, to: 1 }, duration: 120, yoyo: true, repeat: 3 });
     }
 
-    typeLine(line) {
-        this.currentLine = line;
-        this.bodyText.setText("");
-        this.typing = true;
-        this.hintText.setVisible(false);
-
-        let i = 0;
-        this.typewriter = this.time.addEvent({
-            delay: 32,
-            repeat: line.length - 1,
-            callback: () => {
-                i += 1;
-                this.bodyText.setText(line.slice(0, i));
-                if (i >= line.length) {
-                    this.typewriter = null;
-                    this.typing = false;
-                    this.hintText.setVisible(true);
-                }
-            }
+    wakeEffect() {
+        this.flicker(this.android, () => {
+            this.android.clearTint();
+            this.android.play("maid-idle-south");
         });
-    }
-
-    applyEffect(effect) {
-        if (effect === "boot") {
-            this.flicker(this.android);
-            this.tweens.add({ targets: this.lightCone, alpha: { from: 0.4, to: 1 }, duration: 120, yoyo: true, repeat: 3 });
-        }
-
-        if (effect === "wake") {
-            this.flicker(this.android, () => {
-                this.android.clearTint();
-                this.android.play("maid-idle-south");
-            });
-            this.drawLightCone(0.12);
-        }
+        this.drawLightCone(0.12);
     }
 
     flicker(target, onComplete) {
