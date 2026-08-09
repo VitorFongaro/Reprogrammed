@@ -12,8 +12,9 @@ import poraoMap from "../../assets/maps/porao.json";
 // A androide acorda onde a IntroScene a deixou (canto esquerdo do depósito).
 const SPAWN = { x: 236, y: 426 };
 
-// Gerador desenhado na arte do mapa (parede do fundo, à direita da porta).
-const GENERATOR = { x: 1046, y: 75, w: 92, h: 110 };
+// Gerador: objeto do Tiled encostado na parede do fundo, à direita da porta
+// (antes era pintado no fundo). Coordenadas de TELA = mapa + 8 do offset.
+const GENERATOR = { x: 1048, y: 173, w: 96, h: 90 };
 
 // Porta dupla desenhada na arte (parede do fundo, centro).
 const DOOR = { x: 656, y: 98 };
@@ -97,7 +98,7 @@ export default class PoraoScene extends BaseRoomScene {
             w: GENERATOR.w,
             h: GENERATOR.h,
             drawBody: false,
-            promptY: GENERATOR.y + GENERATOR.h / 2 + 22,
+            promptY: GENERATOR.y - GENERATOR.h / 2 - 20,
             blocks: true,
             puzzle: GENERATOR_PUZZLE,
             introScript: PUZZLE_INTRO_SCRIPT,

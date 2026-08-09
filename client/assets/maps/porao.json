@@ -40,7 +40,8 @@
         { "id": 13, "image": "../images/porao/props/cilindro_pequeno.png", "imagewidth": 32, "imageheight": 52 },
         { "id": 14, "image": "../images/porao/props/prancheta.png", "imagewidth": 64, "imageheight": 56 },
         { "id": 15, "image": "../images/porao/props/placa_perigo.png", "imagewidth": 50, "imageheight": 44 },
-        { "id": 16, "image": "../images/porao/props/placa_radiacao.png", "imagewidth": 50, "imageheight": 44 }
+        { "id": 16, "image": "../images/porao/props/placa_radiacao.png", "imagewidth": 50, "imageheight": 44 },
+        { "id": 17, "image": "../images/porao/props/gerador.png", "imagewidth": 96, "imageheight": 90 }
       ]
     }
   ],
@@ -69,7 +70,7 @@
         { "id": 2, "gid": 16, "name": "placa-perigo", "rotation": 0, "type": "", "visible": true, "x": 950, "y": 70, "width": 50, "height": 44 },
         { "id": 3, "gid": 17, "name": "placa-radiacao", "rotation": 0, "type": "", "visible": true, "x": 1190, "y": 70, "width": 50, "height": 44 },
 
-        { "id": 4, "gid": 10, "name": "bancada", "rotation": 0, "type": "", "visible": true, "x": 880, "y": 200, "width": 64, "height": 60 },
+        { "id": 4, "gid": 18, "name": "gerador", "rotation": 0, "type": "", "visible": true, "x": 1000, "y": 210, "width": 96, "height": 90 },
         { "id": 5, "gid": 11, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 1100, "y": 215, "width": 40, "height": 116 },
         { "id": 6, "gid": 12, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 1145, "y": 215, "width": 40, "height": 116 },
         { "id": 7, "gid": 13, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 1185, "y": 210, "width": 32, "height": 64 },
@@ -104,7 +105,7 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 40, "name": "bancada", "rotation": 0, "type": "", "visible": true, "x": 880, "y": 165, "width": 64, "height": 35 },
+        { "id": 40, "name": "gerador", "rotation": 0, "type": "", "visible": true, "x": 1000, "y": 165, "width": 96, "height": 45 },
         { "id": 41, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 1100, "y": 175, "width": 40, "height": 40 },
         { "id": 42, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 1145, "y": 175, "width": 40, "height": 40 },
         { "id": 43, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 1185, "y": 180, "width": 32, "height": 30 },
