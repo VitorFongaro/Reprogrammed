@@ -15,6 +15,10 @@ const MAP_OFFSET = { x: 0, y: 8 };
 const ANDROID_POS = { x: 236, y: 426 };
 const POWERED_OFF_TINT = 0x36406a;
 
+// Mesma profundidade do DialogueBox: os props da sala usam depth = y (y-sort) e
+// chegam a ~633, então a caixa precisa ficar bem acima disso.
+const DIALOGUE_DEPTH = 900;
+
 // Roteiro da abertura. Cada passo pode disparar um efeito via `onEnter`.
 const SCRIPT = [
     { speaker: "COSMO", text: "...você consegue me ouvir?" },
@@ -116,8 +120,10 @@ export default class IntroScene extends Phaser.Scene {
         const boxW = WIDTH - 280;
         const boxH = 96;
 
+        // Acima dos props da sala: eles usam depth = y (y-sort), então os
+        // objetos da parte de baixo passariam por cima do diálogo.
         const box = this.add.graphics();
-        box.setDepth(20);
+        box.setDepth(DIALOGUE_DEPTH);
         box.fillStyle(0x05060a, 0.92);
         box.fillRect(boxX, boxY, boxW, boxH);
         box.lineStyle(2, 0x4ad6ff, 0.8);
@@ -127,14 +133,14 @@ export default class IntroScene extends Phaser.Scene {
             fontFamily: "VCR",
             fontSize: "20px",
             color: "#4ad6ff"
-        }).setDepth(21);
+        }).setDepth(DIALOGUE_DEPTH + 1);
 
         this.bodyText = this.add.text(boxX + 22, boxY + 24, "", {
             fontFamily: "VCR",
             fontSize: "22px",
             color: "#e7e9f2",
             wordWrap: { width: boxW - 44 }
-        }).setDepth(21);
+        }).setDepth(DIALOGUE_DEPTH + 1);
 
         this.hintText = this.add.text(
             boxX + boxW - 22,
@@ -145,7 +151,7 @@ export default class IntroScene extends Phaser.Scene {
                 fontSize: "16px",
                 color: "#5b6178"
             }
-        ).setOrigin(1, 1).setDepth(21).setVisible(false);
+        ).setOrigin(1, 1).setDepth(DIALOGUE_DEPTH + 1).setVisible(false);
 
         this.tweens.add({
             targets: this.hintText,

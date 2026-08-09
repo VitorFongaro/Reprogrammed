@@ -19,9 +19,9 @@ const GENERATOR = { x: 1048, y: 173, w: 96, h: 90 };
 // Porta dupla desenhada na arte (parede do fundo, centro).
 const DOOR = { x: 656, y: 98 };
 
-// Estação de salvamento, ao lado da mesa de trabalho (canto inferior esquerdo).
-// `y` é a base do móvel, para o y-sort casar com os outros objetos da sala.
-const SAVE_STATION = { x: 310, y: 572 };
+// Estação de salvamento encostada na parede do fundo, ao lado do armário de
+// arquivos. `y` é a base do móvel, para o y-sort casar com os outros objetos.
+const SAVE_STATION = { x: 265, y: 184 };
 
 const GENERATOR_PUZZLE = {
     title: "GERADOR // NÚCLEO",
@@ -98,6 +98,9 @@ export default class PoraoScene extends BaseRoomScene {
             w: GENERATOR.w,
             h: GENERATOR.h,
             drawBody: false,
+            // O sprite do gerador já tem sinalização própria; a luz do código
+            // ficaria sobrando por cima dele.
+            indicator: false,
             promptY: GENERATOR.y - GENERATOR.h / 2 - 20,
             blocks: true,
             puzzle: GENERATOR_PUZZLE,
@@ -116,7 +119,8 @@ export default class PoraoScene extends BaseRoomScene {
     }
 
     handleGeneratorSolved() {
-        this.setStatus("> GERADOR ATIVADO", "#51e36b");
+        // Sem texto de status: ele aparecia bem em cima da porta. O retorno
+        // vem pelo diálogo do Cosmo e pela luz da porta destravando.
         this.time.delayedCall(1000, () => {
             this.playDialogue(SOLVED_SCRIPT, () => this.unlockDoor());
         });

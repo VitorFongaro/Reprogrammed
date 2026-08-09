@@ -26,7 +26,10 @@ export default class PuzzleDevice {
         this.onSolved = config.onSolved;
         // drawBody: false para máquinas já desenhadas na arte do mapa (desenha só
         // luz indicadora e prompt). promptY: posição vertical customizada do prompt.
+        // indicator: false quando o sprite da máquina já tem sinalização própria
+        // e a luz do código ficaria sobrando por cima dele.
         this.drawBody = config.drawBody ?? true;
+        this.showIndicator = config.indicator ?? true;
         this.promptY = config.promptY ?? null;
         this.introScript = config.introScript ?? null;
         this.introPlayed = false;
@@ -95,8 +98,10 @@ export default class PuzzleDevice {
             body.fillRect(left - 8, top + this.h, this.w + 16, 10);
         }
 
-        this.indicator = this.scene.add.graphics().setDepth(790);
-        this.drawIndicator(OFF_COLOR);
+        if (this.showIndicator) {
+            this.indicator = this.scene.add.graphics().setDepth(790);
+            this.drawIndicator(OFF_COLOR);
+        }
 
         if (this.label) {
             this.scene.add.text(this.x, top - 16, this.label, {
@@ -124,6 +129,9 @@ export default class PuzzleDevice {
     }
 
     drawIndicator(color) {
+        if (!this.indicator) {
+            return;
+        }
         const cx = this.x;
         const cy = this.y - this.h / 2 + 14;
         this.indicator.clear();

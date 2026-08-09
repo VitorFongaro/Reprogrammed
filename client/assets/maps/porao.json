@@ -66,7 +66,7 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 1, "gid": 15, "name": "prancheta", "rotation": 0, "type": "", "visible": true, "x": 80, "y": 118, "width": 64, "height": 56 },
+        { "id": 1, "gid": 15, "name": "prancheta", "rotation": 0, "type": "", "visible": true, "x": 80, "y": 158, "width": 64, "height": 56 },
         { "id": 2, "gid": 16, "name": "placa-perigo", "rotation": 0, "type": "", "visible": true, "x": 950, "y": 70, "width": 50, "height": 44 },
         { "id": 3, "gid": 17, "name": "placa-radiacao", "rotation": 0, "type": "", "visible": true, "x": 1190, "y": 70, "width": 50, "height": 44 },
 
@@ -105,6 +105,7 @@
       "x": 0,
       "y": 0,
       "objects": [
+        { "id": 39, "name": "prancheta", "rotation": 0, "type": "", "visible": true, "x": 80, "y": 132, "width": 64, "height": 26 },
         { "id": 40, "name": "gerador", "rotation": 0, "type": "", "visible": true, "x": 1000, "y": 165, "width": 96, "height": 45 },
         { "id": 41, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 1100, "y": 175, "width": 40, "height": 40 },
         { "id": 42, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 1145, "y": 175, "width": 40, "height": 40 },
