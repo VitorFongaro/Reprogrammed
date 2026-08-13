@@ -81,9 +81,8 @@ export default class SaguaoScene extends Phaser.Scene {
 
     createAndroid() {
         PlayerCharacter.createAnimations(this);
-        this.android = this.add.sprite(WIDTH / 2, FLOOR_Y - 70, PlayerCharacter.rotationKey("south"));
+        this.android = this.add.sprite(WIDTH / 2, FLOOR_Y - 70, PlayerCharacter.idleTexture("south"), 0);
         this.android.setScale(3);
-        this.android.play("maid-idle-south");
     }
 
     // Portas do elevador deslizam abrindo a visão do saguão.

@@ -35,7 +35,7 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   - `SaveComputer.js` — ponto de salvamento estilo máquina de escrever do Resident Evil: sprite de 2 quadros com LED piscando, `[E] SALVAR` e o `SaveConsole`. O salvamento em si ainda não existe — só o `onSave` como gancho.
 - `utils/tiledMap.js` — leitura dos `.json` do Tiled: `preloadProps` (carrega `assets/images/*/props/*.png` como `prop-<nome>`), `placeTiledObjects` (instancia a camada de objetos com y-sort), `tiledColliders` e `tiledPropNames`.
 - `characters/` — entidades do jogo:
-  - `PlayerCharacter` — protagonista jogável (movimento WASD; corrida segurando Shift — mesma animação de passos acelerada + velocidade maior; animações 8 direções carregadas via `import.meta.glob`).
+  - `PlayerCharacter` — protagonista jogável (movimento WASD 4-direções; corrida segurando Shift — mesma animação de passos acelerada + velocidade maior). Sprite em `assets/sprites/artemis/` (template Eris Esra 16x32, quadros 32×32): caminhada sul/leste/norte, oeste espelhado em runtime (`flipX`); parada usa o quadro 0 e corrida reusa a caminhada acelerada (até haver ciclos de idle/run dedicados). `PlayerCharacter.idleTexture(dir)` dá a textura de repouso para cutscenes.
   - `CosmoCompanion` — companheiro que flutua no ombro da protagonista; sprite de 4 direções
     (`assets/sprites/cosmo/`) que acompanha a direção da Artemis, com fallback para um
     placeholder gerado em runtime caso a textura não seja pré-carregada.

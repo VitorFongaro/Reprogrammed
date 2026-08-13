@@ -88,7 +88,7 @@ export default class IntroScene extends Phaser.Scene {
     createAndroid() {
         PlayerCharacter.createAnimations(this);
 
-        this.android = this.add.sprite(ANDROID_POS.x, ANDROID_POS.y, PlayerCharacter.rotationKey("south"));
+        this.android = this.add.sprite(ANDROID_POS.x, ANDROID_POS.y, PlayerCharacter.idleTexture("south"), 0);
         this.android.setScale(3);
         this.android.setTint(POWERED_OFF_TINT);
         // Mesma profundidade (base = pés) usada pelo y-sort dos objetos.
@@ -129,7 +129,7 @@ export default class IntroScene extends Phaser.Scene {
     wakeEffect() {
         this.flicker(this.android, () => {
             this.android.clearTint();
-            this.android.play("maid-idle-south");
+            this.android.setTexture(PlayerCharacter.idleTexture("south"), 0);
         });
         this.drawLightCone(0.12);
     }
