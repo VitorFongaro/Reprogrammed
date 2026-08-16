@@ -43,6 +43,11 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
     (`assets/sprites/boss/`, sheet horizontal de 6 quadros 60×60) em idle contínuo; expõe
     `hit()` (reação ao perder um estágio), `attackAnim(cb)` (telegrafa o turno de ataque)
     e `powerDown()` (derrota). `EniacBoss.preload(scene)`.
+- `config.js` — `API_BASE_URL`, o endereço do backend. **Único lugar** que define isso;
+  vem de `VITE_API_URL` (ver Deploy) e cai em `localhost:3000` no desenvolvimento.
+- `state/progress.js` — save do jogador: sala atual e puzzles resolvidos, gravados em
+  `PUT /game/progress` e espelhados no `localStorage` (o jogo continua salvando se a API
+  cair). Estilo Resident Evil: vale o último save no `SaveComputer`.
 - `assets/` — `fonts/` (VCR_OSD_MONO), `cursors/`, `sprites/`, `audio/`, `icons/`, `images/`.
 - `pages/`, `scripts/`, `styles/` — páginas HTML auxiliares e auth fora do canvas Phaser.
 
@@ -50,7 +55,8 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
 - `server.js` — app Express; CORS manual; monta `/auth`, `/game`, `/ai`.
 - `routes/` → `controllers/` → `services/`. `middlewares/authMiddleware.js` valida JWT.
 - `config/supabase.js` — cliente Supabase. Segredos via `.env` (não commitar).
-- Rotas: `/auth` (register, login, refresh, logout, me), `/game` (status, settings GET/PATCH), `/ai` (status).
+- Rotas: `/auth` (register, login, refresh, logout, me), `/game` (status, settings GET/PATCH,
+  progress GET/PUT), `/ai` (status).
 
 **Auth:** JWT Bearer; no cliente fica em `localStorage` como `reprogrammed.auth`
 (`accessToken` + `refreshToken` + `user`), com refresh automático.
@@ -71,6 +77,42 @@ Não há suíte de testes nem linter configurados.
 > Quem valida rodando o jogo são os próprios desenvolvedores. Entregue a mudança pronta,
 > descreva o que precisa ser testado e deixe o teste manual para o Vitor e o Ryan.
 > O Vite tem HMR; um F5 recarrega a cena.
+
+## Deploy
+
+Três peças, todas com deploy automático a cada push na `main`:
+
+| peça | onde | endereço |
+|---|---|---|
+| cliente | Vercel (projeto `reprogrammed`) | https://reprogrammed.vercel.app |
+| API | Render (web service `reprogrammed-api`, plano free, Virginia) | https://reprogrammed-api.onrender.com |
+| banco | Supabase (projeto `Reprogrammed`, sa-east-1) | — |
+
+**Cliente.** O build é declarado no [`vercel.json`](vercel.json) **da raiz do repositório**, não
+no painel: `cd client && npm run build`, servindo `client/dist`. Ele existe porque não há
+`package.json` na raiz — com o Root Directory vazio, a Vercel não detecta framework nenhum,
+cai no detector de servidor Node e falha com *"No entrypoint found in /vercel/path0"*. Deixar
+a configuração no repositório faz funcionar com o Root Directory vazio e continuar
+funcionando se alguém apontá-lo para `client/` (aí o arquivo é ignorado e o Vite é detectado
+sozinho).
+
+**Endereço da API.** Vem de `VITE_API_URL`, fixada em `client/.env.production` — versionada
+de propósito: é endereço público, não segredo, e assim o build não depende de ninguém lembrar
+de configurar variável no painel. **É assada no bundle durante o build**, não lida em tempo de
+execução: trocar o endereço exige um novo deploy do cliente.
+
+**API.** Comandos `cd server && npm install` e `cd server && npm start` (o Render clona o repo
+inteiro; não há Root Directory). Variáveis no painel do Render: `SUPABASE_URL`,
+`SUPABASE_ANON_KEY` e `CLIENT_ORIGIN` (a URL da Vercel — sem ela o CORS libera `*`). O `PORT`
+quem injeta é o Render.
+
+> **O plano free do Render dorme depois de 15 min parado** e leva ~30–50s para acordar. Como o
+> login passa pela API, com o serviço dormindo não dá nem para entrar no jogo. Antes de
+> qualquer apresentação, abra o site alguns minutos antes.
+
+**Banco.** `database/schema.sql` e `database/seed.sql` são a fonte da verdade e refletem o que
+está aplicado no Supabase; migração nova entra nos dois (arquivo + banco). O `.env` nunca é
+commitado — o que cada host precisa está nos `.env.example` do cliente e do servidor.
 
 O canvas Phaser vive em `pages/game.html`, atrás de um `authGuard` que exige login
 (token em `localStorage` como `reprogrammed.auth`). Fluxo de entrada: menu (`GameScene`)
