@@ -173,6 +173,56 @@ HUD) e não se compara com a tabela acima.
 - Ao retomar de um `pause`, o Phaser guarda o estado das teclas; o `PauseMenuScene` chama
   `input.keyboard.resetKeys()` antes do `resume` para a Artemis não sair andando sozinha.
 
+## Save (progresso do jogador)
+
+### A regra que não pode ser quebrada
+
+Existem **dois estados com ciclos de vida diferentes**, e misturá-los estraga o jogo:
+
+| | onde mora | comportamento |
+|---|---|---|
+| **Save** | `user_game_state` | **reversível** — carregar volta para o ponto salvo |
+| **Perfil de aprendizado** | `puzzle_attempts`, `user_level_progress`, `user_topic_performance` | **monotônico** — gravado quando acontece, nunca revertido |
+
+Tentativas, acertos e a dificuldade adaptativa da IA **não entram no save**. Carregar um save
+não escreve nessas tabelas: é só isso que impede o jogador de zerar o ajuste de dificuldade
+saindo e voltando do jogo. Se um dia alguém colocar `current_difficulty` dentro do save "para
+restaurar direitinho", o sistema adaptativo do TCC morre em silêncio.
+
+### O modelo é Resident Evil
+
+Vale **o último save**. O jogador resolve puzzles à vontade, mas se sair sem passar pelo
+computador de salvamento, o que resolveu depois do último save é pedido de novo. Foi decisão
+consciente — o `solved_puzzles` grava a lista de puzzles resolvidos *no momento* em que o
+jogador salva, não conforme ele resolve.
+
+### `slug` é o contrato
+
+O cliente nunca conhece id gerado do banco. A ponte é o slug:
+
+- `levels.slug` = a chave da cena no Phaser (`"cap1-porao"`), gravada em `current_scene`
+- `puzzles.slug` = o `id` passado ao `PuzzleDevice` (`"porao-gerador"`), e o que entra na
+  lista `solved_puzzles`
+
+**Renomear um slug invalida os saves existentes.** O servidor resolve `current_level_id` e
+`current_chapter_id` a partir da cena; cena de transição (corredor, saguão) não tem fase, e
+nesse caso o save guarda só a cena e deixa a fase nula.
+
+### No cliente
+
+- `state/progress.js` — `markSolved`/`isSolved`, `snapshot`, `save()` e `load()`. Grava na API
+  e espelha no `localStorage`, para o jogo continuar salvando se o backend cair; `save()`
+  devolve `{ ok, remote }` para a tela dizer se o "nó de arquivo" recebeu.
+- `BaseRoomScene.create()` chama `enterScene(...)` sozinho — sala nova não precisa fazer nada
+  para o save saber onde o jogador está.
+- `PuzzleDevice` com `id` nasce resolvido quando o save diz que foi, e aí chama `onRestore`.
+- `SaveComputer` com `onSave` é o ponto de salvamento. Hoje só o porão tem um.
+
+> **`onRestore` NÃO cai para `onSolved`, de propósito.** O `onSolved` das salas com mais de um
+> painel lê os outros painéis, que ainda não existem quando o primeiro é construído — cair no
+> `onSolved` daria crash ao carregar um save. Sala com vários dispositivos reaplica o estado
+> num passo próprio, depois de construir todos (ver `SalaControleScene.restoreFromSave`).
+
 ## Assets (pixel art)
 
 Sprites/tilesets são pixel art gerada no **Aseprite**. O executável é específico de cada
