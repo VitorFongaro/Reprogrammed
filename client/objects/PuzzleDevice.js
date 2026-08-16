@@ -1,5 +1,6 @@
 import ProgrammingConsole from "../ui/ProgrammingConsole";
 import BlockProgrammingConsole from "../ui/BlockProgrammingConsole";
+import { isSolved, markSolved } from "../state/progress";
 
 // Máquina interagível que abre o console de puzzle de variável. Desenha o corpo,
 // a luz indicadora (vermelha = desligada, verde = ativa) e o prompt "[E] PROGRAMAR",
@@ -8,6 +9,10 @@ import BlockProgrammingConsole from "../ui/BlockProgrammingConsole";
 // caso contrário, usa o console de texto (digitar `nome = valor`).
 // `config.introScript` (roteiro de DialogueBox) toca UMA vez antes da primeira
 // abertura do console — o Cosmo explicando a mecânica em vez do texto do painel.
+// `config.id` é o slug do puzzle (o mesmo de `puzzles.slug` no banco): com ele a
+// máquina nasce já resolvida quando o save carregado diz que ela foi resolvida.
+// Nesse caso ela chama `config.onRestore` (e NÃO `onSolved`), para a sala
+// reaplicar o efeito — porta destravada — sem repetir o diálogo.
 
 const DEFAULT_W = 84;
 const DEFAULT_H = 132;
@@ -18,12 +23,14 @@ const ON_COLOR = 0x51e36b;
 export default class PuzzleDevice {
     constructor(scene, config) {
         this.scene = scene;
+        this.id = config.id ?? null;
         this.x = config.x;
         this.y = config.y;
         this.w = config.w ?? DEFAULT_W;
         this.h = config.h ?? DEFAULT_H;
         this.label = config.label ?? "";
         this.onSolved = config.onSolved;
+        this.onRestore = config.onRestore ?? null;
         // drawBody: false para máquinas já desenhadas na arte do mapa (desenha só
         // luz indicadora e prompt). promptY: posição vertical customizada do prompt.
         // indicator: false quando o sprite da máquina já tem sinalização própria
@@ -63,6 +70,21 @@ export default class PuzzleDevice {
             isAvailable: () => !this.solved,
             onReprogram: () => this.openConsole()
         });
+
+        if (isSolved(this.id)) {
+            this.restoreSolved();
+        }
+    }
+
+    // Save carregado com este puzzle já resolvido: acende a luz e desliga a
+    // interação, sem brilho de ativação nem diálogo. `onRestore` NÃO cai para
+    // `onSolved` de propósito — o onSolved costuma ler outros objetos da sala
+    // que ainda não existem quando este construtor roda.
+    restoreSolved() {
+        this.solved = true;
+        this.introPlayed = true;
+        this.drawIndicator(ON_COLOR);
+        this.onRestore?.();
     }
 
     openConsole() {
@@ -143,6 +165,7 @@ export default class PuzzleDevice {
 
     handleSolved() {
         this.solved = true;
+        markSolved(this.id);
         this.drawIndicator(ON_COLOR);
 
         // Brilho de ativação.

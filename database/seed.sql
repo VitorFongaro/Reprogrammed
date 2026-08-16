@@ -1,6 +1,13 @@
 -- =========================================================
 -- SEED DATA
 -- Dados iniciais do jogo
+--
+-- Os `slug` são as chaves de cena do Phaser e os ids de puzzle usados pelo
+-- cliente. É por eles que o save referencia onde o jogador está e o que ele já
+-- resolveu, então NÃO renomeie um slug sem migrar os saves existentes.
+--
+-- Só o capítulo 1 tem fases aqui, porque só ele existe no jogo. Os capítulos
+-- 2 a 4 ficam cadastrados como roteiro, sem fases inventadas.
 -- =========================================================
 
 insert into public.chapters (
@@ -30,126 +37,102 @@ values
   4
 );
 
+-- =========================================================
+-- LEVELS — capítulo 1 (porão -> saguão)
+--
+-- Só as salas com jogabilidade viram fase. O corredor e o saguão são
+-- transições: o save guarda a cena deles em current_scene e deixa
+-- current_level_id nulo.
+-- =========================================================
+
 insert into public.levels (
   chapter_id,
+  slug,
   title,
   description,
   base_difficulty,
   main_topic,
   order_index
 )
-values
-(
-  1,
-  'Primeiro Código',
-  'A protagonista aprende a usar variáveis para ativar um terminal antigo no subsolo da Elysium.',
-  'easy',
-  'variables',
-  1
-),
-(
-  1,
-  'Porta Numérica',
-  'O jogador precisa usar operações básicas para descobrir o código de uma porta de segurança.',
-  'easy',
-  'operators',
-  2
-),
-(
-  2,
-  'Porta de Segurança',
-  'O jogador usa condicionais para decidir se uma porta deve ser aberta ou permanecer bloqueada.',
-  'medium',
-  'conditionals',
-  1
-),
-(
-  3,
-  'Esteira Automática',
-  'O jogador usa loops para repetir comandos e mover mecanismos pelo cenário.',
-  'medium',
-  'loops',
-  1
-),
-(
-  4,
-  'Módulo de Controle',
-  'O jogador usa funções para organizar comandos e controlar múltiplos sistemas ao mesmo tempo.',
-  'hard',
-  'functions',
-  1
-);
+select
+  c.id,
+  v.slug,
+  v.title,
+  v.description,
+  v.base_difficulty::public.difficulty_level,
+  v.main_topic::public.programming_topic,
+  v.order_index
+from public.chapters c
+cross join (values
+  ('cap1-porao', 'Porão', 'A Artemis desperta no depósito e cria a primeira variável para religar o gerador.', 'easy', 'variables', 1),
+  ('cap1-arquivos', 'Sala de Arquivos', 'O Cosmo mostra que cada registro é uma variável — e dá um nome à androide.', 'easy', 'variables', 2),
+  ('cap1-controle', 'Controle Ambiental', 'Texto e número decimal: o setor da ventilação e a temperatura do núcleo.', 'easy', 'variables', 3),
+  ('cap1-treinamento', 'Sala de Treinamento', 'Desviar e desativar: lasers e torretas caem com booleano e zero.', 'medium', 'variables', 4),
+  ('cap1-sentinela', 'Arena da Sentinela', 'Mini-batalha de treino antes do boss, com a mecânica de turnos.', 'medium', 'variables', 5),
+  ('cap1-seguranca', 'Sala de Segurança', 'Antessala do núcleo do ENIAC e a batalha contra ele.', 'hard', 'variables', 6)
+) as v(slug, title, description, base_difficulty, main_topic, order_index)
+where c.order_index = 1;
+
+-- =========================================================
+-- PUZZLES — os consoles de variável que existem no jogo
+-- expected_output usa a mesma sintaxe do console (`nome = valor`).
+-- =========================================================
 
 insert into public.puzzles (
   level_id,
+  slug,
   title,
   description,
   topic,
   objective,
-  initial_code,
   expected_output,
   base_difficulty,
   order_index,
   max_score
 )
-values
-(
-  1,
-  'Ativar Terminal',
-  'Um terminal antigo precisa receber o valor correto de energia para ser iniciado.',
-  'variables',
-  'Crie uma variável chamada energia com valor 10.',
-  'let energia = 0;',
-  'energia = 10',
-  'easy',
-  1,
+select
+  l.id,
+  v.slug,
+  v.title,
+  v.description,
+  v.topic::public.programming_topic,
+  v.objective,
+  v.expected_output,
+  v.base_difficulty::public.difficulty_level,
+  v.order_index,
   100
-),
-(
-  2,
-  'Código da Porta',
-  'A porta exige o resultado correto de uma operação matemática simples.',
-  'operators',
-  'Calcule o código usando soma e multiplicação.',
-  'let codigo = 0;',
-  'codigo = 15',
-  'easy',
-  1,
-  100
-),
-(
-  3,
-  'Verificar Acesso',
-  'A porta só abre se o nível de acesso for suficiente.',
-  'conditionals',
-  'Use uma estrutura condicional para abrir a porta se acesso for maior ou igual a 3.',
-  'let acesso = 3;\nlet portaAberta = false;',
-  'portaAberta = true',
-  'medium',
-  1,
-  100
-),
-(
-  4,
-  'Mover Esteira',
-  'A esteira precisa repetir o movimento algumas vezes para transportar uma caixa.',
-  'loops',
-  'Use um loop para mover a caixa 5 vezes.',
-  'let movimentos = 0;',
-  'movimentos = 5',
-  'medium',
-  1,
-  100
-),
-(
-  5,
-  'Reiniciar Sistema',
-  'O sistema precisa de uma função para reiniciar módulos diferentes.',
-  'functions',
-  'Crie uma função que reinicie o módulo de controle.',
-  'function reiniciarModulo() {\n  \n}',
-  'moduloReiniciado = true',
-  'hard',
-  1,
-  100
-);
+from public.levels l
+join (values
+  ('cap1-porao', 'porao-gerador', 'Gerador // Núcleo', 'O gerador do depósito está sem carga e nenhuma porta abre sem energia.', 'variables', 'Crie a variável energia guardando a carga total.', 'energia = 100', 'easy', 1),
+  ('cap1-controle', 'controle-ventilacao', 'Ventilação // Setor', 'A ventilação não sabe para qual setor soprar.', 'variables', 'Guarde o setor em uma variável de texto.', 'setor = "B2"', 'easy', 1),
+  ('cap1-controle', 'controle-termostato', 'Termostato // Núcleo', 'O núcleo precisa de uma temperatura com casa decimal.', 'variables', 'Guarde a temperatura em uma variável de número quebrado.', 'temperatura = 21.5', 'easy', 2),
+  ('cap1-treinamento', 'treinamento-lasers', 'Barreira // Lasers', 'A barreira de laser corta o corredor em ciclos.', 'variables', 'Desligue a barreira com um valor de verdadeiro ou falso.', 'lasers = false', 'medium', 1),
+  ('cap1-treinamento', 'treinamento-municao', 'Torretas // Munição', 'As torretas continuam atirando enquanto tiverem munição.', 'variables', 'Zere a munição das torretas.', 'municao = 0', 'medium', 2)
+) as v(level_slug, slug, title, description, topic, objective, expected_output, base_difficulty, order_index)
+  on l.slug = v.level_slug;
+
+-- =========================================================
+-- BOSSES — HP igual ao configurado na BattleScene do cliente
+-- =========================================================
+
+insert into public.bosses (
+  level_id,
+  name,
+  description,
+  max_hp,
+  attack_power,
+  base_difficulty
+)
+select
+  l.id,
+  v.name,
+  v.description,
+  v.max_hp,
+  v.attack_power,
+  v.base_difficulty::public.difficulty_level
+from public.levels l
+join (values
+  ('cap1-sentinela', 'Sentinela', 'Unidade didática da Elysium: mini-batalha de treino, sem turno de defesa.', 25, 2, 'medium'),
+  ('cap1-seguranca', 'ENIAC', 'Unidade-sentinela do ENIAC, o computador central da Elysium.', 60, 4, 'hard')
+) as v(level_slug, name, description, max_hp, attack_power, base_difficulty)
+  on l.slug = v.level_slug;

@@ -3,6 +3,7 @@ import PlayerCharacter from "../../characters/PlayerCharacter";
 import CosmoCompanion from "../../characters/CosmoCompanion";
 import DialogueBox from "../../ui/DialogueBox";
 import { tiledColliders, placeTiledObjects, preloadProps } from "../../utils/tiledMap";
+import { enterScene } from "../../state/progress";
 
 // Cena-base das salas do capítulo 1: desenha a sala (mapa em imagem ou grade),
 // cria jogador/Cosmo/diálogo, gerencia interagíveis ([E] no mais próximo), a
@@ -63,6 +64,10 @@ export default class BaseRoomScene extends Phaser.Scene {
     }
 
     create() {
+        // O save grava a sala onde o jogador está; registrar aqui vale para
+        // todas as salas de uma vez.
+        enterScene(this.scene.key);
+
         this.interactables = [];
         this.reprogrammables = [];
         this.reprogramMode = false;

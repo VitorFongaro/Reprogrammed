@@ -13,7 +13,8 @@ import computadorUrl from "../assets/sprites/computador/computador.png";
 
 const FRAME_W = 16;
 const FRAME_H = 16;
-const DEFAULT_SCALE = 3;          // 16px -> 48px, mesma densidade da Artemis.
+const DEFAULT_SCALE = 4;          // 16px -> 64px: um pouco acima da Artemis, para
+                                  // a estação não sumir no meio do cenário.
 const DEFAULT_RADIUS = 110;
 const ANIM_KEY = "computador-led";
 const PROMPT_OFFSET_Y = 26;

@@ -78,6 +78,7 @@ export default class SalaControleScene extends BaseRoomScene {
 
     onRoomCreate() {
         this.ventilation = new PuzzleDevice(this, {
+            id: "controle-ventilacao",
             x: VENT.x,
             y: VENT.y,
             w: VENT.w,
@@ -90,6 +91,7 @@ export default class SalaControleScene extends BaseRoomScene {
         });
 
         this.thermostat = new PuzzleDevice(this, {
+            id: "controle-termostato",
             x: THERMO.x,
             y: THERMO.y,
             w: THERMO.w,
@@ -101,11 +103,32 @@ export default class SalaControleScene extends BaseRoomScene {
             onSolved: () => this.checkAllSolved()
         });
 
+        this.restoreFromSave();
         this.playDialogue(ENTRY_SCRIPT);
     }
 
+    // Painéis que já vieram resolvidos do save: atualiza o placar e, se os dois
+    // estavam prontos, abre a porta sem repetir a fala do Cosmo.
+    restoreFromSave() {
+        const solvedCount = this.solvedCount();
+
+        if (solvedCount === 0) {
+            return;
+        }
+
+        this.setStatus(`> SISTEMAS REATIVADOS: ${solvedCount}/2`, solvedCount === 2 ? "#51e36b" : "#7a8099");
+
+        if (solvedCount === 2) {
+            this.unlockDoor();
+        }
+    }
+
+    solvedCount() {
+        return [this.ventilation, this.thermostat].filter((device) => device.solved).length;
+    }
+
     checkAllSolved() {
-        const solvedCount = [this.ventilation, this.thermostat].filter((device) => device.solved).length;
+        const solvedCount = this.solvedCount();
         this.setStatus(`> SISTEMAS REATIVADOS: ${solvedCount}/2`, solvedCount === 2 ? "#51e36b" : "#7a8099");
 
         if (solvedCount < 2) {

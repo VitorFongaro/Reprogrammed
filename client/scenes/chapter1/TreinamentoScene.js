@@ -321,6 +321,7 @@ export default class TreinamentoScene extends BaseRoomScene {
     // --- Painéis de desativação ---
     createPanels() {
         this.laserPanel = new PuzzleDevice(this, {
+            id: "treinamento-lasers",
             x: 710,
             y: 330,
             blocks: true,
@@ -328,10 +329,12 @@ export default class TreinamentoScene extends BaseRoomScene {
             onSolved: () => {
                 this.disableLasers();
                 this.checkAllSolved();
-            }
+            },
+            onRestore: () => this.disableLasers()
         });
 
         this.turretPanel = new PuzzleDevice(this, {
+            id: "treinamento-municao",
             x: 1140,
             y: 250,
             blocks: true,
@@ -339,12 +342,35 @@ export default class TreinamentoScene extends BaseRoomScene {
             onSolved: () => {
                 this.disableTurrets();
                 this.checkAllSolved();
-            }
+            },
+            onRestore: () => this.disableTurrets()
         });
+
+        this.restoreFromSave();
+    }
+
+    // Painéis que já vieram desativados do save: os lasers/torretas já foram
+    // desligados pelo onRestore de cada painel, aqui só sobra o placar e a porta.
+    restoreFromSave() {
+        const solved = this.solvedPanels();
+
+        if (solved === 0) {
+            return;
+        }
+
+        this.setStatus(`> SISTEMAS DESATIVADOS: ${solved}/2`, solved === 2 ? "#51e36b" : "#7a8099");
+
+        if (solved === 2) {
+            this.unlockDoor();
+        }
+    }
+
+    solvedPanels() {
+        return [this.laserPanel, this.turretPanel].filter((panel) => panel.solved).length;
     }
 
     checkAllSolved() {
-        const solved = [this.laserPanel, this.turretPanel].filter((panel) => panel.solved).length;
+        const solved = this.solvedPanels();
         this.setStatus(`> SISTEMAS DESATIVADOS: ${solved}/2`, solved === 2 ? "#51e36b" : "#7a8099");
 
         if (solved < 2) {

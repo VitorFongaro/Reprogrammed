@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import wordmark from "../assets/images/reprogrammed-wordmark.png";
+import { hasLocalSave, load as loadProgress, startNewGame } from "../state/progress";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -17,6 +18,15 @@ const DROP_ZONE = {
 };
 
 const MENU_ITEMS = [
+    // CONTINUAR só entra quando existe save (ver buildMenuItems).
+    {
+        id: "continue",
+        label: "CONTINUAR",
+        icon: "disk",
+        accent: 0x4ad6ff,
+        executeText: "LENDO NÓ DE ARQUIVO...",
+        requiresSave: true
+    },
     {
         id: "start",
         label: "INICIAR",
@@ -114,11 +124,13 @@ export default class GameScene extends Phaser.Scene {
     }
 
     drawMenuCards() {
+        const items = MENU_ITEMS.filter((item) => !item.requiresSave || hasLocalSave());
         const spacing = 228;
-        const startX = WIDTH / 2 - spacing;
+        // Centraliza a fileira: o número de cards muda com a existência de save.
+        const startX = WIDTH / 2 - (spacing * (items.length - 1)) / 2;
         const y = 592;
 
-        MENU_ITEMS.forEach((item, index) => {
+        items.forEach((item, index) => {
             const card = this.createCard(startX + spacing * index, y, item);
             this.cards.push(card);
         });
@@ -181,6 +193,17 @@ export default class GameScene extends Phaser.Scene {
                 const y = -16 + Math.sin(angle) * 44;
                 icon.fillRect(x - 6, y - 6, 12, 12);
             }
+        }
+
+        if (item.icon === "disk") {
+            // Disquete: o ícone do save.
+            icon.lineStyle(6, item.accent, 1);
+            icon.strokeRect(-38, -50, 76, 76);
+            icon.fillRect(-20, -50, 40, 26);
+            icon.lineStyle(4, 0x000000, 1);
+            icon.strokeRect(-8, -46, 12, 18);
+            icon.lineStyle(6, item.accent, 1);
+            icon.strokeRect(-26, -4, 52, 30);
         }
 
         if (item.icon === "exit") {
@@ -275,8 +298,16 @@ export default class GameScene extends Phaser.Scene {
     }
 
     finishExecution(card) {
+        if (card.item.id === "continue") {
+            this.loadSavedGame(card);
+            return;
+        }
+
         if (card.item.id === "start") {
             this.statusText.setText("JOGO INICIADO");
+            // Jogo novo começa do zero: sem isso, um save carregado antes nesta
+            // mesma sessão deixaria os puzzles marcados como resolvidos.
+            startNewGame();
             this.time.delayedCall(350, () => {
                 this.scene.start("intro-scene");
             });
@@ -303,6 +334,27 @@ export default class GameScene extends Phaser.Scene {
         if (card.item.id !== "exit") {
             this.time.delayedCall(800, () => this.returnCard(card, false));
         }
+    }
+
+    // CONTINUAR: o save vem da API (com o espelho local como reserva) e o jogo
+    // retoma direto na sala gravada, sem passar pela intro.
+    loadSavedGame(card) {
+        loadProgress()
+            .then((progress) => {
+                if (!progress) {
+                    this.statusText.setText("NENHUM SAVE ENCONTRADO");
+                    this.returnCard(card, false);
+                    return;
+                }
+
+                this.statusText.setText("SAVE CARREGADO");
+                this.time.delayedCall(350, () => this.scene.start(progress.scene));
+            })
+            .catch((error) => {
+                this.statusText.setText("FALHA AO LER O SAVE");
+                console.error(error);
+                this.returnCard(card, false);
+            });
     }
 
     flashDropZone(color) {

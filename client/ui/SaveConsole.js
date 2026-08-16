@@ -242,6 +242,28 @@ export default class SaveConsole {
             ? this.onSave()
             : { text: "> nó de arquivo ainda não conectado", color: COLOR.warn };
 
+        // Gravar passa pela rede: enquanto a promessa não volta, a tela mostra
+        // que está gravando em vez de anunciar sucesso antes da hora.
+        if (typeof result?.then === "function") {
+            this.output.setText("> gravando...").setColor(COLOR.dim);
+            result
+                .then((value) => this.finishSave(value))
+                .catch((error) => this.finishSave({
+                    text: `> falha ao gravar: ${error.message}`,
+                    color: COLOR.warn
+                }));
+            return;
+        }
+
+        this.finishSave(result);
+    }
+
+    finishSave(result) {
+        // O jogador pode ter fechado com ESC enquanto a gravação corria.
+        if (!this.isOpen) {
+            return;
+        }
+
         this.output.setText(result?.text ?? "> progresso salvo").setColor(result?.color ?? COLOR.success);
         this.scene.time.delayedCall(1600, () => this.close());
     }

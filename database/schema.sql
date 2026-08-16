@@ -72,9 +72,12 @@ create table public.chapters (
 -- base_difficulty = dificuldade planejada pelos desenvolvedores
 -- =========================================================
 
+-- slug = chave da cena no Phaser ('cap1-porao'). É por ele que o cliente
+-- referencia a fase; os ids são gerados e mudariam num reseed.
 create table public.levels (
   id bigint generated always as identity primary key,
   chapter_id bigint not null references public.chapters(id) on delete cascade,
+  slug varchar(60) not null,
   title varchar(100) not null,
   description text,
   base_difficulty public.difficulty_level not null default 'easy',
@@ -83,7 +86,8 @@ create table public.levels (
   created_at timestamp with time zone not null default now(),
   updated_at timestamp with time zone not null default now(),
 
-  constraint unique_level_order_per_chapter unique (chapter_id, order_index)
+  constraint unique_level_order_per_chapter unique (chapter_id, order_index),
+  constraint unique_level_slug unique (slug)
 );
 
 -- =========================================================
@@ -92,9 +96,12 @@ create table public.levels (
 -- base_difficulty = dificuldade base do puzzle
 -- =========================================================
 
+-- slug = identificador do puzzle no cliente ('porao-gerador'), usado também
+-- na lista de resolvidos do save.
 create table public.puzzles (
   id bigint generated always as identity primary key,
   level_id bigint not null references public.levels(id) on delete cascade,
+  slug varchar(60) not null,
   title varchar(100) not null,
   description text,
   topic public.programming_topic not null,
@@ -108,6 +115,7 @@ create table public.puzzles (
   updated_at timestamp with time zone not null default now(),
 
   constraint unique_puzzle_order_per_level unique (level_id, order_index),
+  constraint unique_puzzle_slug unique (slug),
   constraint check_puzzle_max_score check (max_score >= 0)
 );
 
@@ -250,8 +258,16 @@ create table public.user_topic_performance (
 
 -- =========================================================
 -- USER GAME STATE
--- Save geral do jogador
--- Útil para guardar posição, cena atual e último ponto salvo
+-- Save geral do jogador — só o que é REVERSÍVEL.
+--
+-- Estilo Resident Evil: o jogador grava no ponto de salvamento e é para lá que
+-- ele volta. `solved_puzzles` é a lista de slugs resolvidos NO MOMENTO do save;
+-- puzzle resolvido depois do último save se perde de propósito.
+--
+-- O que a IA aprendeu sobre o jogador NÃO mora aqui: tentativas, acertos e
+-- dificuldade adaptativa ficam em puzzle_attempts / user_level_progress /
+-- user_topic_performance, que são monotônicos — carregar um save nunca os
+-- reverte, senão o jogador zeraria a dificuldade só saindo e voltando.
 -- =========================================================
 
 create table public.user_game_state (
@@ -264,7 +280,11 @@ create table public.user_game_state (
   position_x int not null default 0,
   position_y int not null default 0,
 
-  last_saved_at timestamp with time zone not null default now()
+  solved_puzzles jsonb not null default '[]'::jsonb,
+
+  last_saved_at timestamp with time zone not null default now(),
+
+  constraint check_solved_puzzles check (jsonb_typeof(solved_puzzles) = 'array')
 );
 
 -- =========================================================
@@ -384,6 +404,23 @@ create trigger set_user_settings_updated_at
 before update on public.user_settings
 for each row
 execute function public.set_updated_at();
+
+-- user_game_state usa last_saved_at no lugar de updated_at: sem este gatilho o
+-- campo só teria o valor do default e nunca marcaria o último save de verdade.
+create or replace function public.set_last_saved_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.last_saved_at = now();
+  return new;
+end;
+$$;
+
+create trigger set_user_game_state_last_saved_at
+before update on public.user_game_state
+for each row
+execute function public.set_last_saved_at();
 
 -- =========================================================
 -- HANDLE NEW USER
@@ -624,6 +661,14 @@ on public.user_game_state
 for select
 to authenticated
 using (auth.uid() = user_id);
+
+-- A linha normalmente nasce no handle_new_user; a política de insert cobre o
+-- usuário que, por qualquer motivo, não passou por aquele gatilho.
+create policy "Users can insert their own game state"
+on public.user_game_state
+for insert
+to authenticated
+with check (auth.uid() = user_id);
 
 create policy "Users can update their own game state"
 on public.user_game_state

@@ -2,6 +2,7 @@ import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
 import SaveComputer from "../../objects/SaveComputer";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
+import { save as saveProgress } from "../../state/progress";
 import poraoBg from "../../assets/images/porao/porao_bg.png";
 import poraoMap from "../../assets/maps/porao.json";
 
@@ -20,8 +21,9 @@ const GENERATOR = { x: 1048, y: 173, w: 96, h: 90 };
 const DOOR = { x: 656, y: 98 };
 
 // Estação de salvamento encostada na parede do fundo, ao lado do armário de
-// arquivos. `y` é a base do móvel, para o y-sort casar com os outros objetos.
-const SAVE_STATION = { x: 265, y: 184 };
+// arquivos. `y` é a base do móvel, para o y-sort casar com os outros objetos —
+// a parede acaba em y=136 na tela, então a base fica a uma altura de sprite dali.
+const SAVE_STATION = { x: 265, y: 200 };
 
 const GENERATOR_PUZZLE = {
     title: "GERADOR // NÚCLEO",
@@ -93,6 +95,7 @@ export default class PoraoScene extends BaseRoomScene {
 
     onRoomCreate() {
         this.generator = new PuzzleDevice(this, {
+            id: "porao-gerador",
             x: GENERATOR.x,
             y: GENERATOR.y,
             w: GENERATOR.w,
@@ -105,17 +108,38 @@ export default class PoraoScene extends BaseRoomScene {
             blocks: true,
             puzzle: GENERATOR_PUZZLE,
             introScript: PUZZLE_INTRO_SCRIPT,
-            onSolved: () => this.handleGeneratorSolved()
+            onSolved: () => this.handleGeneratorSolved(),
+            // Save carregado com o gerador já resolvido: a porta abre calada,
+            // sem repetir a fala do Cosmo.
+            onRestore: () => this.unlockDoor()
         });
 
-        // Ponto de salvamento (só o design por enquanto: sem `onSave`, a tela
-        // avisa que o sistema de arquivo ainda não está conectado).
         this.saveStation = new SaveComputer(this, {
             x: SAVE_STATION.x,
-            y: SAVE_STATION.y
+            y: SAVE_STATION.y,
+            onSave: () => this.saveGame()
         });
 
-        this.playDialogue(ENTRY_SCRIPT);
+        // Quem chega pelo CONTINUAR com o gerador já religado não precisa ouvir
+        // o tutorial de movimento de novo.
+        if (!this.generator.solved) {
+            this.playDialogue(ENTRY_SCRIPT);
+        }
+    }
+
+    // Resposta do ponto de salvamento, na voz do jogo. O save local sempre
+    // acontece; `remote` diz se o nó de arquivo (a API) também recebeu.
+    async saveGame() {
+        const result = await saveProgress();
+
+        if (result.remote) {
+            return { text: "> progresso gravado no nó de arquivo" };
+        }
+
+        return {
+            text: "> gravado só nesta máquina — nó de arquivo fora do ar",
+            color: "#ffb347"
+        };
     }
 
     handleGeneratorSolved() {
