@@ -1,5 +1,6 @@
+import { API_BASE_URL } from '../config.js';
+
 const AUTH_STORAGE_KEY = 'reprogrammed.auth';
-const API_BASE_URL = window.REPROGRAMMED_API_URL || 'http://localhost:3000';
 
 const sidebarActions = document.querySelectorAll('.sidebar-action[data-panel]');
 const logoutButton = document.getElementById('logout-button');

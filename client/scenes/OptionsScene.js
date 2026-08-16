@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { API_BASE_URL } from "../config";
 import keyboardLetters from "../assets/icons/keys/keyboard-letters.png";
 import keyboardExtras from "../assets/icons/keys/keyboard-extras.png";
 
@@ -26,7 +27,6 @@ const EXTRA_SHEET_COLS = 4;
 const EXTRA_FRAME = {
     SHIFT: 1 * EXTRA_SHEET_COLS + 0
 };
-const API_BASE_URL = window.REPROGRAMMED_API_URL || "http://localhost:3000";
 const AUTH_STORAGE_KEY = "reprogrammed.auth";
 const MIN_VOLUME = 1;
 const MAX_VOLUME = 100;

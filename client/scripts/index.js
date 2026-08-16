@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '../config.js';
+
 const modal = document.getElementById('modal');
 const teamContent = document.getElementById('team-content');
 const contactContent = document.getElementById('contact-content');
@@ -31,7 +33,6 @@ const consoleText = document.getElementById('console-text');
 const accountActions = document.querySelectorAll('.account-action');
 const executeButtons = document.querySelectorAll('.execute-button');
 const playLinks = document.querySelectorAll('a[href$="game.html"]');
-const API_BASE_URL = window.REPROGRAMMED_API_URL || 'http://localhost:3000';
 const AUTH_STORAGE_KEY = 'reprogrammed.auth';
 
 const setAuthMessage = (element, message = '', type = 'info') => {

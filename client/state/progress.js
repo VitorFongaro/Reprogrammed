@@ -12,7 +12,8 @@
 // Grava em dois lugares: na API (fonte da verdade, por usuário) e no
 // localStorage (espelho, para o jogo continuar salvando se o backend cair).
 
-const API_BASE_URL = window.REPROGRAMMED_API_URL || "http://localhost:3000";
+import { API_BASE_URL } from "../config.js";
+
 const AUTH_STORAGE_KEY = "reprogrammed.auth";
 const SAVE_STORAGE_KEY = "reprogrammed.save";
 
