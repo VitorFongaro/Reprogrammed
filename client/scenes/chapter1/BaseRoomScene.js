@@ -31,6 +31,15 @@ const REPROGRAM_COOLDOWN = 6000;   // recarga após o uso (ms reais).
 const AFTERIMAGE_INTERVAL = 110;   // ms reais entre imagens residuais.
 const AFTERIMAGE_FADE = 220;       // fade do rastro (alonga junto com a câmara lenta).
 
+// Combate na sala (salas com `hp`): dano por contato/tiro, melee [F] e reinício.
+const PLAYER_IFRAME_MS = 800;
+const ENEMY_BULLET_SPEED = 190;
+const ENEMY_BULLET_DAMAGE = 3;
+const ENERGY_BALL_SPEED = 210;      // bolas do slam do biped (quicam nas paredes).
+const ENERGY_BALL_LIFESPAN = 4500;  // até sumirem (ms).
+const MELEE_RANGE = 110;
+const HP_BAR = { x: 70, y: 46, w: 200, h: 10 };
+
 export default class BaseRoomScene extends Phaser.Scene {
     constructor(key, config = {}) {
         super(key);
@@ -51,6 +60,9 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.bgKey = config.bgKey ?? `bg-${key}`;
         this.mapData = config.map ?? null;
         this.mapOffset = config.mapOffset ?? DEFAULT_MAP_OFFSET;
+        // HP da sala (0 = sala sem combate). Ligado nas salas com inimigos; o
+        // dano vem de contato/tiro e zerar reinicia o jogador no spawn.
+        this.maxHp = config.hp ?? 0;
     }
 
     preload() {
@@ -70,11 +82,14 @@ export default class BaseRoomScene extends Phaser.Scene {
 
         this.interactables = [];
         this.reprogrammables = [];
+        this.enemies = [];
         this.reprogramMode = false;
         this.reprogramCooldownLeft = 0;
         this.afterimageAccumulator = 0;
         this.doorUnlocked = false;
         this.transitioning = false;
+        this.hp = this.maxHp;
+        this.playerInvulnUntil = 0;
 
         this.drawRoom();
         this.createDoor();
@@ -83,6 +98,10 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.cosmo = new CosmoCompanion(this, this.player);
         this.dialogue = new DialogueBox(this);
 
+        if (this.maxHp > 0) {
+            this.setupCombat();
+        }
+
         if (this.mapData) {
             this.addObjectsFromTiled(this.mapData, "objetos", this.mapOffset);
             this.addCollidersFromTiled(this.mapData, "colisao", this.mapOffset);
@@ -90,6 +109,12 @@ export default class BaseRoomScene extends Phaser.Scene {
 
         this.input.keyboard.on("keydown-E", () => this.tryInteract());
         this.input.keyboard.on("keydown", (event) => this.handleRoomKey(event));
+        // No modo [R] a mira é pelo mouse: clique confirma o alvo apontado.
+        this.input.on("pointerdown", () => {
+            if (this.reprogramMode) {
+                this.confirmReprogram();
+            }
+        });
 
         // Restaura a dilatação temporal se a sala fechar/reiniciar com o modo
         // ativo: anims é global e Clock/tweens persistem num scene.restart.
@@ -110,6 +135,8 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.cosmo.update(time, delta);
         this.updatePrompts();
         this.updateReprogramState(delta);
+        this.enemies.forEach((enemy) => enemy.update(time, delta));
+        this.cullEnemyBullets();
 
         if (this.ySort) {
             // Profundidade = pés visíveis da protagonista, para casar com os objetos.
@@ -225,6 +252,9 @@ export default class BaseRoomScene extends Phaser.Scene {
                     ?.setText(`${seconds.toFixed(1)}s`)
                     .setColor(seconds <= 1.5 ? "#ff4545" : "#4ad6ff");
                 this.updateAfterimages(delta);
+                // Mira pelo mouse + destaque acompanha alvos em movimento.
+                this.updateReprogramSelectionFromPointer();
+                this.renderReprogramOverlay();
             }
         } else if (this.reprogramCooldownLeft > 0) {
             this.reprogramCooldownLeft = Math.max(0, this.reprogramCooldownLeft - delta);
@@ -266,6 +296,11 @@ export default class BaseRoomScene extends Phaser.Scene {
 
         if (event.code === "Escape") {
             this.openPauseMenu();
+            return;
+        }
+
+        if (event.code === "KeyF") {
+            this.tryMelee();
             return;
         }
 
@@ -334,6 +369,27 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.renderReprogramOverlay();
     }
 
+    // Seleciona o alvo mais próximo do ponteiro do mouse (mira livre, sem ordem).
+    updateReprogramSelectionFromPointer() {
+        const targets = this.availableReprogrammables();
+        if (targets.length === 0) {
+            return;
+        }
+        const p = this.input.activePointer;
+        let best = 0;
+        let bestDist = Infinity;
+        targets.forEach((target, index) => {
+            const tx = target.sprite ? target.sprite.x : target.x;
+            const ty = target.sprite ? target.sprite.y : target.y;
+            const d = Phaser.Math.Distance.Between(p.worldX, p.worldY, tx, ty);
+            if (d < bestDist) {
+                bestDist = d;
+                best = index;
+            }
+        });
+        this.reprogramIndex = best;
+    }
+
     confirmReprogram() {
         const target = this.availableReprogrammables()[this.reprogramIndex];
         if (target) {
@@ -350,7 +406,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         const hint = this.add.text(
             WIDTH / 2,
             HEIGHT - 56,
-            "WASD mover   [←]/[→] alternar alvo   [E] reprogramar   [R] cancelar",
+            "WASD mover   MOUSE mira o alvo   CLIQUE/[E] reprogramar   [R] cancelar",
             { fontFamily: "VCR", fontSize: "18px", color: "#e7e9f2" }
         ).setOrigin(0.5);
 
@@ -412,8 +468,11 @@ export default class BaseRoomScene extends Phaser.Scene {
         targets.forEach((target, index) => {
             const selected = index === this.reprogramIndex;
             const pad = 10;
-            const left = target.x - target.w / 2 - pad;
-            const top = target.y - target.h / 2 - pad;
+            // Alvos móveis (inimigos) expõem `sprite`; máquinas fixas usam x/y.
+            const tx = target.sprite ? target.sprite.x : target.x;
+            const ty = target.sprite ? target.sprite.y : target.y;
+            const left = tx - target.w / 2 - pad;
+            const top = ty - target.h / 2 - pad;
             const w = target.w + pad * 2;
             const h = target.h + pad * 2;
 
@@ -424,7 +483,7 @@ export default class BaseRoomScene extends Phaser.Scene {
                 this.reprogramGraphics.fillRect(left, top, w, h);
             }
 
-            const label = this.add.text(target.x, top - 12, target.label, {
+            const label = this.add.text(tx, top - 12, target.label, {
                 fontFamily: "VCR",
                 fontSize: selected ? "17px" : "14px",
                 color: selected ? "#ffffff" : "#4ad6ff"
@@ -432,6 +491,211 @@ export default class BaseRoomScene extends Phaser.Scene {
             this.reprogramContainer.add(label);
             this.reprogramLabels.push(label);
         });
+    }
+
+    // --- Combate na sala (inimigos, HP, melee) ---
+    setupCombat() {
+        if (!this.textures.exists("enemy-bullet")) {
+            const g = this.add.graphics();
+            g.fillStyle(0xff4545, 1);
+            g.fillCircle(6, 6, 5);
+            g.lineStyle(2, 0x7a1020, 1);
+            g.strokeCircle(6, 6, 5);
+            g.generateTexture("enemy-bullet", 12, 12);
+            g.destroy();
+        }
+        if (!this.textures.exists("energy-ball")) {
+            const g = this.add.graphics();
+            g.fillStyle(0xb14aff, 0.35);
+            g.fillCircle(10, 10, 9);
+            g.fillStyle(0xd98cff, 1);
+            g.fillCircle(10, 10, 6);
+            g.fillStyle(0xffffff, 1);
+            g.fillCircle(10, 10, 3);
+            g.generateTexture("energy-ball", 20, 20);
+            g.destroy();
+        }
+
+        this.enemyBullets = this.physics.add.group();
+        this.physics.add.overlap(this.player.sprite, this.enemyBullets, (_, bullet) => {
+            bullet.destroy();
+            this.damagePlayer(ENEMY_BULLET_DAMAGE);
+        });
+
+        this.drawHpBar();
+
+        // Retorno da batalha de reprogramação (scene.resume com dados). Usa `on`
+        // (não `once`): o menu de pausa também dá resume e consumiria o listener.
+        this.onSceneResume = (_sys, data) => this.handleSceneResume(data);
+        this.events.on("resume", this.onSceneResume);
+        this.events.once("shutdown", () => this.events.off("resume", this.onSceneResume));
+    }
+
+    // Inimigo se registra aqui (cria a colisão de contato com a Artemis).
+    registerEnemy(enemy) {
+        this.enemies.push(enemy);
+        this.physics.add.overlap(this.player.sprite, enemy.sprite, () => {
+            if (!enemy.disabled) {
+                this.damagePlayer(enemy.def.contactDamage ?? ENEMY_BULLET_DAMAGE);
+            }
+        });
+        return enemy;
+    }
+
+    spawnEnemyBullet(x, y, angle) {
+        if (!this.enemyBullets) {
+            return;
+        }
+        const bullet = this.enemyBullets.create(x, y, "enemy-bullet").setDepth(760);
+        bullet.body.setVelocity(Math.cos(angle) * ENEMY_BULLET_SPEED, Math.sin(angle) * ENEMY_BULLET_SPEED);
+    }
+
+    // Bola de energia do slam do biped: quica nas paredes (bounce + world bounds)
+    // e some após a vida útil. Vai no mesmo grupo — o dano ao jogador é o do
+    // overlap de enemyBullets.
+    spawnEnergyBall(x, y, angle) {
+        if (!this.enemyBullets) {
+            return;
+        }
+        const ball = this.enemyBullets.create(x, y, "energy-ball").setDepth(760);
+        ball.body.setVelocity(Math.cos(angle) * ENERGY_BALL_SPEED, Math.sin(angle) * ENERGY_BALL_SPEED);
+        ball.body.setBounce(1, 1);
+        ball.body.setCollideWorldBounds(true);
+        this.tweens.add({ targets: ball, angle: 360, duration: 700, repeat: -1 });
+        this.time.delayedCall(ENERGY_BALL_LIFESPAN, () => ball.destroy());
+    }
+
+    cullEnemyBullets() {
+        if (!this.enemyBullets) {
+            return;
+        }
+        const { x, y, w, h } = this.bounds;
+        this.enemyBullets.getChildren().slice().forEach((b) => {
+            if (b.x < x - 30 || b.x > x + w + 30 || b.y < y - 30 || b.y > y + h + 30) {
+                b.destroy();
+            }
+        });
+    }
+
+    damagePlayer(amount) {
+        if (this.maxHp <= 0 || !this.player.enabled || this.time.now < this.playerInvulnUntil) {
+            return;
+        }
+        this.playerInvulnUntil = this.time.now + PLAYER_IFRAME_MS;
+
+        this.hp = Math.max(0, this.hp - amount);
+        this.updateHpBar();
+        this.cameras.main.shake(150, 0.004);
+        this.tweens.add({
+            targets: this.player.sprite,
+            alpha: 0.3, duration: 90, yoyo: true, repeat: 3,
+            onComplete: () => this.player.sprite.setAlpha(1)
+        });
+
+        if (this.hp <= 0) {
+            this.onPlayerDowned();
+        }
+    }
+
+    // HP zerado: reinicia a Artemis no spawn (sem reiniciar a sala inteira).
+    onPlayerDowned() {
+        this.player.setEnabled(false);
+        this.cameras.main.flash(400, 255, 40, 40);
+        this.setStatus("> SISTEMAS CRÍTICOS — REINICIANDO", "#ff4545");
+        this.time.delayedCall(900, () => {
+            this.player.sprite.setPosition(this.spawn.x, this.spawn.y);
+            this.hp = this.maxHp;
+            this.updateHpBar();
+            this.playerInvulnUntil = this.time.now + PLAYER_IFRAME_MS;
+            this.player.setEnabled(true);
+            this.setStatus("");
+        });
+    }
+
+    drawHpBar() {
+        this.add.text(HP_BAR.x, HP_BAR.y - 12, "ARTEMIS :: HP", {
+            fontFamily: "VCR", fontSize: "14px", color: "#7a8099"
+        }).setOrigin(0, 0.5).setDepth(900);
+        this.hpText = this.add.text(HP_BAR.x + HP_BAR.w + 12, HP_BAR.y + HP_BAR.h / 2, "", {
+            fontFamily: "VCR", fontSize: "16px", color: "#e7e9f2"
+        }).setOrigin(0, 0.5).setDepth(900);
+        this.hpBarGraphics = this.add.graphics().setDepth(900);
+        this.updateHpBar();
+    }
+
+    updateHpBar() {
+        if (!this.hpBarGraphics) {
+            return;
+        }
+        const ratio = this.hp / this.maxHp;
+        const color = ratio > 0.5 ? 0x51e36b : ratio > 0.25 ? 0xffb347 : 0xff4545;
+        this.hpBarGraphics.clear();
+        this.hpBarGraphics.lineStyle(1, 0x4ad6ff, 0.6);
+        this.hpBarGraphics.strokeRect(HP_BAR.x, HP_BAR.y, HP_BAR.w, HP_BAR.h);
+        this.hpBarGraphics.fillStyle(color, 0.9);
+        this.hpBarGraphics.fillRect(HP_BAR.x + 1, HP_BAR.y + 1, (HP_BAR.w - 2) * ratio, HP_BAR.h - 2);
+        this.hpText.setText(`${this.hp}/${this.maxHp}`);
+    }
+
+    // Melee [F]: golpeia o inimigo mais próximo em alcance (placeholder até a
+    // animação de ataque da Artemis ficar pronta).
+    tryMelee() {
+        if (!this.player.enabled || this.transitioning || this.reprogramMode) {
+            return;
+        }
+        let best = null;
+        let bestDist = MELEE_RANGE;
+        this.enemies.forEach((enemy) => {
+            if (enemy.disabled) {
+                return;
+            }
+            const d = Phaser.Math.Distance.Between(this.player.sprite.x, this.player.sprite.y, enemy.x, enemy.y);
+            if (d < bestDist) {
+                best = enemy;
+                bestDist = d;
+            }
+        });
+        if (!best) {
+            return;
+        }
+        // Lunge curto da Artemis na direção do inimigo (placeholder de ataque).
+        const angle = Phaser.Math.Angle.Between(this.player.sprite.x, this.player.sprite.y, best.x, best.y);
+        this.tweens.add({
+            targets: this.player.sprite,
+            x: this.player.sprite.x + Math.cos(angle) * 14,
+            y: this.player.sprite.y + Math.sin(angle) * 14,
+            duration: 80, yoyo: true
+        });
+        best.takeMeleeHit();
+    }
+
+    // Modo [R] confirmou um inimigo: abre a batalha de reprogramação.
+    startEnemyReprogram(enemy) {
+        const index = this.enemies.indexOf(enemy);
+        this.player.setEnabled(false);
+        this.scene.launch("cap1-reprograma", {
+            config: {
+                type: enemy.type,
+                name: enemy.def.name,
+                puzzle: enemy.reprogramPuzzle(),
+                returnScene: this.scene.key,
+                enemyIndex: index
+            }
+        });
+        this.scene.pause();
+    }
+
+    handleSceneResume(data) {
+        this.input.keyboard.resetKeys();
+        if (!data?.enemyReprogram) {
+            return;
+        }
+        const { index, disabled } = data.enemyReprogram;
+        if (disabled) {
+            this.enemies[index]?.disable();
+            this.setStatus("> ROBÔ DESATIVADO", "#51e36b");
+        }
+        this.player.setEnabled(true);
     }
 
     // --- Menu de pausa (ESC) ---

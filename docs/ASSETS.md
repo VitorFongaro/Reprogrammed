@@ -15,7 +15,7 @@ já processados, em `client/assets/`. Os originais ficam na máquina de cada dev
   para "gerar variações a partir daqui"). Os packs Post Apoc proíbem isso explicitamente, e
   é de onde vem a maior parte da nossa arte de cenário. Sprite novo no estilo do pack se
   desenha no Aseprite, à mão ou por script.
-- Crédito no TCC: liste os quatro packs abaixo com autor e link.
+- Crédito no TCC: liste os packs abaixo com autor e link.
 
 ## Packs usados
 
@@ -56,6 +56,19 @@ paleta quase preta do jogo).
 É a **versão demo**, com poucos tiles — foi por isso que a parede do fundo do porão continuou
 procedural em vez de virar tile do pack. Se a parede for trocada de verdade, provavelmente é
 com o Post Apoc Office/Shelter ou com a versão completa deste pack.
+
+### SteamRobotsPack — inimigos robôs
+
+Origem dos **inimigos** `exploding` (kamikaze), `pistol` e `shotgun`
+(`client/assets/sprites/enemies/`, recortes por tag: walk/idle/shoot/explode/disabled, 32×32),
+mais o `.ase` fonte de cada um. O pack não trouxe arquivo de licença próprio — **confirmar
+autor, licença e forma de crédito com quem baixou** antes da entrega do TCC.
+
+### biped_robot — Silver Ink ([itch.io](https://silverink.itch.io/))
+
+Origem do **inimigo `biped`** (mech vermelho, `client/assets/sprites/enemies/biped/`).
+Licença **CC BY-SA 4.0**: uso livre (comercial e não-comercial), mas **exige atribuição**
+(creditar "Silver Ink") **e share-alike** (derivados herdam a mesma licença). Creditar no TCC.
 
 ## Arte feita no projeto
 

@@ -1,37 +1,20 @@
-import Phaser from "phaser";
 import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
-import armaUrl from "../../assets/sprites/arma/arma.png";
-import projetilUrl from "../../assets/sprites/projetil/projetil.png";
+import Enemy from "../../characters/Enemy";
 
-// Capítulo 1, sala de treinamento (sala 4 do fluxo do capítulo): mecânicas de
-// DESVIAR e DESATIVAR. Uma barreira de laser corta a sala num ciclo (atravesse
-// na janela apagada; o painel do outro lado desliga de vez com `lasers = false`)
-// e duas torretas atiram na Artemis no lado direito (o painel delas zera a
-// munição com `municao = 0`). Encostar em laser/bala tira HP; zerar o HP
-// reinicia a sala. Porta abre com os dois sistemas desativados.
-//
-// Cenário procedural (grade do BaseRoomScene) até a arte da sala ficar pronta.
+// Capítulo 1, sala de treinamento (sala 4): barreira de laser + INIMIGOS. A
+// barreira corta a sala num ciclo (atravesse na janela apagada; o painel do
+// outro lado desliga com `lasers = false`) e três robôs patrulham/atacam o lado
+// direito. Cada robô se neutraliza reprogramando ([R] seleciona direto → batalha
+// de reprogramação) ou no melee ([F], placeholder). Encostar/levar tiro tira HP
+// (base); zerar reinicia a Artemis no spawn. A porta abre com o laser desligado
+// e todos os robôs desativados. Cenário procedural até a arte ficar pronta.
 
-const MAX_HP = 20;
-const LASER_DAMAGE = 5;
-const BULLET_DAMAGE = 3;
-const IFRAME_MS = 800;
-const HP_BAR = { x: 70, y: 46, w: 200, h: 10 };
-
-// Barreira de laser vertical (px de tela).
 const LASER_X = 600;
-const LASER_CYCLE = { warn: 500, on: 1100, off: 1400 };   // ms de cada fase.
+const LASER_CYCLE = { warn: 500, on: 1100, off: 1400 };
 const LASER_HIT_W = 14;
-
-// Torretas na parede de cima, ativas com a jogadora à direita de TURRET_RANGE_X.
-const TURRETS_X = [820, 1060];
-const FIRE_INTERVAL = 1500;
-const BULLET_SPEED = 200;
-const TURRET_RANGE_X = 660;
-
-const RETRY_FLAG = "cap1-treinamento-retry";
+const LASER_DAMAGE = 5;
 
 const LASER_PUZZLE = {
     title: "BARREIRA // LASERS",
@@ -52,28 +35,16 @@ const LASER_PUZZLE = {
     }
 };
 
-const TURRET_PUZZLE = {
-    title: "TORRETAS // MUNIÇÃO",
-    briefing: [
-        "As torretas atiram enquanto houver munição.",
-        "O contador vive na variável municao —",
-        "esvazie os carregadores."
-    ],
-    hint: "monte na ordem:  municao  =  0",
-    variable: "municao",
-    expected: 0,
-    successMessage: "TORRETAS OFFLINE",
-    wrongValueMessage: "ainda há munição nos carregadores",
-    blockDistractors: {
-        nome: ["balas", "torreta"],
-        op: ["=="],
-        valor: ["100", '"0"']
-    }
-};
+const ENEMY_SPAWNS = [
+    { type: "exploding", x: 820, y: 300 },
+    { type: "pistol", x: 1080, y: 430 },
+    { type: "shotgun", x: 940, y: 560 }
+];
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Lasers e torretas. Atravesse a barreira quando ela apagar; os painéis desligam tudo de vez." },
-    { speaker: "COSMO", text: "Se o seu HP zerar, eu reinicio a sala." }
+    { speaker: "COSMO", text: "Barreira de laser e robôs de segurança. Atravesse quando a barreira apagar." },
+    { speaker: "COSMO", text: "Contra os robôs: aperte [R] pra reprogramar um deles, ou [F] pra quebrá-lo no braço." },
+    { speaker: "COSMO", text: "Se o HP zerar, eu te reinicio aqui. Desligue a barreira e neutralize todos." }
 ];
 
 const CLEARED_SCRIPT = [
@@ -84,83 +55,48 @@ export default class TreinamentoScene extends BaseRoomScene {
     constructor() {
         super("cap1-treinamento", {
             title: "TREINAMENTO // SEGURANÇA",
-            footer: "WASD mover   SHIFT correr   [E] interagir",
+            footer: "WASD mover   SHIFT correr   [R] reprogramar   [F] golpear",
             nextScene: "cap1-sentinela",
-            spawn: { x: 140, y: 400 }
+            spawn: { x: 140, y: 400 },
+            ySort: true,
+            hp: 20
         });
     }
 
     preload() {
         super.preload();
         BlockProgrammingConsole.preload(this);
-        if (!this.textures.exists("arma")) {
-            this.load.image("arma", armaUrl);
-        }
-        if (!this.textures.exists("projetil")) {
-            this.load.spritesheet("projetil", projetilUrl, { frameWidth: 32, frameHeight: 32 });
-        }
+        Enemy.preload(this);
     }
 
     onRoomCreate() {
-        this.hp = MAX_HP;
-        this.invulnUntil = 0;
-        this.downed = false;
-        this.lasersOn = true;      // sistema da barreira (ciclo rodando).
-        this.laserActive = false;  // feixe ligado neste instante.
-        this.turretsOn = true;
+        this.lasersOn = true;
+        this.laserActive = false;
+        this.cleared = false;
 
-        this.createProjectileAnim();
-        this.drawHpBar();
         this.createLaser();
-        this.createTurrets();
-        this.createPanels();
+        this.createPanel();
 
-        if (this.registry.get(RETRY_FLAG)) {
-            this.registry.remove(RETRY_FLAG);
-            this.setStatus("> SISTEMAS RESTAURADOS — TENTE DE NOVO", "#4ad6ff");
-        } else {
-            this.playDialogue(ENTRY_SCRIPT);
-        }
+        ENEMY_SPAWNS.forEach((spawn) => new Enemy(this, spawn.x, spawn.y, { type: spawn.type }));
+
+        this.playDialogue(ENTRY_SCRIPT);
     }
 
     onRoomUpdate() {
-        // Balas que saíram da área jogável somem.
-        if (this.bullets) {
-            const { x, y, w, h } = this.bounds;
-            this.bullets.getChildren().slice().forEach((bullet) => {
-                if (bullet.x < x - 20 || bullet.x > x + w + 20 || bullet.y < y - 20 || bullet.y > y + h + 20) {
-                    bullet.destroy();
-                }
-            });
+        if (this.cleared) {
+            return;
+        }
+        if (!this.lasersOn && this.enemies.every((e) => e.disabled)) {
+            this.handleCleared();
         }
     }
 
-    // --- HUD de HP da sala ---
-    drawHpBar() {
-        this.add.text(HP_BAR.x, HP_BAR.y - 12, "ARTEMIS :: HP", {
-            fontFamily: "VCR",
-            fontSize: "14px",
-            color: "#7a8099"
-        }).setOrigin(0, 0.5).setDepth(900);
-        this.hpText = this.add.text(HP_BAR.x + HP_BAR.w + 12, HP_BAR.y + HP_BAR.h / 2, "", {
-            fontFamily: "VCR",
-            fontSize: "16px",
-            color: "#e7e9f2"
-        }).setOrigin(0, 0.5).setDepth(900);
-        this.hpGraphics = this.add.graphics().setDepth(900);
-        this.updateHpBar();
-    }
-
-    updateHpBar() {
-        const ratio = this.hp / MAX_HP;
-        const color = ratio > 0.5 ? 0x51e36b : ratio > 0.25 ? 0xffb347 : 0xff4545;
-
-        this.hpGraphics.clear();
-        this.hpGraphics.lineStyle(1, 0x4ad6ff, 0.6);
-        this.hpGraphics.strokeRect(HP_BAR.x, HP_BAR.y, HP_BAR.w, HP_BAR.h);
-        this.hpGraphics.fillStyle(color, 0.9);
-        this.hpGraphics.fillRect(HP_BAR.x + 1, HP_BAR.y + 1, (HP_BAR.w - 2) * ratio, HP_BAR.h - 2);
-        this.hpText.setText(`${this.hp}/${MAX_HP}`);
+    handleCleared() {
+        this.cleared = true;
+        this.setStatus("> AMEAÇAS NEUTRALIZADAS", "#51e36b");
+        this.time.delayedCall(700, () => {
+            this.playDialogue(CLEARED_SCRIPT, () => this.unlockDoor());
+        });
     }
 
     // --- Barreira de laser ---
@@ -211,8 +147,6 @@ export default class TreinamentoScene extends BaseRoomScene {
         const g = this.laserGraphics;
 
         g.clear();
-
-        // Emissores (topo e base).
         const emitterColor = this.lasersOn ? 0xff4545 : 0x3a3f55;
         g.fillStyle(emitterColor, 1);
         g.fillRect(LASER_X - 8, top - 4, 16, 10);
@@ -221,14 +155,11 @@ export default class TreinamentoScene extends BaseRoomScene {
         if (!this.lasersOn || this.laserState === "off") {
             return;
         }
-
         if (this.laserState === "warn") {
             g.lineStyle(2, 0xff4545, 0.35);
             g.lineBetween(LASER_X, top, LASER_X, bottom);
             return;
         }
-
-        // Ligado: feixe cheio + brilho.
         g.fillStyle(0xff4545, 0.22);
         g.fillRect(LASER_X - LASER_HIT_W / 2, top, LASER_HIT_W, bottom - top);
         g.lineStyle(4, 0xff4545, 1);
@@ -245,177 +176,18 @@ export default class TreinamentoScene extends BaseRoomScene {
         this.drawLaser();
     }
 
-    // --- Torretas ---
-    createProjectileAnim() {
-        if (!this.anims.exists("projetil-anim")) {
-            this.anims.create({
-                key: "projetil-anim",
-                frames: this.anims.generateFrameNumbers("projetil", { start: 0, end: 7 }),
-                frameRate: 12,
-                repeat: -1
-            });
-        }
-    }
-
-    createTurrets() {
-        const turretY = this.bounds.y + 16;
-
-        // Sprite da arma (assets/sprites/arma) aponta para baixo por padrão;
-        // no tiro, gira para mirar na Artemis.
-        this.turretSprites = TURRETS_X.map((tx) =>
-            this.add.image(tx, turretY, "arma").setScale(2).setDepth(700)
-        );
-
-        this.bullets = this.physics.add.group();
-        this.physics.add.overlap(this.player.sprite, this.bullets, (_, bullet) => {
-            bullet.destroy();
-            this.damagePlayer(BULLET_DAMAGE);
-        });
-
-        this.fireTimer = this.time.addEvent({
-            delay: FIRE_INTERVAL,
-            loop: true,
-            callback: () => this.fireTurrets()
-        });
-    }
-
-    fireTurrets() {
-        if (!this.turretsOn || !this.player.enabled || this.downed) {
-            return;
-        }
-        if (this.player.sprite.x < TURRET_RANGE_X) {
-            return;
-        }
-
-        this.turretSprites.forEach((turret) => {
-            const angle = Phaser.Math.Angle.Between(
-                turret.x, turret.y, this.player.sprite.x, this.player.sprite.y
-            );
-            // O cano aponta para baixo (90°); gira a diferença para mirar.
-            turret.setRotation(angle - Math.PI / 2);
-
-            const bullet = this.bullets.create(
-                turret.x + Math.cos(angle) * 26,
-                turret.y + Math.sin(angle) * 26,
-                "projetil"
-            );
-            bullet.setDepth(750);
-            bullet.play("projetil-anim");
-            bullet.body.setSize(20, 20, true);
-            bullet.body.setVelocity(Math.cos(angle) * BULLET_SPEED, Math.sin(angle) * BULLET_SPEED);
-        });
-    }
-
-    disableTurrets() {
-        this.turretsOn = false;
-        this.fireTimer?.remove();
-        this.fireTimer = null;
-        this.bullets?.clear(true, true);
-        // Armas apagadas, de volta à posição de descanso.
-        this.turretSprites.forEach((turret) => {
-            turret.setTint(0x555a66);
-            turret.setRotation(0);
-        });
-    }
-
-    // --- Painéis de desativação ---
-    createPanels() {
+    // --- Painel da barreira ---
+    createPanel() {
         this.laserPanel = new PuzzleDevice(this, {
             id: "treinamento-lasers",
-            x: 710,
+            x: 300,
             y: 330,
             blocks: true,
             puzzle: LASER_PUZZLE,
             onSolved: () => {
                 this.disableLasers();
-                this.checkAllSolved();
-            },
-            onRestore: () => this.disableLasers()
-        });
-
-        this.turretPanel = new PuzzleDevice(this, {
-            id: "treinamento-municao",
-            x: 1140,
-            y: 250,
-            blocks: true,
-            puzzle: TURRET_PUZZLE,
-            onSolved: () => {
-                this.disableTurrets();
-                this.checkAllSolved();
-            },
-            onRestore: () => this.disableTurrets()
-        });
-
-        this.restoreFromSave();
-    }
-
-    // Painéis que já vieram desativados do save: os lasers/torretas já foram
-    // desligados pelo onRestore de cada painel, aqui só sobra o placar e a porta.
-    restoreFromSave() {
-        const solved = this.solvedPanels();
-
-        if (solved === 0) {
-            return;
-        }
-
-        this.setStatus(`> SISTEMAS DESATIVADOS: ${solved}/2`, solved === 2 ? "#51e36b" : "#7a8099");
-
-        if (solved === 2) {
-            this.unlockDoor();
-        }
-    }
-
-    solvedPanels() {
-        return [this.laserPanel, this.turretPanel].filter((panel) => panel.solved).length;
-    }
-
-    checkAllSolved() {
-        const solved = this.solvedPanels();
-        this.setStatus(`> SISTEMAS DESATIVADOS: ${solved}/2`, solved === 2 ? "#51e36b" : "#7a8099");
-
-        if (solved < 2) {
-            return;
-        }
-
-        this.time.delayedCall(800, () => {
-            this.playDialogue(CLEARED_SCRIPT, () => this.unlockDoor());
-        });
-    }
-
-    // --- Dano e reinício ---
-    damagePlayer(amount) {
-        if (this.downed || !this.player.enabled || this.time.now < this.invulnUntil) {
-            return;
-        }
-        this.invulnUntil = this.time.now + IFRAME_MS;
-
-        this.hp = Math.max(0, this.hp - amount);
-        this.updateHpBar();
-        this.cameras.main.shake(150, 0.004);
-
-        this.tweens.add({
-            targets: this.player.sprite,
-            alpha: 0.3,
-            duration: 90,
-            yoyo: true,
-            repeat: 3,
-            onComplete: () => this.player.sprite.setAlpha(1)
-        });
-
-        if (this.hp <= 0) {
-            this.handleDefeat();
-        }
-    }
-
-    handleDefeat() {
-        this.downed = true;
-        this.player.setEnabled(false);
-        this.cameras.main.flash(400, 255, 40, 40);
-        this.setStatus("> SISTEMAS CRÍTICOS — REINICIANDO SALA", "#ff4545");
-
-        this.time.delayedCall(1400, () => {
-            this.registry.set(RETRY_FLAG, true);
-            this.scene.restart();
+                this.setStatus("> BARREIRA DESATIVADA", "#51e36b");
+            }
         });
     }
 }

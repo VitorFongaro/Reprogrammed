@@ -11,6 +11,7 @@ import TreinamentoScene from './scenes/chapter1/TreinamentoScene';
 import SentinelaScene from './scenes/chapter1/SentinelaScene';
 import SalaSegurancaScene from './scenes/chapter1/SalaSegurancaScene';
 import BattleScene from './scenes/chapter1/BattleScene';
+import ReprogramScene from './scenes/chapter1/ReprogramScene';
 import CorredorScene from './scenes/chapter1/CorredorScene';
 import SaguaoScene from './scenes/chapter1/SaguaoScene';
 
@@ -42,6 +43,7 @@ const config = {
         SentinelaScene,
         SalaSegurancaScene,
         BattleScene,
+        ReprogramScene,
         CorredorScene,
         SaguaoScene,
         // Overlays por último: renderizam por cima das salas (ver bringToTop).

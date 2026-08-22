@@ -1,6 +1,7 @@
 import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
+import Enemy from "../../characters/Enemy";
 import controleBg from "../../assets/images/controle/controle_bg.png";
 import controleMap from "../../assets/maps/controle.json";
 
@@ -50,8 +51,14 @@ const THERMOSTAT_PUZZLE = {
     }
 };
 
+const ENEMY_SPAWNS = [
+    { type: "biped", x: 940, y: 400 },
+    { type: "pistol", x: 700, y: 540 }
+];
+
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Controle ambiental: dois painéis, dois tipos de valor — texto e número decimal. Reative os dois." }
+    { speaker: "COSMO", text: "Controle ambiental: dois painéis, dois tipos de valor — texto e número decimal. Reative os dois." },
+    { speaker: "COSMO", text: "Cuidado, tem robôs de segurança soltos. [R] reprograma um deles, [F] golpeia — ou só desvie." }
 ];
 
 const SOLVED_SCRIPT = [
@@ -67,13 +74,15 @@ export default class SalaControleScene extends BaseRoomScene {
             door: { x: 640, y: 98 },
             ySort: true,
             bg: controleBg,
-            map: controleMap
+            map: controleMap,
+            hp: 20
         });
     }
 
     preload() {
         super.preload();
         BlockProgrammingConsole.preload(this);
+        Enemy.preload(this);
     }
 
     onRoomCreate() {
@@ -102,6 +111,8 @@ export default class SalaControleScene extends BaseRoomScene {
             puzzle: THERMOSTAT_PUZZLE,
             onSolved: () => this.checkAllSolved()
         });
+
+        ENEMY_SPAWNS.forEach((spawn) => new Enemy(this, spawn.x, spawn.y, { type: spawn.type }));
 
         this.restoreFromSave();
         this.playDialogue(ENTRY_SCRIPT);
