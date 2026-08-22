@@ -498,10 +498,12 @@ export default class BaseRoomScene extends Phaser.Scene {
         if (!this.textures.exists("enemy-bullet")) {
             const g = this.add.graphics();
             g.fillStyle(0xff4545, 1);
-            g.fillCircle(6, 6, 5);
+            g.fillCircle(9, 9, 8);
+            g.fillStyle(0xffb0b0, 1);
+            g.fillCircle(9, 9, 3);
             g.lineStyle(2, 0x7a1020, 1);
-            g.strokeCircle(6, 6, 5);
-            g.generateTexture("enemy-bullet", 12, 12);
+            g.strokeCircle(9, 9, 8);
+            g.generateTexture("enemy-bullet", 18, 18);
             g.destroy();
         }
         if (!this.textures.exists("energy-ball")) {

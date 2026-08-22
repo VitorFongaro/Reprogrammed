@@ -46,7 +46,7 @@ const TYPES = {
         name: "ROBÔ EXPLOSIVO",
         walkKey: "enemy-exploding-walk",
         disabledKey: "enemy-exploding-disabled",
-        scale: 2.6, speed: 130, meleeHp: 2, ranged: false, contactDamage: 5,
+        scale: 3.3, speed: 130, meleeHp: 2, ranged: false, contactDamage: 5,
         disablePuzzle: { variable: "carga", expected: 0,
             hint: "monte:  carga = 0", wrongValueMessage: "ainda vai explodir",
             blockDistractors: { nome: ["fusivel"], op: ["=="], valor: ["100", '"0"'] } }
@@ -56,7 +56,7 @@ const TYPES = {
         walkKey: "enemy-pistol-walk",
         disabledKey: "enemy-pistol-disabled",
         weaponKey: "enemy-pistol-weapon",
-        scale: 2.6, speed: 100, meleeHp: 2, ranged: true, fireMs: 1800, contactDamage: 3,
+        scale: 3.3, speed: 100, meleeHp: 2, ranged: true, fireMs: 1800, contactDamage: 3,
         disablePuzzle: { variable: "mira", expected: false,
             hint: "monte:  mira = false", wrongValueMessage: "ainda está mirando",
             blockDistractors: { nome: ["gatilho"], op: ["=="], valor: ["true", '"false"'] } }
@@ -66,7 +66,8 @@ const TYPES = {
         walkKey: "enemy-shotgun-walk",
         disabledKey: "enemy-shotgun-disabled",
         weaponKey: "enemy-shotgun-weapon",
-        scale: 2.6, speed: 90, meleeHp: 3, ranged: true, fireMs: 2300, contactDamage: 4,
+        scale: 3.3, speed: 90, meleeHp: 3, ranged: true, fireMs: 2500, contactDamage: 4,
+        pellets: 5, spread: 0.6,       // rajada de 5 balas em leque.
         disablePuzzle: { variable: "cartucho", expected: 0,
             hint: "monte:  cartucho = 0", wrongValueMessage: "ainda tem cartucho",
             blockDistractors: { nome: ["cano"], op: ["=="], valor: ["50", '"0"'] } }
@@ -75,7 +76,7 @@ const TYPES = {
         name: "MECH VERMELHO",
         walkKey: "enemy-biped-walk",
         disabledKey: "enemy-biped-disabled",
-        scale: 2.8, speed: 90, meleeHp: 4, ranged: false, contactDamage: 4,
+        scale: 3.2, speed: 90, meleeHp: 4, ranged: false, contactDamage: 4,
         // Anda ALEATÓRIO (não persegue) e periodicamente pula: ao aterrissar
         // solta 4 bolas de energia que quicam nas paredes até sumirem.
         wander: true, slam: true, slamMs: 3800,
@@ -265,11 +266,20 @@ export default class Enemy {
                 if (this.weapon && !this.disabled) this.weapon.setFrame(0);
             });
         }
-        this.scene.spawnEnemyBullet?.(
-            this.x + Math.cos(angle) * MUZZLE_OFFSET,
-            this.y + Math.sin(angle) * MUZZLE_OFFSET,
-            angle
-        );
+        const mx = this.x + Math.cos(angle) * MUZZLE_OFFSET;
+        const my = this.y + Math.sin(angle) * MUZZLE_OFFSET;
+        const pellets = this.def.pellets ?? 1;
+
+        if (pellets <= 1) {
+            this.scene.spawnEnemyBullet?.(mx, my, angle);
+            return;
+        }
+        // Rajada em leque (escopeta): `pellets` balas espalhadas em `spread` rad.
+        const spread = this.def.spread ?? 0.5;
+        for (let i = 0; i < pellets; i += 1) {
+            const a = angle + (i / (pellets - 1) - 0.5) * spread;
+            this.scene.spawnEnemyBullet?.(mx, my, a);
+        }
     }
 
     // Golpe de melee ([F]): reduz o HP e, ao zerar, quebra (fica disabled).

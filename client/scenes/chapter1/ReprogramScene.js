@@ -14,18 +14,22 @@ import DodgeBox from "../../ui/DodgeBox";
 const WIDTH = 1280;
 const HEIGHT = 720;
 
-const REPROG_HP = 16;
+const REPROG_HP = 20;
 const DODGE_HIT_DAMAGE = 3;
 const PUZZLE_TIME = 14000;
 const PORTRAIT_SCALE = 6;
-const BOX = { x: 640, y: 470, w: 440, h: 230 };
+const BOX = { x: 640, y: 460, w: 480, h: 260 };
 
 const DODGE_ROUND = {
-    durationMs: 3200,
-    intervalMs: 340,
-    speed: { min: 150, max: 230 },
-    drift: 40,
-    aimedChance: 0.35
+    durationMs: 6500,
+    intervalMs: 400,
+    speed: { min: 150, max: 240 },
+    drift: 45,
+    aimedChance: 0.35,
+    patterns: ["rain", "sides", "aimed"],   // varia o padrão a cada fase.
+    phaseMs: 2100,
+    exploders: true,                        // balas que explodem em várias.
+    exploderMs: 2300
 };
 
 export default class ReprogramScene extends Phaser.Scene {
