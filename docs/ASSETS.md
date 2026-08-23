@@ -70,6 +70,10 @@ Origem do **inimigo `biped`** (mech vermelho, `client/assets/sprites/enemies/bip
 Licença **CC BY-SA 4.0**: uso livre (comercial e não-comercial), mas **exige atribuição**
 (creditar "Silver Ink") **e share-alike** (derivados herdam a mesma licença). Creditar no TCC.
 
+Os sentinelas da arena pré-boss (`biped_teal/`, `biped_violet/`) são **derivados** deste
+sprite, recoloridos por rotação de matiz (HSV) via `tools/biped_recolor.py` — transformação
+determinística (NÃO é IA generativa). Herdam a CC BY-SA 4.0 (mesma atribuição + share-alike).
+
 ## Arte feita no projeto
 
 Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte versionado ao lado do

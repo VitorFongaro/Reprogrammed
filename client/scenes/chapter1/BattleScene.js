@@ -161,6 +161,15 @@ export default class BattleScene extends Phaser.Scene {
         if (!this.textures.exists("projetil")) {
             this.load.spritesheet("projetil", projetilUrl, { frameWidth: 32, frameHeight: 32 });
         }
+        // Combatentes customizados (ex.: dupla de sentinelas): sheets via config.
+        (this.config.combatants ?? []).forEach((c) => {
+            if (!this.textures.exists(`${c.key}-walk`)) {
+                this.load.spritesheet(`${c.key}-walk`, c.walkUrl, { frameWidth: 32, frameHeight: 32 });
+            }
+            if (!this.textures.exists(`${c.key}-disabled`)) {
+                this.load.spritesheet(`${c.key}-disabled`, c.disabledUrl, { frameWidth: 32, frameHeight: 32 });
+            }
+        });
     }
 
     create() {
@@ -170,13 +179,23 @@ export default class BattleScene extends Phaser.Scene {
         this.bossAttackIndex = 0;
         this.dodgeActive = false;
         this.invulnUntil = 0;
+        this.dodgeIndex = 0;
+        this.dodgePatterns = this.config.dodgePatterns ?? [this.config.dodgePattern];
+        this.bounceBalls = [];
 
         this.drawBackdrop();
         this.createTextures();
-        this.boss = new EniacBoss(this, BOSS_POS.x, BOSS_POS.y, {
-            scale: BOSS_POS.scale,
-            tint: this.config.bossTint
-        });
+        // Boss único (ENIAC) ou vários combatentes (dupla de sentinelas): quando a
+        // config traz `combatants`, o topo mostra esses sprites e o HP é um pool
+        // combinado (a dupla luta "de uma vez").
+        if (this.config.combatants) {
+            this.createCombatants();
+        } else {
+            this.boss = new EniacBoss(this, BOSS_POS.x, BOSS_POS.y, {
+                scale: BOSS_POS.scale,
+                tint: this.config.bossTint
+            });
+        }
         this.drawBox();
         this.drawHud();
         this.createSoul();
@@ -219,16 +238,26 @@ export default class BattleScene extends Phaser.Scene {
             this.soul.body.setVelocity(0, 0);
         }
 
-        // Projéteis que cruzaram a caixa somem nas bordas (baixo na chuva,
-        // lados na varredura).
+        // Projéteis que saíram da caixa somem (qualquer borda, para os padrões
+        // radiais). As bolas quicantes são poupadas — elas quicam (updateSplitBounce).
         if (this.projectiles) {
+            const left = BOX.x - BOX.w / 2;
+            const right = BOX.x + BOX.w / 2;
+            const top = BOX.y - BOX.h / 2;
+            const bottom = BOX.y + BOX.h / 2;
+            const m = 26;
             this.projectiles.getChildren().slice().forEach((proj) => {
-                const outY = proj.y > BOX.y + BOX.h / 2 - 6;
-                const outX = proj.x < BOX.x - BOX.w / 2 - 24 || proj.x > BOX.x + BOX.w / 2 + 24;
-                if (outY || outX) {
+                if (proj.bouncing) {
+                    return;
+                }
+                if (proj.x < left - m || proj.x > right + m || proj.y < top - m || proj.y > bottom + m) {
                     proj.destroy();
                 }
             });
+        }
+
+        if (this.dodgeActive) {
+            this.updateSplitBounce();
         }
     }
 
@@ -355,6 +384,17 @@ export default class BattleScene extends Phaser.Scene {
             g.destroy();
         }
 
+        // Orbe de energia (bola grande dos padrões espiral e quicante).
+        if (!this.textures.exists("battle-orb")) {
+            const g = this.add.graphics();
+            g.fillStyle(0xff7a1f, 0.30); g.fillCircle(20, 20, 20);
+            g.fillStyle(0xff9d4d, 1); g.fillCircle(20, 20, 13);
+            g.fillStyle(0xffe0b0, 1); g.fillCircle(20, 20, 6);
+            g.lineStyle(2, 0x7a3810, 1); g.strokeCircle(20, 20, 18);
+            g.generateTexture("battle-orb", 40, 40);
+            g.destroy();
+        }
+
         // Projétil animado do dev (assets/sprites/projetil, 8 quadros 32x32).
         if (!this.anims.exists("projetil-anim")) {
             this.anims.create({
@@ -384,6 +424,66 @@ export default class BattleScene extends Phaser.Scene {
         });
     }
 
+    // --- Combatentes (dupla de sentinelas) e dispatch de reações ---
+    // Sem EniacBoss: renderiza um sprite por combatente no topo, com HP combinado.
+    createCombatants() {
+        this.combatantSprites = [];
+        this.config.combatants.forEach((c) => {
+            const walkKey = `${c.key}-walk`;
+            const disabledKey = `${c.key}-disabled`;
+            if (!this.anims.exists(walkKey)) {
+                this.anims.create({ key: walkKey, frames: this.anims.generateFrameNumbers(walkKey, { start: 0, end: 5 }), frameRate: 8, repeat: -1 });
+            }
+            if (!this.anims.exists(disabledKey)) {
+                this.anims.create({ key: disabledKey, frames: this.anims.generateFrameNumbers(disabledKey, { start: 0, end: 1 }), frameRate: 2, repeat: -1 });
+            }
+            const s = this.add.sprite(c.x, c.y ?? BOSS_POS.y, walkKey, 0)
+                .setScale(c.scale ?? 3)
+                .setDepth(HUD_DEPTH - 1);
+            s.play(walkKey);
+            s.baseY = c.y ?? BOSS_POS.y;
+            s.disabledKey = disabledKey;
+            this.combatantSprites.push(s);
+        });
+    }
+
+    // Reação ao levar dano (piscar branco). Boss ou dupla.
+    foeHit() {
+        if (this.boss) {
+            this.boss.hit();
+            return;
+        }
+        this.combatantSprites.forEach((s) => {
+            s.setTintFill(0xffffff);
+            this.time.delayedCall(90, () => { if (s.active) s.clearTint(); });
+        });
+    }
+
+    // Telegrafo do ataque; chama `cb` quando pode começar o bullet hell.
+    foeAttackAnim(cb) {
+        if (this.boss) {
+            this.boss.attackAnim(cb);
+            return;
+        }
+        this.combatantSprites.forEach((s) => {
+            this.tweens.add({ targets: s, y: s.baseY + 18, duration: 140, yoyo: true, ease: "Quad.easeOut" });
+            s.setTintFill(0xffb347);
+            this.time.delayedCall(160, () => { if (s.active) s.clearTint(); });
+        });
+        this.time.delayedCall(320, cb);
+    }
+
+    foePowerDown() {
+        if (this.boss) {
+            this.boss.powerDown();
+            return;
+        }
+        this.combatantSprites.forEach((s) => {
+            s.play(s.disabledKey);
+            this.tweens.add({ targets: s, y: s.baseY + 8, alpha: 0.75, duration: 500, ease: "Quad.easeOut" });
+        });
+    }
+
     // --- Turno do jogador ---
     playerTurn() {
         this.setBattleStatus("> SEU TURNO — ESCOLHA UMA AÇÃO", "#4ad6ff");
@@ -403,7 +503,7 @@ export default class BattleScene extends Phaser.Scene {
     attack() {
         const damage = this.forca ?? BASE_DAMAGE;
 
-        this.boss.hit();
+        this.foeHit();
         this.cameras.main.shake(220, 0.004);
         this.bossHp = Math.max(0, this.bossHp - damage);
         this.updateBossHp();
@@ -483,20 +583,22 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     dodgeTurn() {
+        const pattern = this.dodgePatterns[this.dodgeIndex % this.dodgePatterns.length];
+        this.dodgeIndex += 1;
+        this.currentPattern = pattern;
+
         this.setBattleStatus(`> TURNO DE ${this.config.name} — DESVIE COM WASD!`, "#ff4545");
-        this.soul.body.reset(BOX.x, BOX.y);
+        // Na espiral as balas nascem no centro: começa a alma mais embaixo.
+        const startY = pattern === "spiral" ? BOX.y + BOX.h / 2 - 30 : BOX.y;
+        this.soul.body.reset(BOX.x, startY);
         this.soul.setVisible(true);
         this.dodgeActive = true;
 
-        this.boss.attackAnim(() => {
+        this.foeAttackAnim(() => {
             if (!this.dodgeActive) {
                 return;
             }
-            this.spawnTimer = this.time.addEvent({
-                delay: this.config.projectileInterval,
-                loop: true,
-                callback: () => this.spawnAttack()
-            });
+            this.startPattern(pattern);
             this.dodgeTimer = this.time.delayedCall(this.config.dodgeDuration, () => this.endDodge());
         });
     }
@@ -514,16 +616,164 @@ export default class BattleScene extends Phaser.Scene {
         this.spawnTimer = null;
         this.dodgeTimer?.remove();
         this.dodgeTimer = null;
+        this.crossTimer?.remove();
+        this.crossTimer = null;
+        if (this.centralBall) {
+            this.tweens.killTweensOf(this.centralBall);
+            this.centralBall.destroy();
+            this.centralBall = null;
+        }
+        this.bounceBalls = [];
         this.projectiles?.clear(true, true);
         this.soul?.setVisible(false);
     }
 
-    spawnAttack() {
-        if (this.config.dodgePattern === "sweep") {
-            this.spawnSweepWave();
-        } else {
-            this.spawnProjectile();
+    // Prepara o padrão do turno. Os padrões antigos (rain/sweep) usam um timer de
+    // spawn por intervalo; os novos montam os próprios timers/estado.
+    startPattern(name) {
+        if (name === "spiral") {
+            this.startSpiral();
+            return;
         }
+        if (name === "splitBounce") {
+            this.startSplitBounce();
+            return;
+        }
+        if (name === "touhouCross") {
+            this.startTouhouCross();
+            return;
+        }
+        const spawn = name === "sweep" ? () => this.spawnSweepWave() : () => this.spawnProjectile();
+        this.spawnTimer = this.time.addEvent({
+            delay: this.config.projectileInterval,
+            loop: true,
+            callback: spawn
+        });
+    }
+
+    // Bala radial genérica (padrões espiral e cruz): sai de (x,y) num ângulo.
+    spawnRadial(x, y, angle, speed) {
+        const proj = this.projectiles.create(x, y, "projetil");
+        proj.setDepth(28).setScale(0.6);
+        proj.play("projetil-anim");
+        proj.body.setSize(18, 18, true);
+        proj.body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+        return proj;
+    }
+
+    // PADRÃO 1 — Espiral: uma orbe grande gira no centro e cospe balas em braços
+    // que giram (o ângulo de emissão avança a cada tique).
+    startSpiral() {
+        this.spiralAngle = 0;
+        this.centralBall = this.add.image(BOX.x, BOX.y, "battle-orb").setDepth(27).setScale(1.4);
+        this.tweens.add({ targets: this.centralBall, angle: 360, duration: 1400, repeat: -1 });
+        this.tweens.add({ targets: this.centralBall, scale: 1.65, duration: 520, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+        this.spawnTimer = this.time.addEvent({ delay: 115, loop: true, callback: () => this.spiralTick() });
+    }
+
+    spiralTick() {
+        const arms = 3;
+        const speed = 150;
+        for (let i = 0; i < arms; i += 1) {
+            const a = this.spiralAngle + (i / arms) * Math.PI * 2;
+            this.spawnRadial(BOX.x, BOX.y, a, speed);
+        }
+        this.spiralAngle += 0.42;
+    }
+
+    // PADRÃO 2 — Quicar e dividir: bolas grandes quicam nas bordas e a cada quicada
+    // se dividem em duas menores (até um tamanho mínimo). Movimento/quique tratados
+    // à mão em updateSplitBounce.
+    startSplitBounce() {
+        this.bounceBalls = [];
+        for (let i = 0; i < 2; i += 1) {
+            const angle = Phaser.Math.FloatBetween(0.6, Math.PI - 0.6) + (i * Math.PI);
+            const x = Phaser.Math.Between(BOX.x - BOX.w / 2 + 70, BOX.x + BOX.w / 2 - 70);
+            const y = Phaser.Math.Between(BOX.y - BOX.h / 2 + 60, BOX.y + BOX.h / 2 - 60);
+            this.spawnBounceBall(x, y, angle, 0);
+        }
+    }
+
+    spawnBounceBall(x, y, angle, gen) {
+        const speed = 110 + gen * 35;
+        const scale = 1.5 - gen * 0.45;         // grande no gen 0, menor a cada divisão.
+        const ball = this.projectiles.create(x, y, "battle-orb").setDepth(28).setScale(scale);
+        ball.bouncing = true;
+        ball.gen = gen;
+        ball.radius = 20 * scale;
+        ball.body.setSize(34, 34, true);
+        ball.body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+        this.bounceBalls.push(ball);
+        return ball;
+    }
+
+    updateSplitBounce() {
+        if (!this.bounceBalls || this.bounceBalls.length === 0) {
+            return;
+        }
+        const left = BOX.x - BOX.w / 2;
+        const right = BOX.x + BOX.w / 2;
+        const top = BOX.y - BOX.h / 2;
+        const bottom = BOX.y + BOX.h / 2;
+        const maxGen = 2;
+
+        this.bounceBalls.slice().forEach((ball) => {
+            if (!ball.active) {
+                this.removeBounceBall(ball);
+                return;
+            }
+            const r = ball.radius;
+            let bounced = false;
+            if (ball.x - r <= left) { ball.body.velocity.x = Math.abs(ball.body.velocity.x); ball.x = left + r; bounced = true; }
+            else if (ball.x + r >= right) { ball.body.velocity.x = -Math.abs(ball.body.velocity.x); ball.x = right - r; bounced = true; }
+            if (ball.y - r <= top) { ball.body.velocity.y = Math.abs(ball.body.velocity.y); ball.y = top + r; bounced = true; }
+            else if (ball.y + r >= bottom) { ball.body.velocity.y = -Math.abs(ball.body.velocity.y); ball.y = bottom - r; bounced = true; }
+
+            if (bounced && ball.gen < maxGen) {
+                const base = Math.atan2(ball.body.velocity.y, ball.body.velocity.x);
+                const px = ball.x;
+                const py = ball.y;
+                const gen = ball.gen;
+                this.removeBounceBall(ball);
+                ball.destroy();
+                this.spawnBounceBall(px, py, base - 0.5, gen + 1);
+                this.spawnBounceBall(px, py, base + 0.5, gen + 1);
+            }
+        });
+    }
+
+    removeBounceBall(ball) {
+        const i = this.bounceBalls.indexOf(ball);
+        if (i >= 0) {
+            this.bounceBalls.splice(i, 1);
+        }
+    }
+
+    // PADRÃO 3 — Cruz Touhou: um "+" de balas surge em volta da alma e converge
+    // para dentro; as diagonais são as aberturas por onde escapar. Some e reaparece
+    // na posição atual da alma, sucessivamente.
+    startTouhouCross() {
+        this.spawnCross();
+        this.crossTimer = this.time.addEvent({ delay: 1150, loop: true, callback: () => this.spawnCross() });
+    }
+
+    spawnCross() {
+        if (!this.dodgeActive) {
+            return;
+        }
+        const cx = this.soul.x;
+        const cy = this.soul.y;
+        const arms = [0, Math.PI / 2, Math.PI, -Math.PI / 2];   // direita/baixo/esquerda/cima.
+        const count = 4;
+        const rStart = 66;
+        const rStep = 22;
+        const speed = 74;
+        arms.forEach((base) => {
+            for (let k = 0; k < count; k += 1) {
+                const r = rStart + k * rStep;
+                this.spawnRadial(cx + Math.cos(base) * r, cy + Math.sin(base) * r, base + Math.PI, speed);
+            }
+        });
     }
 
     // Varredura (sentinela): uma fileira vertical de fragmentos entra por um dos
@@ -601,7 +851,7 @@ export default class BattleScene extends Phaser.Scene {
         this.setBattleStatus("> SEQUÊNCIA HOSTIL A CAMINHO — DEFENDA-SE!", "#ff4545");
         const puzzle = Phaser.Utils.Array.GetRandom(DEFENSE_PUZZLES);
 
-        this.boss.attackAnim(() => {
+        this.foeAttackAnim(() => {
             let solvedThisRun = false;
 
             this.console = new BlockProgrammingConsole(this, puzzle, {
@@ -665,7 +915,7 @@ export default class BattleScene extends Phaser.Scene {
     victory() {
         this.menu.hide();
         this.stopDodge();
-        this.boss.powerDown();
+        this.foePowerDown();
         this.cameras.main.shake(600, 0.006);
         this.setBattleStatus(`> ${this.config.name} OFFLINE`, "#51e36b");
 
