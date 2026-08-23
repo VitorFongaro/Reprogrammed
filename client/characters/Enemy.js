@@ -122,7 +122,10 @@ export default class Enemy {
         this.scene = scene;
         Enemy.createAnimations(scene);
 
-        this.def = TYPES[options.type] ?? TYPES.exploding;
+        // `options.overrides` ajusta o comportamento por instância sem tocar no
+        // TYPES (ex.: um biped parado que só faz o slam, como guardião de sala).
+        const base = TYPES[options.type] ?? TYPES.exploding;
+        this.def = options.overrides ? { ...base, ...options.overrides } : base;
         this.type = options.type ?? "exploding";
         this.homeX = x;
         this.meleeHp = this.def.meleeHp;

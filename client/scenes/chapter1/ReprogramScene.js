@@ -15,6 +15,7 @@ const WIDTH = 1280;
 const HEIGHT = 720;
 
 const REPROG_HP = 20;
+const REPROG_HP_PER_STAGE = 10;   // HP extra do jogador por estágio além do 1º.
 const DODGE_HIT_DAMAGE = 3;
 const PUZZLE_TIME = 14000;
 const PORTRAIT_SCALE = 6;
@@ -42,7 +43,12 @@ export default class ReprogramScene extends Phaser.Scene {
 
     create() {
         Enemy.createAnimations(this);
-        this.hp = REPROG_HP;
+        // O robô resiste a N estágios (cada um = uma esquiva + um puzzle). O HP do
+        // jogador cresce com os estágios para a luta longa não virar desgaste.
+        this.enemyStages = this.config.stages ?? 1;
+        this.enemyStage = 0;
+        this.maxReprogHp = REPROG_HP + (this.enemyStages - 1) * REPROG_HP_PER_STAGE;
+        this.hp = this.maxReprogHp;
         this.solvedThisRun = false;
         this.finished = false;
 
@@ -63,6 +69,7 @@ export default class ReprogramScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         this.drawHpBar();
+        this.drawEnemyBar();
         this.dodge = new DodgeBox(this, { box: BOX });
 
         this.cameras.main.fadeIn(300, 0, 0, 0);
@@ -118,14 +125,55 @@ export default class ReprogramScene extends Phaser.Scene {
 
     updateHpBar() {
         const bar = { x: 70, y: 650, w: 200, h: 10 };
-        const ratio = this.hp / REPROG_HP;
+        const ratio = this.hp / this.maxReprogHp;
         const color = ratio > 0.5 ? 0x51e36b : ratio > 0.25 ? 0xffb347 : 0xff4545;
         this.hpGraphics.clear();
         this.hpGraphics.lineStyle(1, 0x4ad6ff, 0.6);
         this.hpGraphics.strokeRect(bar.x, bar.y, bar.w, bar.h);
         this.hpGraphics.fillStyle(color, 0.9);
         this.hpGraphics.fillRect(bar.x + 1, bar.y + 1, (bar.w - 2) * ratio, bar.h - 2);
-        this.hpText.setText(`${this.hp}/${REPROG_HP}`);
+        this.hpText.setText(`${this.hp}/${this.maxReprogHp}`);
+    }
+
+    // Integridade do NÚCLEO do robô: um segmento por estágio (só aparece quando
+    // há mais de um), esvaziando a cada camada quebrada. Fica numa linha própria,
+    // abaixo do status e acima da caixa de combate.
+    drawEnemyBar() {
+        if (this.enemyStages <= 1) {
+            return;
+        }
+        const segW = 40;
+        const gap = 8;
+        const h = 12;
+        const y = 304;
+        const total = this.enemyStages * segW + (this.enemyStages - 1) * gap;
+        const startX = WIDTH / 2 - total / 2;
+        this.enemyBarLayout = { startX, y, segW, gap, h };
+
+        this.enemyBarGraphics = this.add.graphics().setDepth(20);
+        this.add.text(startX - 12, y + h / 2, "NÚCLEO", {
+            fontFamily: "VCR", fontSize: "13px", color: "#ff8a8a"
+        }).setOrigin(1, 0.5);
+        this.updateEnemyBar();
+    }
+
+    updateEnemyBar() {
+        if (!this.enemyBarGraphics) {
+            return;
+        }
+        const { startX, y, segW, gap, h } = this.enemyBarLayout;
+        const remaining = this.enemyStages - this.enemyStage;
+        const g = this.enemyBarGraphics;
+        g.clear();
+        for (let i = 0; i < this.enemyStages; i += 1) {
+            const x = startX + i * (segW + gap);
+            g.lineStyle(1, 0xff4545, 0.6);
+            g.strokeRect(x, y, segW, h);
+            if (i < remaining) {
+                g.fillStyle(0xff4545, 0.9);
+                g.fillRect(x + 1, y + 1, segW - 2, h - 2);
+            }
+        }
     }
 
     setStatus(text, color = "#7a8099") {
@@ -179,21 +227,46 @@ export default class ReprogramScene extends Phaser.Scene {
         this.setStatus("DESLIGUE O ROBÔ — MONTE A INSTRUÇÃO", "#4ad6ff");
         this.solvedThisRun = false;
 
-        this.console = new BlockProgrammingConsole(this, this.config.puzzle, {
+        // Título mostra o progresso quando o robô tem vários estágios.
+        const puzzle = { ...this.config.puzzle };
+        if (this.enemyStages > 1) {
+            puzzle.title = `${this.config.puzzle.title}  [${this.enemyStage + 1}/${this.enemyStages}]`;
+        }
+
+        this.console = new BlockProgrammingConsole(this, puzzle, {
             singleAttempt: true,
             timeLimitMs: PUZZLE_TIME,
             onSolved: () => {
                 this.solvedThisRun = true;
             },
             onClose: () => {
-                if (this.solvedThisRun) {
+                if (!this.solvedThisRun) {
+                    this.enemyAttack();       // errou/tempo: outra esquiva, sem avançar.
+                    return;
+                }
+                this.enemyStage += 1;
+                this.updateEnemyBar();
+                if (this.enemyStage >= this.enemyStages) {
                     this.win();
                 } else {
-                    this.enemyAttack();   // errou ou estourou o tempo: outra esquiva.
+                    this.advanceStage();      // quebrou uma camada: mais uma rodada.
                 }
             }
         });
         this.console.open();
+    }
+
+    // Uma camada caiu, mas o robô resiste: telegrafa o dano e parte para outra
+    // rodada (esquiva → puzzle).
+    advanceStage() {
+        if (this.finished) {
+            return;
+        }
+        this.portrait.setTintFill(0xffffff);
+        this.cameras.main.shake(160, 0.005);
+        this.time.delayedCall(120, () => this.portrait.clearTint());
+        this.setStatus(`CAMADA ${this.enemyStage}/${this.enemyStages} QUEBRADA — ELE RESISTE`, "#ffb347");
+        this.time.delayedCall(1000, () => this.enemyAttack());
     }
 
     win() {

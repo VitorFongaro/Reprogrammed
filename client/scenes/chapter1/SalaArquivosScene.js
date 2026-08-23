@@ -1,88 +1,152 @@
 import BaseRoomScene from "./BaseRoomScene";
+import Enemy from "../../characters/Enemy";
 import arquivosBg from "../../assets/images/arquivos/arquivos_bg.png";
 import arquivosMap from "../../assets/maps/arquivos.json";
 
-// Capítulo 1, sala 2 — Sala de arquivos: sem puzzle próprio; introduz o conceito
-// de variável e é onde o Cosmo dá o nome "Artemis" à androide (nomear a variável).
-// O terminal central é um prop do Tiled; o código só registra a interação.
+// Capítulo 1, sala 2 — Sala de arquivos, agora o TUTORIAL da reprogramação
+// remota ([R]). Uma unidade de segurança (mech biped) fica trancada atrás de uma
+// barreira de laser IMPASSÁVEL: a Artemis não chega perto para golpear/reprogramar
+// de perto, então precisa apertar [R] (tempo desacelerado), mirar com o mouse e
+// reprogramar À DISTÂNCIA — desviando das bolas de energia que o robô solta. Ao
+// ser desligado, o próprio robô revela o nome dela ("Artemis... você nos traiu"),
+// a barreira cai e a porta abre. É aqui que o jogo também introduz a ideia de
+// variável: o nome é um valor de texto (nome = "Artemis").
 
-const TERMINAL = { x: 640, y: 330 };
-const TERMINAL_RADIUS = 150;
-const TERMINAL_PROMPT_Y = 246;
+const BARRIER_X = 740;
+const BARRIER_W = 16;
+const ROBOT = { x: 1000, y: 470 };
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "A sala de arquivos. A Elysium guardava registros de tudo aqui embaixo." },
-    { speaker: "COSMO", text: "Cada registro funciona como uma variável: um nome que guarda um valor." },
-    { speaker: "COSMO", text: "Procure o terminal central. Quero verificar o seu registro." }
+    { speaker: "COSMO", text: "A sala de arquivos. E um problema: aquela unidade de segurança trancou tudo." },
+    { speaker: "COSMO", text: "Ela está atrás de uma barreira de laser. Chegar perto pra desativar? Nem pensar." },
+    { speaker: "COSMO", text: "Mas você não precisa chegar perto. Aperte [R] para desacelerar o tempo." },
+    { speaker: "COSMO", text: "No tempo lento, mire nela com o mouse e clique para reprogramar à distância." },
+    { speaker: "COSMO", text: "Ela vai revidar — desvie do ataque e desligue o sistema dela. Vai." }
 ];
 
 export default class SalaArquivosScene extends BaseRoomScene {
     constructor() {
         super("cap1-arquivos", {
             nextScene: "cap1-controle",
+            footer: "WASD mover   [R] reprogramação remota",
             spawn: { x: 150, y: 450 },
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
             door: { x: 656, y: 98 },
             ySort: true,
+            hp: 18,
             bg: arquivosBg,
             map: arquivosMap
         });
     }
 
+    preload() {
+        super.preload();
+        Enemy.preload(this);
+    }
+
     onRoomCreate() {
-        this.terminalUsed = false;
-        this.createTerminalInteraction();
+        this.robotDefeated = false;
+
+        this.createBarrier();
+
+        // Guardião parado (só faz o slam soltando bolas de energia): não persegue,
+        // não sai do lugar — a barreira já garante que ele fica inalcançável.
+        this.robot = new Enemy(this, ROBOT.x, ROBOT.y, {
+            type: "biped",
+            // Guardião-tutorial: resiste a 3 estágios de reprogramação antes de cair.
+            overrides: { wander: false, speed: 0, slamMs: 3200, reprogramStages: 3 }
+        });
+
         this.playDialogue(ENTRY_SCRIPT);
     }
 
-    namingScript() {
+    onRoomUpdate() {
+        if (this.robotDefeated) {
+            return;
+        }
+        if (this.robot?.disabled) {
+            this.robotDefeated = true;
+            this.handleRobotDefeated();
+        }
+    }
+
+    // --- Barreira de laser (parede sólida + feixe) ---
+    createBarrier() {
+        const { y, h } = this.bounds;
+        const cy = y + h / 2;
+        this.barrierOn = true;
+
+        // Emissores no topo e na base do feixe.
+        this.barrierEmitters = this.add.graphics().setDepth(701);
+        this.drawEmitters(0xff4545);
+
+        // Feixe: glow largo + núcleo fino, ambos pulsando.
+        this.barrierGlow = this.add.rectangle(BARRIER_X, cy, 16, h - 8, 0xff4545, 0.22).setDepth(700);
+        this.barrierCore = this.add.rectangle(BARRIER_X, cy, 4, h - 8, 0xff4545, 1).setDepth(700);
+        this.tweens.add({ targets: this.barrierCore, alpha: { from: 0.8, to: 1 }, duration: 480, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+        this.tweens.add({ targets: this.barrierGlow, alpha: { from: 0.14, to: 0.3 }, duration: 480, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+
+        // Parede sólida: a Artemis não atravessa (colisor só contra ela; as bolas
+        // de energia do robô passam livres para poderem alcançá-la).
+        this.barrierZone = this.add.zone(BARRIER_X, cy, BARRIER_W, h);
+        this.physics.add.existing(this.barrierZone, true);
+        this.barrierCollider = this.physics.add.collider(this.player.sprite, this.barrierZone);
+    }
+
+    drawEmitters(color) {
+        const { y, h } = this.bounds;
+        this.barrierEmitters.clear();
+        this.barrierEmitters.fillStyle(color, 1);
+        this.barrierEmitters.fillRect(BARRIER_X - 10, y - 2, 20, 12);
+        this.barrierEmitters.fillRect(BARRIER_X - 10, y + h - 10, 20, 12);
+    }
+
+    dropBarrier() {
+        if (!this.barrierOn) {
+            return;
+        }
+        this.barrierOn = false;
+        this.barrierCollider?.destroy();
+        this.barrierCollider = null;
+        this.tweens.killTweensOf(this.barrierCore);
+        this.tweens.killTweensOf(this.barrierGlow);
+        this.drawEmitters(0x3a3f55);
+        this.tweens.add({
+            targets: [this.barrierCore, this.barrierGlow],
+            alpha: 0,
+            duration: 400,
+            onComplete: () => {
+                this.barrierCore?.destroy();
+                this.barrierGlow?.destroy();
+            }
+        });
+    }
+
+    // --- Robô desligado: revela o nome, derruba a barreira, abre a porta ---
+    handleRobotDefeated() {
+        this.dropBarrier();
+        this.setStatus("> UNIDADE DE SEGURANÇA DESATIVADA", "#51e36b");
+        this.time.delayedCall(600, () => {
+            this.playDialogue(this.revealScript(), () => {
+                this.setStatus('> nome = "Artemis"', "#51e36b");
+                this.unlockDoor();
+            });
+        });
+    }
+
+    revealScript() {
         return [
-            { speaker: "SISTEMA", text: "> consultando registro da unidade..." },
-            { speaker: "SISTEMA", text: "> unidade: A-7724   |   classe: androide   |   nome: ────" },
-            { speaker: "COSMO", text: "Nome vazio. Anos aqui embaixo e nem um nome te deram." },
-            { speaker: "COSMO", text: "Toda variável importante merece um nome. Que tal... Artemis?" },
+            { speaker: "SEGURANÇA", text: "Unidade... A-7724...", color: "#ff6b6b" },
             {
-                speaker: "SISTEMA",
-                text: '> nome = "Artemis"   [registro atualizado]',
+                speaker: "SEGURANÇA",
+                text: "Artemis... você nos traiu...",
+                color: "#ff6b6b",
                 onEnter: () => this.flashPlayer()
             },
-            { speaker: "COSMO", text: "Artemis. Gostei. Um texto entre aspas — é assim que máquinas guardam nomes." },
-            { speaker: "COSMO", text: "Vamos. O controle ambiental fica adiante." }
+            { speaker: "COSMO", text: '"Artemis". Foi como ela te chamou. Acho que é o seu nome.' },
+            { speaker: "COSMO", text: 'Um nome é só um valor de texto — guardado entre aspas: nome = "Artemis".' },
+            { speaker: "COSMO", text: "Vamos, Artemis. O controle ambiental fica adiante." }
         ];
-    }
-
-    createTerminalInteraction() {
-        const prompt = this.add.text(TERMINAL.x, TERMINAL_PROMPT_Y, "[E] CONSULTAR", {
-            fontFamily: "VCR",
-            fontSize: "18px",
-            color: "#4ad6ff"
-        }).setOrigin(0.5).setDepth(800).setVisible(false);
-
-        this.tweens.add({
-            targets: prompt,
-            y: TERMINAL_PROMPT_Y - 6,
-            duration: 600,
-            yoyo: true,
-            repeat: -1,
-            ease: "Sine.easeInOut"
-        });
-
-        this.registerInteractable({
-            x: TERMINAL.x,
-            y: TERMINAL.y,
-            radius: TERMINAL_RADIUS,
-            promptObj: prompt,
-            isAvailable: () => !this.terminalUsed,
-            onInteract: () => this.useTerminal()
-        });
-    }
-
-    useTerminal() {
-        this.terminalUsed = true;
-        this.playDialogue(this.namingScript(), () => {
-            this.setStatus('> nome = "Artemis"', "#51e36b");
-            this.unlockDoor();
-        });
     }
 
     flashPlayer() {

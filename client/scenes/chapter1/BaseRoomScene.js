@@ -681,6 +681,7 @@ export default class BaseRoomScene extends Phaser.Scene {
                 name: enemy.def.name,
                 puzzle: enemy.reprogramPuzzle(),
                 dodge: enemy.def.dodge,          // padrão do bullet hell do inimigo.
+                stages: enemy.def.reprogramStages ?? 1,  // quantas camadas até cair.
                 returnScene: this.scene.key,
                 enemyIndex: index
             }
