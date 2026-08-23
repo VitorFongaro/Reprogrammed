@@ -83,6 +83,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.interactables = [];
         this.reprogrammables = [];
         this.enemies = [];
+        this.mapColliders = [];
         this.reprogramMode = false;
         this.reprogramCooldownLeft = 0;
         this.afterimageAccumulator = 0;
@@ -137,6 +138,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.updateReprogramState(delta);
         this.enemies.forEach((enemy) => enemy.update(time, delta));
         this.cullEnemyBullets();
+        this.updateBulletTrails();
 
         if (this.ySort) {
             // Profundidade = pés visíveis da protagonista, para casar com os objetos.
@@ -163,6 +165,15 @@ export default class BaseRoomScene extends Phaser.Scene {
             const zone = this.add.zone(x + w / 2, y + h / 2, w, h);
             this.physics.add.existing(zone, true);
             this.physics.add.collider(this.player.sprite, zone);
+            this.mapColliders.push(zone);
+            // Inimigos batem nos mesmos obstáculos do mapa que o player. Cobre o
+            // caso de colisores criados DEPOIS dos inimigos (o registro cobre o
+            // caso inverso).
+            this.enemies.forEach((enemy) => {
+                if (enemy.sprite) {
+                    this.physics.add.collider(enemy.sprite, zone);
+                }
+            });
         });
     }
 
@@ -524,6 +535,26 @@ export default class BaseRoomScene extends Phaser.Scene {
             this.damagePlayer(ENEMY_BULLET_DAMAGE);
         });
 
+        // Rastro de partículas dos projéteis: uma faísca é emitida na posição de
+        // cada bala a cada frame (ver updateBulletTrails) e some sozinha, deixando
+        // um risco luminoso atrás. Quente para as balas, roxo para as bolas de
+        // energia. Emissores compartilhados (não um por bala).
+        if (!this.textures.exists("enemy-spark")) {
+            const g = this.add.graphics();
+            g.fillStyle(0xffffff, 1);
+            g.fillCircle(4, 4, 4);
+            g.generateTexture("enemy-spark", 8, 8);
+            g.destroy();
+        }
+        this.bulletTrail = this.add.particles(0, 0, "enemy-spark", {
+            lifespan: 240, speed: 0, scale: { start: 1, end: 0 },
+            alpha: { start: 0.7, end: 0 }, tint: 0xff7a4d, blendMode: Phaser.BlendModes.ADD, emitting: false
+        }).setDepth(755);
+        this.energyTrail = this.add.particles(0, 0, "enemy-spark", {
+            lifespan: 300, speed: 0, scale: { start: 1.2, end: 0 },
+            alpha: { start: 0.6, end: 0 }, tint: 0xc98cff, blendMode: Phaser.BlendModes.ADD, emitting: false
+        }).setDepth(755);
+
         this.drawHpBar();
 
         // Retorno da batalha de reprogramação (scene.resume com dados). Usa `on`
@@ -536,11 +567,15 @@ export default class BaseRoomScene extends Phaser.Scene {
     // Inimigo se registra aqui (cria a colisão de contato com a Artemis).
     registerEnemy(enemy) {
         this.enemies.push(enemy);
-        this.physics.add.overlap(this.player.sprite, enemy.sprite, () => {
+        // Colisão SÓLIDA com a Artemis (ela não atravessa mais o inimigo); o toque
+        // ainda tira HP. Colisor, não overlap — assim os dois se bloqueiam de fato.
+        this.physics.add.collider(this.player.sprite, enemy.sprite, () => {
             if (!enemy.disabled) {
                 this.damagePlayer(enemy.def.contactDamage ?? ENEMY_BULLET_DAMAGE);
             }
         });
+        // Colide com os obstáculos do mapa já registrados (props/paredes).
+        this.mapColliders.forEach((zone) => this.physics.add.collider(enemy.sprite, zone));
         return enemy;
     }
 
@@ -565,6 +600,21 @@ export default class BaseRoomScene extends Phaser.Scene {
         ball.body.setCollideWorldBounds(true);
         this.tweens.add({ targets: ball, angle: 360, duration: 700, repeat: -1 });
         this.time.delayedCall(ENERGY_BALL_LIFESPAN, () => ball.destroy());
+    }
+
+    // Emite uma faísca na posição de cada projétil ativo (rastro). As partículas
+    // expiram sozinhas; os emissores são compartilhados e vivem com a cena.
+    updateBulletTrails() {
+        if (!this.enemyBullets || !this.bulletTrail) {
+            return;
+        }
+        this.enemyBullets.getChildren().forEach((b) => {
+            if (!b.active) {
+                return;
+            }
+            const trail = b.texture.key === "energy-ball" ? this.energyTrail : this.bulletTrail;
+            trail.emitParticleAt(b.x, b.y);
+        });
     }
 
     cullEnemyBullets() {
