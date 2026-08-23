@@ -22,14 +22,8 @@ const BOX = { x: 640, y: 460, w: 480, h: 260 };
 
 const DODGE_ROUND = {
     durationMs: 6500,
-    intervalMs: 400,
-    speed: { min: 150, max: 240 },
-    drift: 45,
-    aimedChance: 0.35,
-    patterns: ["rain", "sides", "aimed"],   // varia o padrão a cada fase.
-    phaseMs: 2100,
-    exploders: true,                        // balas que explodem em várias.
-    exploderMs: 2300
+    attackIntervalMs: 1500,
+    speed: { min: 150, max: 240 }
 };
 
 export default class ReprogramScene extends Phaser.Scene {
@@ -155,6 +149,7 @@ export default class ReprogramScene extends Phaser.Scene {
 
         this.dodge.start({
             ...DODGE_ROUND,
+            patterns: this.config.dodge ?? ["rain"],   // padrão de bullet hell do inimigo.
             onHit: () => this.onDodgeHit(),
             onEnd: () => this.afterDodge()
         });

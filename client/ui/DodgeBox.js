@@ -1,19 +1,29 @@
 import Phaser from "phaser";
 
 // Mini-jogo de ESQUIVA estilo Undertale, reutilizável: uma caixa com uma alma
-// (losango ciano) que o jogador move com WASD desviando de projéteis. Varia os
-// padrões de ataque em fases (chuva / laterais / mirado) e solta balas que
-// EXPLODEM em várias outras. Autossuficiente (gera texturas, escuta o update da
-// cena). Uma rodada é iniciada com `start(opts)`; cada acerto chama `onHit`, e
-// ao fim da duração chama `onEnd`. Usado na ReprogramScene (ataque do inimigo).
+// (losango ciano) que o jogador move com WASD desviando de projéteis. A rodada
+// dispara ATAQUES nomeados em sequência (cada inimigo tem os seus). Padrões:
+//   rain          — chuva de balas do topo.
+//   fan           — leque de balas de uma borda (escopeta).
+//   fallExplode   — balas grandes que caem e explodem em menores.
+//   bigDropHoming — uma bala grande que atravessa deixando pequenas que PERSEGUEM.
+//   laserSweep    — um rastro laser varre a caixa deixando balas pequenas no caminho.
+// Autossuficiente (gera texturas, escuta o update da cena). `start(opts)` inicia;
+// cada acerto chama `onHit`; ao fim da duração chama `onEnd`.
 
 const SOUL_SPEED = 240;
 const IFRAME_MS = 700;
 const DEFAULT_BOX = { x: 640, y: 460, w: 480, h: 260 };
 
-const EXPLODE_DELAY = 1100;        // ms até a bala-bomba explodir.
-const EXPLODE_FRAGMENTS = 8;       // balas geradas na explosão.
+const EXPLODE_DELAY = 1100;
+const EXPLODE_FRAGMENTS = 8;
 const EXPLODE_FRAG_SPEED = 150;
+const HOMING_SPEED = 120;
+const HOMING_TURN = 2.6;           // rad/s de correção rumo à alma.
+const HOMING_LIFE = 2600;
+const HOMING_DELAY = 380;          // as pequenas caem antes de começar a perseguir.
+const LASER_DROP_LIFE = 2200;
+const FAN_SPEED = 250;             // balas do leque.
 
 export default class DodgeBox {
     constructor(scene, config = {}) {
@@ -21,11 +31,22 @@ export default class DodgeBox {
         this.box = config.box ?? DEFAULT_BOX;
         this.active = false;
         this.invulnUntil = 0;
+        this.lasers = [];
 
         this.createTextures();
 
         const { x, y, w, h } = this.box;
         this.boxGraphics = scene.add.graphics().setDepth(20).setVisible(false);
+
+        // Máscara que recorta os projéteis à caixa (estilo Undertale): nada
+        // renderiza para fora do quadro de combate.
+        const maskG = scene.make.graphics();
+        maskG.fillStyle(0xffffff);
+        maskG.fillRect(x - w / 2 + 2, y - h / 2 + 2, w - 4, h - 4);
+        this.boxMask = maskG.createGeometryMask();
+
+        this.laserGraphics = scene.add.graphics().setDepth(29);
+        this.laserGraphics.setMask(this.boxMask);
 
         this.soul = scene.physics.add.image(x, y, "dodge-soul").setDepth(30).setVisible(false);
         this.soul.body.setCollideWorldBounds(true);
@@ -43,12 +64,24 @@ export default class DodgeBox {
             right: Phaser.Input.Keyboard.KeyCodes.D
         });
 
-        this.updateHandler = () => this.onUpdate();
+        this.updateHandler = (time, delta) => this.onUpdate(delta);
         scene.events.on("update", this.updateHandler);
         scene.events.once("shutdown", () => this.destroy());
     }
 
     createTextures() {
+        const orb = (key, size, r, fill, core) => {
+            if (this.scene.textures.exists(key)) return;
+            const g = this.scene.add.graphics();
+            g.fillStyle(fill, 1);
+            g.fillCircle(size / 2, size / 2, r);
+            g.fillStyle(core, 1);
+            g.fillCircle(size / 2, size / 2, Math.max(2, r * 0.4));
+            g.lineStyle(2, 0x7a1020, 1);
+            g.strokeCircle(size / 2, size / 2, r);
+            g.generateTexture(key, size, size);
+            g.destroy();
+        };
         if (!this.scene.textures.exists("dodge-soul")) {
             const g = this.scene.add.graphics();
             g.fillStyle(0x4ad6ff, 1);
@@ -56,27 +89,15 @@ export default class DodgeBox {
             g.generateTexture("dodge-soul", 14, 14);
             g.destroy();
         }
-        if (!this.scene.textures.exists("dodge-bullet")) {
-            const g = this.scene.add.graphics();
-            g.fillStyle(0xff4545, 1);
-            g.fillCircle(10, 10, 9);
-            g.fillStyle(0xffb0b0, 1);
-            g.fillCircle(10, 10, 4);
-            g.lineStyle(2, 0x7a1020, 1);
-            g.strokeCircle(10, 10, 9);
-            g.generateTexture("dodge-bullet", 20, 20);
-            g.destroy();
-        }
+        orb("dodge-mini", 12, 5, 0xff4545, 0xffb0b0);
+        orb("dodge-bullet", 20, 9, 0xff4545, 0xffb0b0);
+        orb("dodge-big", 30, 14, 0xff4545, 0xffd0d0);
         if (!this.scene.textures.exists("dodge-exploder")) {
             const g = this.scene.add.graphics();
-            g.fillStyle(0xffb347, 1);
-            g.fillCircle(13, 13, 12);
-            g.fillStyle(0xff7a1f, 1);
-            g.fillCircle(13, 13, 8);
-            g.fillStyle(0xfff2c8, 1);
-            g.fillCircle(13, 13, 3);
-            g.lineStyle(2, 0x7a3810, 1);
-            g.strokeCircle(13, 13, 12);
+            g.fillStyle(0xffb347, 1); g.fillCircle(13, 13, 12);
+            g.fillStyle(0xff7a1f, 1); g.fillCircle(13, 13, 8);
+            g.fillStyle(0xfff2c8, 1); g.fillCircle(13, 13, 3);
+            g.lineStyle(2, 0x7a3810, 1); g.strokeCircle(13, 13, 12);
             g.generateTexture("dodge-exploder", 26, 26);
             g.destroy();
         }
@@ -91,49 +112,33 @@ export default class DodgeBox {
         this.boxGraphics.strokeRect(x - w / 2, y - h / 2, w, h);
     }
 
-    // Inicia uma rodada. opts: { durationMs, intervalMs, speed:{min,max}, drift,
-    // aimedChance, patterns[], phaseMs, exploders, exploderMs, onHit(), onEnd() }.
+    // opts: { durationMs, attackIntervalMs, patterns[], speed:{min,max}, onHit(), onEnd() }.
     start(opts = {}) {
         this.opts = {
-            durationMs: opts.durationMs ?? 6000,
-            intervalMs: opts.intervalMs ?? 380,
-            speed: opts.speed ?? { min: 150, max: 230 },
-            drift: opts.drift ?? 45,
-            aimedChance: opts.aimedChance ?? 0.4,
-            patterns: opts.patterns ?? ["rain", "sides", "aimed"],
-            phaseMs: opts.phaseMs ?? 2200,
-            exploders: opts.exploders ?? true,
-            exploderMs: opts.exploderMs ?? 2200,
+            durationMs: opts.durationMs ?? 6500,
+            attackIntervalMs: opts.attackIntervalMs ?? 1500,
+            patterns: opts.patterns ?? ["rain"],
+            speed: opts.speed ?? { min: 150, max: 240 },
             onHit: opts.onHit,
             onEnd: opts.onEnd
         };
 
         this.active = true;
-        this.phaseIndex = 0;
+        this.attackIndex = 0;
         this.drawBox();
         this.boxGraphics.setVisible(true);
         this.soul.body.reset(this.box.x, this.box.y);
         this.soul.setVisible(true).setAlpha(1);
 
-        this.spawnTimer = this.scene.time.addEvent({
-            delay: this.opts.intervalMs, loop: true, callback: () => this.spawnProjectile()
+        this.runNextAttack();
+        this.attackTimer = this.scene.time.addEvent({
+            delay: this.opts.attackIntervalMs, loop: true, callback: () => this.runNextAttack()
         });
-        this.phaseTimer = this.scene.time.addEvent({
-            delay: this.opts.phaseMs, loop: true,
-            callback: () => { this.phaseIndex = (this.phaseIndex + 1) % this.opts.patterns.length; }
-        });
-        if (this.opts.exploders) {
-            this.exploderTimer = this.scene.time.addEvent({
-                delay: this.opts.exploderMs, loop: true, callback: () => this.spawnExploder()
-            });
-        }
         this.durationTimer = this.scene.time.delayedCall(this.opts.durationMs, () => this.end());
     }
 
     end() {
-        if (!this.active) {
-            return;
-        }
+        if (!this.active) return;
         const onEnd = this.opts?.onEnd;
         this.stop();
         onEnd?.();
@@ -141,115 +146,159 @@ export default class DodgeBox {
 
     stop() {
         this.active = false;
-        this.spawnTimer?.remove();
-        this.spawnTimer = null;
-        this.phaseTimer?.remove();
-        this.phaseTimer = null;
-        this.exploderTimer?.remove();
-        this.exploderTimer = null;
+        this.attackTimer?.remove();
+        this.attackTimer = null;
         this.durationTimer?.remove();
         this.durationTimer = null;
         this.projectiles?.clear(true, true);
-        if (this.soul?.body) {
-            this.soul.body.setVelocity(0, 0);
-        }
+        this.lasers = [];
+        this.laserGraphics?.clear();
+        if (this.soul?.body) this.soul.body.setVelocity(0, 0);
         this.soul?.setVisible(false);
         this.boxGraphics?.setVisible(false);
     }
 
-    // --- Cria uma bala genérica no grupo ---
+    runNextAttack() {
+        if (!this.active) return;
+        const pattern = this.opts.patterns[this.attackIndex % this.opts.patterns.length];
+        this.attackIndex += 1;
+        ({
+            fan: () => this.attackFan(),
+            fallExplode: () => this.attackFallExplode(),
+            bigDropHoming: () => this.attackBigDropHoming(),
+            laserSweep: () => this.attackLaserSweep()
+        }[pattern] ?? (() => this.attackRain()))();
+    }
+
+    // Cria uma bala no grupo (com hitbox um pouco menor que a arte).
     spawnBullet(x, y, vx, vy, texture = "dodge-bullet") {
         const proj = this.projectiles.create(x, y, texture);
-        proj.setDepth(28);
+        proj.setDepth(28).setMask(this.boxMask);
         proj.body.setVelocity(vx, vy);
         proj.body.setSize(proj.width - 4, proj.height - 4, true);
         this.scene.tweens.add({ targets: proj, angle: 360, duration: 800, repeat: -1 });
         return proj;
     }
 
-    // --- Padrões de ataque (variam por fase) ---
-    spawnProjectile() {
-        const pattern = this.opts.patterns[this.phaseIndex];
-        if (pattern === "sides") {
-            this.spawnSide();
-        } else if (pattern === "aimed") {
-            this.spawnAimed();
-        } else {
-            this.spawnRain();
-        }
-    }
-
-    spawnRain() {
+    // --- Ataques ---
+    attackRain() {
         const { x, y, w, h } = this.box;
         const left = x - w / 2 + 14;
         const right = x + w / 2 - 14;
-        const aimed = Math.random() < this.opts.aimedChance;
-        const px = aimed ? this.soul.x + Phaser.Math.Between(-22, 22) : Phaser.Math.Between(left, right);
-        const speed = Phaser.Math.Between(this.opts.speed.min, this.opts.speed.max);
-        this.spawnBullet(Phaser.Math.Clamp(px, left, right), y - h / 2 + 12,
-            Phaser.Math.Between(-this.opts.drift, this.opts.drift), speed);
+        for (let i = 0; i < 4; i += 1) {
+            const px = Phaser.Math.Between(left, right);
+            const speed = Phaser.Math.Between(this.opts.speed.min, this.opts.speed.max);
+            this.spawnBullet(px, y - h / 2 + 12, Phaser.Math.Between(-40, 40), speed);
+        }
     }
 
-    spawnSide() {
+    // Leque de balas rápidas vindo de uma borda aleatória, mirado na alma.
+    attackFan() {
         const { x, y, w, h } = this.box;
-        const fromLeft = Math.random() < 0.5;
-        const py = Phaser.Math.Between(y - h / 2 + 14, y + h / 2 - 14);
-        const speed = Phaser.Math.Between(this.opts.speed.min, this.opts.speed.max);
-        this.spawnBullet(fromLeft ? x - w / 2 + 12 : x + w / 2 - 12, py,
-            fromLeft ? speed : -speed, Phaser.Math.Between(-this.opts.drift, this.opts.drift));
+        const edge = Phaser.Math.Between(0, 3);
+        let ox;
+        let oy;
+        if (edge === 0) { ox = Phaser.Math.Between(x - w / 2 + 30, x + w / 2 - 30); oy = y - h / 2 + 8; }
+        else if (edge === 1) { ox = x + w / 2 - 8; oy = Phaser.Math.Between(y - h / 2 + 30, y + h / 2 - 30); }
+        else if (edge === 2) { ox = Phaser.Math.Between(x - w / 2 + 30, x + w / 2 - 30); oy = y + h / 2 - 8; }
+        else { ox = x - w / 2 + 8; oy = Phaser.Math.Between(y - h / 2 + 30, y + h / 2 - 30); }
+
+        const base = Phaser.Math.Angle.Between(ox, oy, this.soul.x, this.soul.y);
+        const n = 6;
+        const spread = 0.9;
+        for (let i = 0; i < n; i += 1) {
+            const a = base + (i / (n - 1) - 0.5) * spread;
+            this.spawnBullet(ox, oy, Math.cos(a) * FAN_SPEED, Math.sin(a) * FAN_SPEED);
+        }
     }
 
-    spawnAimed() {
+    attackFallExplode() {
         const { x, y, w, h } = this.box;
-        const sx = Phaser.Math.Between(x - w / 2 + 12, x + w / 2 - 12);
-        const sy = y - h / 2 + 12;
-        const angle = Phaser.Math.Angle.Between(sx, sy, this.soul.x, this.soul.y);
-        const speed = this.opts.speed.max;
-        this.spawnBullet(sx, sy, Math.cos(angle) * speed, Math.sin(angle) * speed);
-    }
-
-    // --- Bala que explode em várias ---
-    spawnExploder() {
-        const { x, y, w, h } = this.box;
-        const px = Phaser.Math.Between(x - w / 2 + 30, x + w / 2 - 30);
-        const bomb = this.spawnBullet(px, y - h / 2 + 16, Phaser.Math.Between(-20, 20), 70, "dodge-exploder");
-        // Pisca como aviso da explosão.
-        this.scene.tweens.add({ targets: bomb, scale: { from: 1, to: 1.3 }, duration: 220, yoyo: true, repeat: -1 });
-        this.scene.time.delayedCall(EXPLODE_DELAY, () => this.explode(bomb));
+        for (let i = 0; i < 2; i += 1) {
+            const px = Phaser.Math.Between(x - w / 2 + 30, x + w / 2 - 30);
+            const bomb = this.spawnBullet(px, y - h / 2 + 16, Phaser.Math.Between(-20, 20), 70, "dodge-exploder");
+            this.scene.tweens.add({ targets: bomb, scale: { from: 1, to: 1.3 }, duration: 220, yoyo: true, repeat: -1 });
+            this.scene.time.delayedCall(EXPLODE_DELAY, () => this.explode(bomb));
+        }
     }
 
     explode(bomb) {
-        if (!this.active || !bomb || !bomb.active) {
-            return;
-        }
+        if (!this.active || !bomb || !bomb.active) return;
         const bx = bomb.x;
         const by = bomb.y;
         bomb.destroy();
         for (let i = 0; i < EXPLODE_FRAGMENTS; i += 1) {
             const a = (i / EXPLODE_FRAGMENTS) * Math.PI * 2;
-            this.spawnBullet(bx, by, Math.cos(a) * EXPLODE_FRAG_SPEED, Math.sin(a) * EXPLODE_FRAG_SPEED);
+            this.spawnBullet(bx, by, Math.cos(a) * EXPLODE_FRAG_SPEED, Math.sin(a) * EXPLODE_FRAG_SPEED, "dodge-mini");
         }
     }
 
+    // Bala grande que atravessa deixando pequenas que perseguem a alma.
+    attackBigDropHoming() {
+        const { x, y, w, h } = this.box;
+        const fromLeft = Math.random() < 0.5;
+        const cy = Phaser.Math.Between(y - h / 2 + 30, y + h / 2 - 30);
+        const carrier = this.spawnBullet(
+            fromLeft ? x - w / 2 - 10 : x + w / 2 + 10, cy, fromLeft ? 120 : -120, 0, "dodge-big"
+        );
+        this.scene.time.addEvent({
+            delay: 200, repeat: 8,
+            callback: () => {
+                if (!this.active || !carrier.active) return;
+                // Nasce CAINDO (para baixo, com espalhamento) e só depois persegue.
+                const mini = this.spawnBullet(carrier.x, carrier.y, Phaser.Math.Between(-45, 45), 150, "dodge-mini");
+                this.scene.time.delayedCall(HOMING_DELAY, () => { if (mini.active) mini.homing = true; });
+                this.scene.time.delayedCall(HOMING_LIFE, () => { if (mini.active) mini.destroy(); });
+            }
+        });
+    }
+
+    // Rastro laser varrendo a caixa, deixando balas pequenas no caminho (o laser
+    // é só visual — o perigo são as balas). Cada sweep é independente (lista),
+    // então varreduras seguidas não se atrapalham.
+    attackLaserSweep() {
+        const { x, y, w, h } = this.box;
+        const fromLeft = Math.random() < 0.5;
+        const laser = {
+            x: fromLeft ? x - w / 2 + 10 : x + w / 2 - 10,
+            y0: y - h / 2 + 6,
+            y1: y + h / 2 - 6,
+            active: true
+        };
+        this.lasers.push(laser);
+
+        const sweepMs = 1500;
+        this.scene.tweens.add({
+            targets: laser,
+            x: fromLeft ? x + w / 2 - 10 : x - w / 2 + 10,
+            duration: sweepMs, ease: "Sine.easeInOut",
+            onComplete: () => { laser.active = false; }
+        });
+        this.scene.time.addEvent({
+            delay: 150, repeat: Math.floor(sweepMs / 150),
+            callback: () => {
+                if (!this.active || !laser.active) return;
+                const by = Phaser.Math.Between(laser.y0, laser.y1);
+                const mini = this.spawnBullet(laser.x, by, Phaser.Math.Between(-14, 14), Phaser.Math.Between(-14, 14), "dodge-mini");
+                this.scene.time.delayedCall(LASER_DROP_LIFE, () => { if (mini.active) mini.destroy(); });
+            }
+        });
+    }
+
     onProjectileHit(proj) {
-        if (!this.active) {
-            return;
-        }
+        if (!this.active) return;
         proj.destroy();
-        if (this.scene.time.now < this.invulnUntil) {
-            return;
-        }
+        if (this.scene.time.now < this.invulnUntil) return;
         this.invulnUntil = this.scene.time.now + IFRAME_MS;
 
         this.scene.tweens.add({
-            targets: this.soul,
-            alpha: 0.25, duration: 90, yoyo: true, repeat: 3,
+            targets: this.soul, alpha: 0.25, duration: 90, yoyo: true, repeat: 3,
             onComplete: () => this.soul.setAlpha(1)
         });
         this.opts.onHit?.();
     }
 
-    onUpdate() {
+    onUpdate(delta) {
         if (this.active && this.soul.visible) {
             let vx = 0;
             let vy = 0;
@@ -263,10 +312,33 @@ export default class DodgeBox {
             this.soul.body.setVelocity(0, 0);
         }
 
-        // Projéteis que saíram da caixa somem (com folga, para as explosões).
+        // Rastro laser (visual): o perigo são as balas que ele deixa no caminho.
+        this.laserGraphics.clear();
+        this.lasers = this.lasers.filter((laser) => laser.active);
+        this.lasers.forEach((laser) => {
+            this.laserGraphics.lineStyle(10, 0xff4545, 0.18);
+            this.laserGraphics.lineBetween(laser.x, laser.y0, laser.x, laser.y1);
+            this.laserGraphics.lineStyle(3, 0xff4545, 0.9);
+            this.laserGraphics.lineBetween(laser.x, laser.y0, laser.x, laser.y1);
+        });
+
+        // Balas que perseguem: viram gradualmente rumo à alma.
+        const dt = (delta ?? 16) / 1000;
+        const children = this.projectiles.getChildren();
+        for (let i = 0; i < children.length; i += 1) {
+            const p = children[i];
+            if (p.active && p.homing && p.body && this.soul.visible) {
+                const desired = Phaser.Math.Angle.Between(p.x, p.y, this.soul.x, this.soul.y);
+                const cur = Math.atan2(p.body.velocity.y, p.body.velocity.x);
+                const next = Phaser.Math.Angle.RotateTo(cur, desired, HOMING_TURN * dt);
+                p.body.setVelocity(Math.cos(next) * HOMING_SPEED, Math.sin(next) * HOMING_SPEED);
+            }
+        }
+
+        // Projéteis fora da caixa somem (com folga para explosões e carriers).
         const { x, y, w, h } = this.box;
-        const m = 40;
-        this.projectiles.getChildren().slice().forEach((proj) => {
+        const m = 44;
+        children.slice().forEach((proj) => {
             if (proj.x < x - w / 2 - m || proj.x > x + w / 2 + m ||
                 proj.y < y - h / 2 - m || proj.y > y + h / 2 + m) {
                 proj.destroy();
@@ -274,13 +346,11 @@ export default class DodgeBox {
         });
     }
 
-    // Chamado no shutdown da cena: NÃO tocar em physics (já desligada). Só solta
-    // o listener e os timers; o Phaser destrói os objetos ao encerrar.
+    // Shutdown da cena: NÃO tocar em physics (já desligada). Só solta o listener
+    // e os timers; o Phaser destrói os objetos ao encerrar.
     destroy() {
         this.scene.events.off("update", this.updateHandler);
-        this.spawnTimer?.remove();
-        this.phaseTimer?.remove();
-        this.exploderTimer?.remove();
+        this.attackTimer?.remove();
         this.durationTimer?.remove();
         this.active = false;
     }

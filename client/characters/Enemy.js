@@ -47,6 +47,7 @@ const TYPES = {
         walkKey: "enemy-exploding-walk",
         disabledKey: "enemy-exploding-disabled",
         scale: 3.3, speed: 130, meleeHp: 2, ranged: false, contactDamage: 5,
+        dodge: ["fallExplode"],        // bullet hell: balas que caem e explodem.
         disablePuzzle: { variable: "carga", expected: 0,
             hint: "monte:  carga = 0", wrongValueMessage: "ainda vai explodir",
             blockDistractors: { nome: ["fusivel"], op: ["=="], valor: ["100", '"0"'] } }
@@ -57,6 +58,7 @@ const TYPES = {
         disabledKey: "enemy-pistol-disabled",
         weaponKey: "enemy-pistol-weapon",
         scale: 3.3, speed: 100, meleeHp: 2, ranged: true, fireMs: 1800, contactDamage: 3,
+        dodge: ["bigDropHoming"],      // bullet hell: bala grande que deixa perseguidoras.
         disablePuzzle: { variable: "mira", expected: false,
             hint: "monte:  mira = false", wrongValueMessage: "ainda está mirando",
             blockDistractors: { nome: ["gatilho"], op: ["=="], valor: ["true", '"false"'] } }
@@ -68,6 +70,7 @@ const TYPES = {
         weaponKey: "enemy-shotgun-weapon",
         scale: 3.3, speed: 90, meleeHp: 3, ranged: true, fireMs: 2500, contactDamage: 4,
         pellets: 5, spread: 0.6,       // rajada de 5 balas em leque.
+        dodge: ["fan"],                // bullet hell: leque de balas.
         disablePuzzle: { variable: "cartucho", expected: 0,
             hint: "monte:  cartucho = 0", wrongValueMessage: "ainda tem cartucho",
             blockDistractors: { nome: ["cano"], op: ["=="], valor: ["50", '"0"'] } }
@@ -80,6 +83,7 @@ const TYPES = {
         // Anda ALEATÓRIO (não persegue) e periodicamente pula: ao aterrissar
         // solta 4 bolas de energia que quicam nas paredes até sumirem.
         wander: true, slam: true, slamMs: 3800,
+        dodge: ["laserSweep"],         // bullet hell: rastro laser deixando balas.
         disablePuzzle: { variable: "sistema", expected: false,
             hint: "monte:  sistema = false", wrongValueMessage: "sistema ainda ativo",
             blockDistractors: { nome: ["motor", "servo"], op: ["=="], valor: ["true", '"false"'] } }
