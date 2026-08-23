@@ -37,16 +37,7 @@ export default class DodgeBox {
 
         const { x, y, w, h } = this.box;
         this.boxGraphics = scene.add.graphics().setDepth(20).setVisible(false);
-
-        // Máscara que recorta os projéteis à caixa (estilo Undertale): nada
-        // renderiza para fora do quadro de combate.
-        const maskG = scene.make.graphics();
-        maskG.fillStyle(0xffffff);
-        maskG.fillRect(x - w / 2 + 2, y - h / 2 + 2, w - 4, h - 4);
-        this.boxMask = maskG.createGeometryMask();
-
         this.laserGraphics = scene.add.graphics().setDepth(29);
-        this.laserGraphics.setMask(this.boxMask);
 
         this.soul = scene.physics.add.image(x, y, "dodge-soul").setDepth(30).setVisible(false);
         this.soul.body.setCollideWorldBounds(true);
@@ -173,7 +164,7 @@ export default class DodgeBox {
     // Cria uma bala no grupo (com hitbox um pouco menor que a arte).
     spawnBullet(x, y, vx, vy, texture = "dodge-bullet") {
         const proj = this.projectiles.create(x, y, texture);
-        proj.setDepth(28).setMask(this.boxMask);
+        proj.setDepth(28);
         proj.body.setVelocity(vx, vy);
         proj.body.setSize(proj.width - 4, proj.height - 4, true);
         this.scene.tweens.add({ targets: proj, angle: 360, duration: 800, repeat: -1 });
@@ -188,7 +179,7 @@ export default class DodgeBox {
         for (let i = 0; i < 4; i += 1) {
             const px = Phaser.Math.Between(left, right);
             const speed = Phaser.Math.Between(this.opts.speed.min, this.opts.speed.max);
-            this.spawnBullet(px, y - h / 2 + 12, Phaser.Math.Between(-40, 40), speed);
+            this.spawnBullet(px, y - h / 2 + 14, Phaser.Math.Between(-40, 40), speed);
         }
     }
 
@@ -198,10 +189,10 @@ export default class DodgeBox {
         const edge = Phaser.Math.Between(0, 3);
         let ox;
         let oy;
-        if (edge === 0) { ox = Phaser.Math.Between(x - w / 2 + 30, x + w / 2 - 30); oy = y - h / 2 + 8; }
-        else if (edge === 1) { ox = x + w / 2 - 8; oy = Phaser.Math.Between(y - h / 2 + 30, y + h / 2 - 30); }
-        else if (edge === 2) { ox = Phaser.Math.Between(x - w / 2 + 30, x + w / 2 - 30); oy = y + h / 2 - 8; }
-        else { ox = x - w / 2 + 8; oy = Phaser.Math.Between(y - h / 2 + 30, y + h / 2 - 30); }
+        if (edge === 0) { ox = Phaser.Math.Between(x - w / 2 + 30, x + w / 2 - 30); oy = y - h / 2 + 18; }
+        else if (edge === 1) { ox = x + w / 2 - 18; oy = Phaser.Math.Between(y - h / 2 + 30, y + h / 2 - 30); }
+        else if (edge === 2) { ox = Phaser.Math.Between(x - w / 2 + 30, x + w / 2 - 30); oy = y + h / 2 - 18; }
+        else { ox = x - w / 2 + 18; oy = Phaser.Math.Between(y - h / 2 + 30, y + h / 2 - 30); }
 
         const base = Phaser.Math.Angle.Between(ox, oy, this.soul.x, this.soul.y);
         const n = 6;
@@ -216,7 +207,7 @@ export default class DodgeBox {
         const { x, y, w, h } = this.box;
         for (let i = 0; i < 2; i += 1) {
             const px = Phaser.Math.Between(x - w / 2 + 30, x + w / 2 - 30);
-            const bomb = this.spawnBullet(px, y - h / 2 + 16, Phaser.Math.Between(-20, 20), 70, "dodge-exploder");
+            const bomb = this.spawnBullet(px, y - h / 2 + 24, Phaser.Math.Between(-20, 20), 70, "dodge-exploder");
             this.scene.tweens.add({ targets: bomb, scale: { from: 1, to: 1.3 }, duration: 220, yoyo: true, repeat: -1 });
             this.scene.time.delayedCall(EXPLODE_DELAY, () => this.explode(bomb));
         }
@@ -239,7 +230,7 @@ export default class DodgeBox {
         const fromLeft = Math.random() < 0.5;
         const cy = Phaser.Math.Between(y - h / 2 + 30, y + h / 2 - 30);
         const carrier = this.spawnBullet(
-            fromLeft ? x - w / 2 - 10 : x + w / 2 + 10, cy, fromLeft ? 120 : -120, 0, "dodge-big"
+            fromLeft ? x - w / 2 + 18 : x + w / 2 - 18, cy, fromLeft ? 120 : -120, 0, "dodge-big"
         );
         this.scene.time.addEvent({
             delay: 200, repeat: 8,
@@ -278,7 +269,7 @@ export default class DodgeBox {
             delay: 150, repeat: Math.floor(sweepMs / 150),
             callback: () => {
                 if (!this.active || !laser.active) return;
-                const by = Phaser.Math.Between(laser.y0, laser.y1);
+                const by = Phaser.Math.Between(y - h / 2 + 12, y + h / 2 - 12);
                 const mini = this.spawnBullet(laser.x, by, Phaser.Math.Between(-14, 14), Phaser.Math.Between(-14, 14), "dodge-mini");
                 this.scene.time.delayedCall(LASER_DROP_LIFE, () => { if (mini.active) mini.destroy(); });
             }
@@ -335,12 +326,17 @@ export default class DodgeBox {
             }
         }
 
-        // Projéteis fora da caixa somem (com folga para explosões e carriers).
+        // Projétil some ao TOCAR a parede (a borda dele cruza), então nada
+        // aparece para fora do quadro de combate.
         const { x, y, w, h } = this.box;
-        const m = 44;
+        const left = x - w / 2;
+        const right = x + w / 2;
+        const top = y - h / 2;
+        const bottom = y + h / 2;
         children.slice().forEach((proj) => {
-            if (proj.x < x - w / 2 - m || proj.x > x + w / 2 + m ||
-                proj.y < y - h / 2 - m || proj.y > y + h / 2 + m) {
+            const hw = proj.displayWidth / 2;
+            const hh = proj.displayHeight / 2;
+            if (proj.x - hw <= left || proj.x + hw >= right || proj.y - hh <= top || proj.y + hh >= bottom) {
                 proj.destroy();
             }
         });
