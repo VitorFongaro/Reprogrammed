@@ -29,14 +29,16 @@ const GENERATOR_PUZZLE = {
     title: "GERADOR // NÚCLEO",
     briefing: [
         "O gerador está sem carga.",
-        "Ele só religa com uma variável chamada energia",
-        "guardando a carga total: 100."
+        "Guarde na variável energia a carga certa",
+        "para deixar a bateria cheia."
     ],
-    hint: "monte na ordem:  energia  =  100",
+    hint: "a estrutura é  energia = valor  — qual valor enche a bateria?",
     variable: "energia",
     expected: 100,
+    // Medidor visual: a bateria enche conforme o valor; cheia = 100.
+    gauge: { kind: "battery", label: "BATERIA", max: 100 },
     successMessage: "GERADOR ATIVADO",
-    wrongValueMessage: "carga insuficiente: o valor não é 100",
+    wrongValueMessage: "a bateria ainda não está cheia",
     // Blocos extras (distratores) por categoria, além dos corretos.
     blockDistractors: {
         nome: ["voltagem", "sensor"],

@@ -16,13 +16,15 @@ const DEVICE_PROMPT_Y = 152;
 const VENTILATION_PUZZLE = {
     title: "VENTILAÇÃO // SETOR",
     briefing: [
-        "A ventilação precisa saber qual setor reativar.",
-        "Guarde na variável setor o código de onde você",
-        "está: B2 — um texto (string)."
+        "A ventilação precisa do setor onde você",
+        "está agora. Leia o mapa (o ponto azul) e",
+        "informe o código — é um texto (string)."
     ],
-    hint: 'monte na ordem:  setor  =  "B2"',
+    hint: 'setor = "código do mapa" (a linha e a coluna, entre aspas)',
     variable: "setor",
     expected: "B2",
+    // Mapa/grade: o ponto azul marca onde a Artemis está; escolha a célula certa.
+    gauge: { kind: "sector", label: "SETOR", rows: ["A", "B", "C"], cols: ["1", "2", "3"] },
     successMessage: "VENTILAÇÃO ATIVA",
     wrongValueMessage: "setor não reconhecido",
     blockDistractors: {
@@ -36,12 +38,14 @@ const THERMOSTAT_PUZZLE = {
     title: "TERMOSTATO // NÚCLEO",
     briefing: [
         "O núcleo está superaquecendo.",
-        "Ajuste a variável temperatura para o alvo",
-        "seguro: 21.5 graus (decimal usa ponto)."
+        "Ajuste a variável temperatura até o",
+        "termômetro bater no marcador seguro."
     ],
-    hint: "monte na ordem:  temperatura  =  21.5",
+    hint: "temperatura = número decimal (com ponto) — qual bate no marcador?",
     variable: "temperatura",
     expected: 21.5,
+    // Termômetro: o mercúrio sobe até o valor; o marcador verde é o alvo (21.5).
+    gauge: { kind: "thermometer", label: "TERMOSTATO", min: 18, max: 25, target: 21.5 },
     successMessage: "TEMPERATURA AJUSTADA",
     wrongValueMessage: "fora da faixa segura",
     blockDistractors: {

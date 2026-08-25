@@ -21,11 +21,13 @@ const LASER_PUZZLE = {
     briefing: [
         "A barreira de lasers corta a sala.",
         "O emissor obedece à variável lasers:",
-        "com o valor certo, ele desliga de vez."
+        "ache o valor que desliga os feixes."
     ],
-    hint: "monte na ordem:  lasers  =  false",
+    hint: "lasers = <ligada ou desligada?>  (booleano true/false)",
     variable: "lasers",
     expected: false,
+    // Painel: os feixes ficam vermelhos (ligados) ou apagam conforme o valor.
+    gauge: { kind: "toggle", label: "BARREIRA" },
     successMessage: "BARREIRA DESATIVADA",
     wrongValueMessage: "a barreira continua ligada",
     blockDistractors: {

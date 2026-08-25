@@ -279,6 +279,10 @@ export default class BlockProgrammingConsole {
 
         this.container.add([backdrop, panel, title, escHint, briefing, this.outputText, footer]);
 
+        if (this.puzzle.gauge) {
+            this.buildGauge();
+        }
+
         if (this.timeLimitMs) {
             this.timerText = this.scene.add.text(PANEL_X + PANEL_W - PAD, PANEL_Y + 56, "", {
                 fontFamily: "VCR",
@@ -329,6 +333,247 @@ export default class BlockProgrammingConsole {
                 this.slotGraphics.fillRoundedRect(left, top, BLOCK_W, BLOCK_H, 10);
             }
         });
+    }
+
+    // --- Medidor visual opcional (puzzle.gauge) --------------------------------
+    // Dá um VISUAL ao puzzle para o jogador resolver por RACIOCÍNIO, em vez de o
+    // texto entregar a resposta. Tipos: "battery" (enche até um máximo),
+    // "thermometer" (sobe até um alvo), "sector" (mapa/grade — ache a célula certa)
+    // e "toggle" (barreira liga/desliga). Reage AO VIVO ao valor no encaixe; com
+    // medidor, um encaixe errado NÃO devolve a peça (ver handleFailure).
+    buildGauge() {
+        const cfg = this.puzzle.gauge;
+        let bw = 150;
+        let bh = 74;
+        let by = PANEL_Y + 100;
+        if (cfg.kind === "thermometer") { bw = 60; bh = 150; by = PANEL_Y + 60; }
+        else if (cfg.kind === "sector") { bw = 150; bh = 140; by = PANEL_Y + 62; }
+        const bx = PANEL_X + PANEL_W - PAD - bw - 14;
+        this.gaugeRect = { x: bx, y: by, w: bw, h: bh };
+
+        this.gaugeLabel = this.scene.add.text(bx + bw / 2, by - 22, cfg.label ?? "STATUS", {
+            fontFamily: "VCR", fontSize: "16px", color: COLOR.dim
+        }).setOrigin(0.5, 1);
+        this.gaugeGraphics = this.scene.add.graphics();
+        this.gaugeState = this.scene.add.text(bx + bw / 2, by + bh + 8, "", {
+            fontFamily: "VCR", fontSize: "15px", color: COLOR.dim, align: "center"
+        }).setOrigin(0.5, 0);
+
+        this.container.add([this.gaugeLabel, this.gaugeGraphics, this.gaugeState]);
+        if (cfg.kind === "sector") {
+            this.buildSectorLabels();
+        }
+        this.updateGauge();
+    }
+
+    // Rótulos fixos dos eixos do mapa de setores (linhas A/B/C, colunas 1/2/3).
+    buildSectorLabels() {
+        const cfg = this.puzzle.gauge;
+        const rows = cfg.rows ?? ["A", "B", "C"];
+        const cols = cfg.cols ?? ["1", "2", "3"];
+        const b = this.gaugeRect;
+        const ox = 16;
+        const oy = 14;
+        const cw = (b.w - ox) / cols.length;
+        const chh = (b.h - oy) / rows.length;
+        cols.forEach((c, i) => {
+            this.container.add(this.scene.add.text(b.x + ox + cw * (i + 0.5), b.y, c, {
+                fontFamily: "VCR", fontSize: "13px", color: COLOR.dim
+            }).setOrigin(0.5, 0));
+        });
+        rows.forEach((r, i) => {
+            this.container.add(this.scene.add.text(b.x + 4, b.y + oy + chh * (i + 0.5), r, {
+                fontFamily: "VCR", fontSize: "13px", color: COLOR.dim
+            }).setOrigin(0.5, 0.5));
+        });
+    }
+
+    valueSlot() {
+        return this.slots.find((slot) => slot.category === "valor") ?? null;
+    }
+
+    valueLabel() {
+        const slot = this.valueSlot();
+        return slot?.piece?.label ?? null;
+    }
+
+    // Valor numérico no encaixe (null se vazio ou não-numérico).
+    currentValue() {
+        const label = this.valueLabel();
+        if (label === null) return null;
+        if (INT_REGEX.test(label) || FLOAT_REGEX.test(label)) return parseFloat(label);
+        return null;
+    }
+
+    // O valor no encaixe é exatamente o esperado?
+    valueCorrect() {
+        const slot = this.valueSlot();
+        return !!slot && !!slot.piece && slot.piece.label === slot.expected;
+    }
+
+    updateGauge() {
+        if (!this.gaugeGraphics) return;
+        this.gaugeGraphics.clear();
+        const kind = this.puzzle.gauge.kind;
+        let result;
+        if (kind === "thermometer") result = this.drawThermometer();
+        else if (kind === "sector") result = this.drawSector();
+        else if (kind === "toggle") result = this.drawToggle();
+        else result = this.drawBattery();
+        this.gaugeState.setText(result.state).setColor(result.color);
+    }
+
+    drawBattery() {
+        const b = this.gaugeRect;
+        const g = this.gaugeGraphics;
+        const max = this.puzzle.gauge.max ?? 100;
+        const label = this.valueLabel();
+        const num = this.currentValue();
+        const valid = num !== null;
+        const correct = this.valueCorrect();
+        const fill = valid ? Phaser.Math.Clamp(num / max, 0, 1) : 0;
+
+        const frame = correct ? COLOR.success : COLOR.border;
+        g.lineStyle(3, frame, 0.9);
+        g.strokeRoundedRect(b.x, b.y, b.w, b.h, 8);
+        g.fillStyle(frame, 0.9);
+        g.fillRect(b.x + b.w + 2, b.y + b.h / 2 - 12, 8, 24);
+        if (fill > 0) {
+            const pad = 6;
+            g.fillStyle(correct ? 0x51e36b : 0xffb347, 0.9);
+            g.fillRoundedRect(b.x + pad, b.y + pad, (b.w - pad * 2) * fill, b.h - pad * 2, 4);
+        }
+        if (label === null) return { state: "", color: COLOR.dim };
+        if (!valid) return { state: "TIPO INVÁLIDO", color: COLOR.error };
+        if (correct) return { state: "CHEIA", color: COLOR.success };
+        return { state: "CARREGANDO...", color: "#ffb347" };
+    }
+
+    drawThermometer() {
+        const b = this.gaugeRect;
+        const g = this.gaugeGraphics;
+        const cfg = this.puzzle.gauge;
+        const min = cfg.min ?? 0;
+        const max = cfg.max ?? 40;
+        const target = cfg.target ?? this.puzzle.expected;
+        const label = this.valueLabel();
+        const num = this.currentValue();
+        const valid = num !== null;
+        const correct = this.valueCorrect();
+
+        const cx = b.x + b.w / 2;
+        const tubeW = 14;
+        const bulbR = 15;
+        const sTop = b.y + 8;
+        const bulbCY = b.y + b.h - bulbR;
+        const sBot = bulbCY - bulbR + 2;
+        const col = correct ? 0x51e36b : 0xffb347;
+        const frame = correct ? COLOR.success : COLOR.border;
+        const yFor = (v) => Phaser.Math.Linear(sBot, sTop, Phaser.Math.Clamp((v - min) / (max - min), 0, 1));
+
+        g.fillStyle(0x0b0d12, 1);
+        g.fillRoundedRect(cx - tubeW / 2, sTop, tubeW, sBot - sTop + bulbR, tubeW / 2);
+        g.fillCircle(cx, bulbCY, bulbR);
+        g.lineStyle(2, frame, 0.9);
+        g.strokeRoundedRect(cx - tubeW / 2, sTop, tubeW, sBot - sTop + bulbR, tubeW / 2);
+        g.strokeCircle(cx, bulbCY, bulbR);
+        // Marcador do alvo (seta verde apontando o valor seguro).
+        const ty = yFor(target);
+        g.lineStyle(2, COLOR.success, 0.9);
+        g.lineBetween(cx + tubeW / 2 + 3, ty, cx + tubeW / 2 + 16, ty);
+        g.fillStyle(COLOR.success, 0.9);
+        g.fillTriangle(cx + tubeW / 2 + 16, ty - 5, cx + tubeW / 2 + 16, ty + 5, cx + tubeW / 2 + 8, ty);
+        // Mercúrio (bulbo cheio + coluna até o valor).
+        g.fillStyle(col, 1);
+        g.fillCircle(cx, bulbCY, bulbR - 3);
+        if (valid) {
+            const my = yFor(num);
+            g.fillRect(cx - (tubeW - 6) / 2, my, tubeW - 6, sBot - my + 4);
+        }
+        if (label === null) return { state: "", color: COLOR.dim };
+        if (!valid) return { state: "TIPO INVÁLIDO", color: COLOR.error };
+        if (correct) return { state: "NO ALVO", color: COLOR.success };
+        return { state: num < target ? "ABAIXO DO ALVO" : "ACIMA DO ALVO", color: "#ffb347" };
+    }
+
+    drawSector() {
+        const b = this.gaugeRect;
+        const g = this.gaugeGraphics;
+        const cfg = this.puzzle.gauge;
+        const rows = cfg.rows ?? ["A", "B", "C"];
+        const cols = cfg.cols ?? ["1", "2", "3"];
+        const label = this.valueLabel();
+        const sel = label !== null ? label.replace(/["']/g, "") : null;
+        const target = String(this.puzzle.expected);
+        const correct = this.valueCorrect();
+        const isStr = label !== null && STRING_REGEX.test(label);
+
+        const ox = 16;
+        const oy = 14;
+        const cw = (b.w - ox) / cols.length;
+        const chh = (b.h - oy) / rows.length;
+        rows.forEach((r, ri) => {
+            cols.forEach((c, ci) => {
+                const cell = r + c;
+                const x = b.x + ox + ci * cw;
+                const y = b.y + oy + ri * chh;
+                g.lineStyle(1, COLOR.slot, 0.9);
+                g.strokeRect(x + 2, y + 2, cw - 6, chh - 6);
+                if (cell === sel) {
+                    g.fillStyle(correct ? 0x51e36b : 0xffb347, 0.35);
+                    g.fillRect(x + 2, y + 2, cw - 6, chh - 6);
+                }
+                if (cell === target) {
+                    const mx = x + 2 + (cw - 6) / 2;
+                    const my = y + 2 + (chh - 6) / 2;
+                    g.fillStyle(0x4ad6ff, 1);
+                    g.fillCircle(mx, my, 5);
+                    g.lineStyle(2, 0x4ad6ff, 0.4);
+                    g.strokeCircle(mx, my, 9);
+                }
+            });
+        });
+        if (label === null) return { state: "você está no setor marcado", color: COLOR.dim };
+        if (!isStr) return { state: "TIPO INVÁLIDO", color: COLOR.error };
+        if (correct) return { state: "SETOR CERTO", color: COLOR.success };
+        return { state: "OUTRO SETOR", color: "#ffb347" };
+    }
+
+    drawToggle() {
+        const b = this.gaugeRect;
+        const g = this.gaugeGraphics;
+        const label = this.valueLabel();
+        const boolVal = label === "true" ? true : label === "false" ? false : null;
+        const correct = this.valueCorrect();
+        const barrierOn = boolVal !== false;   // ligada, a menos que seja exatamente false.
+
+        const frame = correct ? COLOR.success : COLOR.border;
+        g.fillStyle(0x0b0d12, 1);
+        g.fillRoundedRect(b.x, b.y, b.w, b.h, 8);
+        g.lineStyle(2, frame, 0.9);
+        g.strokeRoundedRect(b.x, b.y, b.w, b.h, 8);
+        // Emissores nas laterais.
+        g.fillStyle(barrierOn ? 0xff4545 : 0x3a3f55, 1);
+        g.fillRect(b.x + 6, b.y + 8, 8, b.h - 16);
+        g.fillRect(b.x + b.w - 14, b.y + 8, 8, b.h - 16);
+        // Feixes.
+        const beams = 3;
+        for (let i = 0; i < beams; i += 1) {
+            const y = b.y + (b.h * (i + 1)) / (beams + 1);
+            if (barrierOn) {
+                g.lineStyle(8, 0xff4545, 0.18);
+                g.lineBetween(b.x + 14, y, b.x + b.w - 14, y);
+                g.lineStyle(3, 0xff4545, 1);
+                g.lineBetween(b.x + 14, y, b.x + b.w - 14, y);
+            } else {
+                g.lineStyle(2, 0x3a3f55, 0.8);
+                g.lineBetween(b.x + 14, y, b.x + b.w - 14, y);
+            }
+        }
+        if (label === null) return { state: "", color: COLOR.dim };
+        if (boolVal === null) return { state: "TIPO INVÁLIDO", color: COLOR.error };
+        if (correct) return { state: "BARREIRA DESLIGADA", color: COLOR.success };
+        return { state: "BARREIRA LIGADA", color: COLOR.error };
     }
 
     createPiece(piece) {
@@ -390,6 +635,7 @@ export default class BlockProgrammingConsole {
             piece.slot.piece = null;
             piece.slot = null;
         }
+        this.updateGauge();
         this.drawSlots();
     }
 
@@ -433,6 +679,7 @@ export default class BlockProgrammingConsole {
     placeInSlot(piece, slot) {
         slot.piece = piece;
         piece.slot = slot;
+        this.updateGauge();
         this.drawSlots();
         this.scene.tweens.add({
             targets: piece.container,
@@ -521,6 +768,18 @@ export default class BlockProgrammingConsole {
         return this.puzzle.wrongValueMessage ?? "valor incorreto";
     }
 
+    // Mensagem guiada pelo medidor: foca na bateria quando o VALOR está errado;
+    // senão, cai no diagnóstico normal (variável/operador).
+    gaugeFailMessage(wrongSlots) {
+        const vs = this.valueSlot();
+        if (vs && wrongSlots.includes(vs)) {
+            return this.currentValue() === null
+                ? "esse valor não carrega a bateria — confira o tipo"
+                : "a bateria ainda não está cheia";
+        }
+        return this.diagnose(wrongSlots);
+    }
+
     handleSuccess() {
         this.solved = true;
         this.timerEvent?.remove();
@@ -546,7 +805,10 @@ export default class BlockProgrammingConsole {
     }
 
     handleFailure(wrongSlots) {
-        this.setOutput(this.diagnose(wrongSlots), COLOR.error);
+        this.setOutput(
+            this.puzzle.gauge ? this.gaugeFailMessage(wrongSlots) : this.diagnose(wrongSlots),
+            COLOR.error
+        );
 
         // Modo combate (tentativa única): o erro consome o turno — congela os
         // blocos, deixa o diagnóstico na tela e fecha sem resolver.
@@ -558,6 +820,12 @@ export default class BlockProgrammingConsole {
                 piece.dragArea.disableInteractive();
             });
             this.scene.time.delayedCall(1400, () => this.close());
+            return;
+        }
+
+        // Puzzles com medidor: NÃO devolve as peças — o jogador ajusta o valor
+        // olhando a bateria (raciocínio), sem punição por encaixe "errado".
+        if (this.puzzle.gauge) {
             return;
         }
 
