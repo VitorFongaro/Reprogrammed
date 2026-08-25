@@ -74,6 +74,14 @@ Os sentinelas da arena pré-boss (`biped_teal/`, `biped_violet/`) são **derivad
 sprite, recoloridos por rotação de matiz (HSV) via `tools/biped_recolor.py` — transformação
 determinística (NÃO é IA generativa). Herdam a CC BY-SA 4.0 (mesma atribuição + share-alike).
 
+### RC Car — inimigo `car`
+
+Origem do **inimigo `car`** (`client/assets/sprites/enemies/car/`). O sheet fonte é
+`RC Car Sprite Sheet.png` (192×256, grade 32×32, 8 linhas: idle/move/jump/activate/deactivate/
+shoot/damage/broken) + `Projectile.png` (2 quadros 8×8). `tools/car_slice.py` fatia o sheet em
+um PNG por animação (nomes minúsculos) e normaliza o projétil pra `projectile.png`. **Confirmar
+autor, licença e forma de crédito com quem baixou** antes da entrega do TCC.
+
 ## Arte feita no projeto
 
 Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte versionado ao lado do

@@ -12,6 +12,11 @@ import shotgunDisabled from "../assets/sprites/enemies/shotgun/disabled.png";
 import shotgunWeapon from "../assets/sprites/enemies/shotgun/weapon.png";
 import bipedWalk from "../assets/sprites/enemies/biped/walk.png";
 import bipedDisabled from "../assets/sprites/enemies/biped/disabled.png";
+import carMove from "../assets/sprites/enemies/car/move.png";
+import carActivate from "../assets/sprites/enemies/car/activate.png";
+import carShoot from "../assets/sprites/enemies/car/shoot.png";
+import carBroken from "../assets/sprites/enemies/car/broken.png";
+import carProjectile from "../assets/sprites/enemies/car/projectile.png";
 
 // Inimigos do capítulo 1 (packs SteamRobotsPack + biped_robot, quadros 32×32).
 // Cada inimigo anda/persegue a Artemis e ataca (contato ou tiro), tirando HP da
@@ -38,7 +43,11 @@ const SHEETS = {
     "enemy-shotgun-disabled": { url: shotgunDisabled, frames: 1 },
     "enemy-shotgun-weapon": { url: shotgunWeapon, frames: 7, fh: 16, repeat: 0 },
     "enemy-biped-walk": { url: bipedWalk, frames: 6 },
-    "enemy-biped-disabled": { url: bipedDisabled, frames: 2 }
+    "enemy-biped-disabled": { url: bipedDisabled, frames: 2 },
+    "enemy-car-move": { url: carMove, frames: 4 },
+    "enemy-car-activate": { url: carActivate, frames: 6, repeat: 0 },
+    "enemy-car-shoot": { url: carShoot, frames: 5, repeat: 0 },
+    "enemy-car-broken": { url: carBroken, frames: 4, repeat: 0 }
 };
 
 const TYPES = {
@@ -87,6 +96,22 @@ const TYPES = {
         disablePuzzle: { variable: "sistema", expected: false,
             hint: "monte:  sistema = false", wrongValueMessage: "sistema ainda ativo",
             blockDistractors: { nome: ["motor", "servo"], op: ["=="], valor: ["true", '"false"'] } }
+    },
+    car: {
+        name: "CARRO DE ATAQUE",
+        walkKey: "enemy-car-move",
+        disabledKey: "enemy-car-broken",
+        scale: 3.3, speed: 95, meleeHp: 3, ranged: true, contactDamage: 3,
+        // Carro: dirige pelo mapa; ao avistar a Artemis ATIVA a arma (torreta sobe)
+        // e passa a ATIRAR mantendo distância (kite). Máquina de estados em updateCar.
+        car: true, fireMs: 1500,
+        detectRange: 360, fireRange: 400, kiteMin: 190, kiteMax: 320,
+        activateKey: "enemy-car-activate",
+        shootKey: "enemy-car-shoot",
+        dodge: ["fan"],                // bullet hell da reprogramação.
+        disablePuzzle: { variable: "arma", expected: false,
+            hint: "monte:  arma = false", wrongValueMessage: "a arma ainda dispara",
+            blockDistractors: { nome: ["torreta", "canhao"], op: ["=="], valor: ["true", '"false"'] } }
     }
 };
 
@@ -102,6 +127,10 @@ export default class Enemy {
                 scene.load.spritesheet(key, def.url, { frameWidth: FRAME, frameHeight: def.fh ?? FRAME });
             }
         });
+        // Projétil do carro: sheet 16x8 = 2 quadros de 8x8 (animado).
+        if (!scene.textures.exists("car-projectile")) {
+            scene.load.spritesheet("car-projectile", carProjectile, { frameWidth: 8, frameHeight: 8 });
+        }
     }
 
     static createAnimations(scene) {
@@ -116,6 +145,14 @@ export default class Enemy {
                 repeat: def.repeat ?? -1
             });
         });
+        if (scene.textures.exists("car-projectile") && !scene.anims.exists("car-projectile-anim")) {
+            scene.anims.create({
+                key: "car-projectile-anim",
+                frames: scene.anims.generateFrameNumbers("car-projectile", { start: 0, end: 1 }),
+                frameRate: 10,
+                repeat: -1
+            });
+        }
     }
 
     constructor(scene, x, y, options = {}) {
@@ -135,11 +172,19 @@ export default class Enemy {
         this.wanderAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
         this.nextSlam = 2000;
         this.jumping = false;
+        this.carState = "patrol";
 
         this.sprite = scene.physics.add.sprite(x, y, this.def.walkKey, 0)
             .setScale(this.def.scale);
         this.sprite.play(this.def.walkKey);
-        this.sprite.body.setSize(HITBOX, HITBOX, true);
+        if (this.def.car) {
+            // O carro fica na parte BAIXA do quadro 32x32 (bbox ~x8-23, y23-31):
+            // corpo sobre ele, centralizado no eixo x (o flip não desalinha).
+            this.sprite.body.setSize(16, 10, false);
+            this.sprite.body.setOffset(8, 22);
+        } else {
+            this.sprite.body.setSize(HITBOX, HITBOX, true);
+        }
         this.sprite.setCollideWorldBounds(true);
         this.sprite.enemyRef = this;
 
@@ -174,6 +219,11 @@ export default class Enemy {
         const player = this.scene.player?.sprite;
         if (!player || !this.scene.player.enabled) {
             this.sprite.body.setVelocity(0, 0);
+            return;
+        }
+
+        if (this.def.car) {
+            this.updateCar(time, player);
             return;
         }
 
@@ -225,6 +275,66 @@ export default class Enemy {
         if (this.sprite.body.velocity.x !== 0) {
             this.sprite.setFlipX(this.sprite.body.velocity.x < 0);
         }
+    }
+
+    // Carro: patrulha até avistar a Artemis; então ATIVA a arma (uma vez) e passa a
+    // MANTER DISTÂNCIA (kite) atirando. Vira sempre encarando a Artemis.
+    updateCar(time, player) {
+        const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+        this.sprite.setFlipX(player.x < this.x);
+
+        if (this.carState === "activating") {
+            this.sprite.body.setVelocity(0, 0);   // travado tocando a ativação.
+            return;
+        }
+
+        if (this.carState !== "armed") {
+            if (dist <= this.def.detectRange) {
+                this.carState = "activating";
+                this.sprite.body.setVelocity(0, 0);
+                this.playOnce(this.def.activateKey, () => {
+                    this.carState = "armed";
+                    this.nextFire = time + 400;
+                    if (!this.disabled) this.sprite.play(this.def.walkKey, true);
+                });
+                return;
+            }
+            this.wander(time);
+            return;
+        }
+
+        // Armado: recua se estiver perto demais, aproxima se longe, para na distância boa.
+        const angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
+        const s = this.def.speed;
+        if (dist < this.def.kiteMin) {
+            this.sprite.body.setVelocity(-Math.cos(angle) * s, -Math.sin(angle) * s);
+        } else if (dist > this.def.kiteMax) {
+            this.sprite.body.setVelocity(Math.cos(angle) * s * 0.85, Math.sin(angle) * s * 0.85);
+        } else {
+            this.sprite.body.setVelocity(0, 0);
+        }
+
+        if (time >= this.nextFire && dist <= this.def.fireRange) {
+            this.nextFire = time + this.def.fireMs;
+            this.carShoot(angle);
+        }
+    }
+
+    carShoot(angle) {
+        this.sprite.play(this.def.shootKey);
+        this.sprite.once("animationcomplete", () => {
+            if (!this.disabled && this.carState === "armed") {
+                this.sprite.play(this.def.walkKey, true);
+            }
+        });
+        const mx = this.x + Math.cos(angle) * MUZZLE_OFFSET;
+        const my = this.y + Math.sin(angle) * MUZZLE_OFFSET;
+        this.scene.spawnEnemyBullet?.(mx, my, angle, "car-projectile", 2.4);
+    }
+
+    playOnce(key, cb) {
+        this.sprite.play(key);
+        this.sprite.once("animationcomplete", cb);
     }
 
     // Pula (hop visual, sem física) e ao aterrissar solta 4 bolas nas diagonais.

@@ -579,11 +579,16 @@ export default class BaseRoomScene extends Phaser.Scene {
         return enemy;
     }
 
-    spawnEnemyBullet(x, y, angle) {
+    spawnEnemyBullet(x, y, angle, texture = "enemy-bullet", scale = 1) {
         if (!this.enemyBullets) {
             return;
         }
-        const bullet = this.enemyBullets.create(x, y, "enemy-bullet").setDepth(760);
+        const bullet = this.enemyBullets.create(x, y, texture).setDepth(760).setScale(scale);
+        // Projéteis com animação própria (ex.: o do carro) tocam `<textura>-anim`.
+        const animKey = `${texture}-anim`;
+        if (this.anims.exists(animKey)) {
+            bullet.play(animKey);
+        }
         bullet.body.setVelocity(Math.cos(angle) * ENEMY_BULLET_SPEED, Math.sin(angle) * ENEMY_BULLET_SPEED);
     }
 
