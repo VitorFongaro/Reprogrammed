@@ -235,8 +235,8 @@ export default class BlockProgrammingConsole {
         // Linha divisória acima da prateleira.
         panel.lineStyle(1, COLOR.border, 0.4);
         panel.lineBetween(PANEL_X + PAD, TRAY_Y - 44, PANEL_X + PANEL_W - PAD, TRAY_Y - 44);
-        // Scanlines.
-        panel.lineStyle(1, 0x000000, 0.28);
+        // Scanlines (suaves, para não atrapalhar a leitura do texto).
+        panel.lineStyle(1, 0x000000, 0.15);
         for (let y = PANEL_Y + 47; y < PANEL_Y + PANEL_H; y += 4) {
             panel.lineBetween(PANEL_X + 1, y, PANEL_X + PANEL_W - 1, y);
         }
@@ -255,10 +255,12 @@ export default class BlockProgrammingConsole {
 
         const briefing = this.scene.add.text(
             PANEL_X + PAD,
-            PANEL_Y + 76,
+            PANEL_Y + 74,
             this.puzzle.briefing.join("\n"),
-            { fontFamily: "VCR", fontSize: "20px", color: COLOR.text, lineSpacing: 8 }
+            { fontFamily: "VCR", fontSize: "22px", color: "#f4f6fb", lineSpacing: 12 }
         );
+        // Sombra escura sutil: destaca a fonte fina do fundo com scanlines.
+        briefing.setShadow(0, 2, "#000000", 4, false, true);
 
         this.outputText = this.scene.add.text(SLOT_CENTER_X, SLOT_Y + 64, "", {
             fontFamily: "VCR",
@@ -346,20 +348,26 @@ export default class BlockProgrammingConsole {
         let bw = 150;
         let bh = 74;
         let by = PANEL_Y + 100;
+        let rightPad = 14;
         if (cfg.kind === "thermometer") { bw = 60; bh = 150; by = PANEL_Y + 60; }
-        else if (cfg.kind === "sector") { bw = 150; bh = 140; by = PANEL_Y + 62; }
-        const bx = PANEL_X + PANEL_W - PAD - bw - 14;
+        else if (cfg.kind === "sector") { bw = 262; bh = 132; by = PANEL_Y + 54; rightPad = 0; }
+        const bx = PANEL_X + PANEL_W - PAD - bw - rightPad;
         this.gaugeRect = { x: bx, y: by, w: bw, h: bh };
 
-        this.gaugeLabel = this.scene.add.text(bx + bw / 2, by - 22, cfg.label ?? "STATUS", {
-            fontFamily: "VCR", fontSize: "16px", color: COLOR.dim
-        }).setOrigin(0.5, 1);
+        // A grade de setor dispensa rótulo em cima (o título da janela já diz
+        // "SETOR" e ele colidiria com a barra de título).
+        if (cfg.kind !== "sector") {
+            this.gaugeLabel = this.scene.add.text(bx + bw / 2, by - 22, cfg.label ?? "STATUS", {
+                fontFamily: "VCR", fontSize: "16px", color: COLOR.dim
+            }).setOrigin(0.5, 1);
+            this.container.add(this.gaugeLabel);
+        }
         this.gaugeGraphics = this.scene.add.graphics();
-        this.gaugeState = this.scene.add.text(bx + bw / 2, by + bh + 8, "", {
+        this.gaugeState = this.scene.add.text(bx + bw / 2, by + bh + 6, "", {
             fontFamily: "VCR", fontSize: "15px", color: COLOR.dim, align: "center"
         }).setOrigin(0.5, 0);
 
-        this.container.add([this.gaugeLabel, this.gaugeGraphics, this.gaugeState]);
+        this.container.add([this.gaugeGraphics, this.gaugeState]);
         if (cfg.kind === "sector") {
             this.buildSectorLabels();
         }
@@ -372,18 +380,18 @@ export default class BlockProgrammingConsole {
         const rows = cfg.rows ?? ["A", "B", "C"];
         const cols = cfg.cols ?? ["1", "2", "3"];
         const b = this.gaugeRect;
-        const ox = 16;
-        const oy = 14;
+        const ox = 24;
+        const oy = 20;
         const cw = (b.w - ox) / cols.length;
         const chh = (b.h - oy) / rows.length;
         cols.forEach((c, i) => {
             this.container.add(this.scene.add.text(b.x + ox + cw * (i + 0.5), b.y, c, {
-                fontFamily: "VCR", fontSize: "13px", color: COLOR.dim
+                fontFamily: "VCR", fontSize: "16px", color: COLOR.accent
             }).setOrigin(0.5, 0));
         });
         rows.forEach((r, i) => {
-            this.container.add(this.scene.add.text(b.x + 4, b.y + oy + chh * (i + 0.5), r, {
-                fontFamily: "VCR", fontSize: "13px", color: COLOR.dim
+            this.container.add(this.scene.add.text(b.x + 8, b.y + oy + chh * (i + 0.5), r, {
+                fontFamily: "VCR", fontSize: "16px", color: COLOR.accent
             }).setOrigin(0.5, 0.5));
         });
     }
@@ -508,8 +516,8 @@ export default class BlockProgrammingConsole {
         const correct = this.valueCorrect();
         const isStr = label !== null && STRING_REGEX.test(label);
 
-        const ox = 16;
-        const oy = 14;
+        const ox = 24;
+        const oy = 20;
         const cw = (b.w - ox) / cols.length;
         const chh = (b.h - oy) / rows.length;
         rows.forEach((r, ri) => {
@@ -518,18 +526,18 @@ export default class BlockProgrammingConsole {
                 const x = b.x + ox + ci * cw;
                 const y = b.y + oy + ri * chh;
                 g.lineStyle(1, COLOR.slot, 0.9);
-                g.strokeRect(x + 2, y + 2, cw - 6, chh - 6);
+                g.strokeRect(x + 3, y + 3, cw - 6, chh - 6);
                 if (cell === sel) {
                     g.fillStyle(correct ? 0x51e36b : 0xffb347, 0.35);
-                    g.fillRect(x + 2, y + 2, cw - 6, chh - 6);
+                    g.fillRect(x + 3, y + 3, cw - 6, chh - 6);
                 }
                 if (cell === target) {
-                    const mx = x + 2 + (cw - 6) / 2;
-                    const my = y + 2 + (chh - 6) / 2;
+                    const mx = x + cw / 2;
+                    const my = y + chh / 2;
                     g.fillStyle(0x4ad6ff, 1);
-                    g.fillCircle(mx, my, 5);
+                    g.fillCircle(mx, my, 7);
                     g.lineStyle(2, 0x4ad6ff, 0.4);
-                    g.strokeCircle(mx, my, 9);
+                    g.strokeCircle(mx, my, 12);
                 }
             });
         });
@@ -584,7 +592,11 @@ export default class BlockProgrammingConsole {
         const label = this.scene.add.text(0, -1, piece.label, {
             fontFamily: "VCR",
             fontSize: "22px",
-            color: "#ffffff"
+            color: "#ffffff",
+            // Contorno escuro: o texto branco fica legível mesmo nos blocos claros
+            // (nome/ciano, operador/âmbar).
+            stroke: "#0a0d16",
+            strokeThickness: 4
         }).setOrigin(0.5);
 
         // Área de arraste: retângulo invisível cobrindo o bloco inteiro (mesmo
@@ -644,7 +656,7 @@ export default class BlockProgrammingConsole {
         const local = parent ? parent.getLocalPoint(pointer.x, pointer.y) : pointer;
         piece.container.x = local.x;
         piece.container.y = local.y;
-        this.drawSlots(this.nearestFreeSlot(piece));
+        this.drawSlots(this.nearestSlot(piece));
     }
 
     onDragEnd(piece) {
@@ -652,19 +664,24 @@ export default class BlockProgrammingConsole {
         piece.container.setAlpha(1);
         if (this.solved) return;
 
-        const slot = this.nearestFreeSlot(piece);
+        const slot = this.nearestSlot(piece);
         if (slot) {
+            // Alvo ocupado por outra peça: ela volta pra prateleira e a nova assume.
+            if (slot.piece) {
+                this.evict(slot.piece);
+            }
             this.placeInSlot(piece, slot);
         } else {
             this.returnHome(piece);
         }
     }
 
-    nearestFreeSlot(piece) {
+    // Encaixe mais próximo dentro do raio de snap (ocupado ou não). Se o alvo já
+    // tiver uma peça, ela é devolvida à prateleira (troca) — ver onDragEnd.
+    nearestSlot(piece) {
         let best = null;
         let bestDistance = SNAP_RADIUS;
         this.slots.forEach((slot) => {
-            if (slot.piece) return;
             const distance = Phaser.Math.Distance.Between(
                 piece.container.x, piece.container.y, slot.x, slot.y
             );
@@ -674,6 +691,25 @@ export default class BlockProgrammingConsole {
             }
         });
         return best;
+    }
+
+    // Devolve uma peça que estava num encaixe para a prateleira (com flutuação).
+    evict(piece) {
+        if (piece.slot) {
+            piece.slot.piece = null;
+        }
+        piece.slot = null;
+        this.updateGauge();
+        this.scene.tweens.add({
+            targets: piece.container,
+            x: piece.homeX,
+            y: piece.homeY,
+            duration: 220,
+            ease: "Back.easeOut",
+            onComplete: () => {
+                if (!piece.slot) this.startFloat(piece);
+            }
+        });
     }
 
     placeInSlot(piece, slot) {
