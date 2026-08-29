@@ -11,24 +11,89 @@
   "version": "1.10",
   "type": "map",
   "nextlayerid": 4,
-  "nextobjectid": 40,
+  "nextobjectid": 200,
   "tilesets": [
     {
       "columns": 0,
       "firstgid": 1,
-      "grid": { "height": 1, "orientation": "orthogonal", "width": 1 },
+      "grid": {
+        "height": 1,
+        "orientation": "orthogonal",
+        "width": 1
+      },
       "margin": 0,
       "name": "props",
       "spacing": 0,
-      "tilecount": 5,
+      "tilecount": 11,
       "tilewidth": 110,
-      "tileheight": 134,
+      "tileheight": 122,
       "tiles": [
-        { "id": 0, "image": "../images/arquivos/props/arquivo.png", "imagewidth": 56, "imageheight": 110 },
-        { "id": 1, "image": "../images/arquivos/props/terminal.png", "imagewidth": 110, "imageheight": 122 },
-        { "id": 2, "image": "../images/porao/props/armario.png", "imagewidth": 56, "imageheight": 134 },
-        { "id": 3, "image": "../images/porao/props/caixote.png", "imagewidth": 56, "imageheight": 52 },
-        { "id": 4, "image": "../images/porao/props/caixote_lona.png", "imagewidth": 72, "imageheight": 86 }
+        {
+          "id": 0,
+          "image": "../images/arquivos/props/terminal.png",
+          "imagewidth": 110,
+          "imageheight": 122
+        },
+        {
+          "id": 1,
+          "image": "../images/arquivos/props/server_rack_closed.png",
+          "imagewidth": 48,
+          "imageheight": 112
+        },
+        {
+          "id": 2,
+          "image": "../images/arquivos/props/server_rack_open.png",
+          "imagewidth": 60,
+          "imageheight": 112
+        },
+        {
+          "id": 3,
+          "image": "../images/arquivos/props/server_rack_toppled.png",
+          "imagewidth": 88,
+          "imageheight": 52
+        },
+        {
+          "id": 4,
+          "image": "../images/arquivos/props/server_tower_small.png",
+          "imagewidth": 32,
+          "imageheight": 72
+        },
+        {
+          "id": 5,
+          "image": "../images/arquivos/props/network_panel.png",
+          "imagewidth": 52,
+          "imageheight": 44
+        },
+        {
+          "id": 6,
+          "image": "../images/arquivos/props/cable_spool.png",
+          "imagewidth": 44,
+          "imageheight": 40
+        },
+        {
+          "id": 7,
+          "image": "../images/arquivos/props/crt_monitor_off.png",
+          "imagewidth": 40,
+          "imageheight": 40
+        },
+        {
+          "id": 8,
+          "image": "../images/arquivos/props/ups_battery.png",
+          "imagewidth": 36,
+          "imageheight": 48
+        },
+        {
+          "id": 9,
+          "image": "../images/arquivos/props/toolbox.png",
+          "imagewidth": 40,
+          "imageheight": 30
+        },
+        {
+          "id": 10,
+          "image": "../images/arquivos/props/industrial_fan.png",
+          "imagewidth": 52,
+          "imageheight": 60
+        }
       ]
     }
   ],
@@ -53,17 +118,198 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 1, "gid": 1, "name": "arquivo-1", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 246, "width": 56, "height": 110 },
-        { "id": 2, "gid": 1, "name": "arquivo-2", "rotation": 0, "type": "", "visible": true, "x": 152, "y": 246, "width": 56, "height": 110 },
-        { "id": 3, "gid": 1, "name": "arquivo-3", "rotation": 0, "type": "", "visible": true, "x": 216, "y": 246, "width": 56, "height": 110 },
-        { "id": 4, "gid": 1, "name": "arquivo-4", "rotation": 0, "type": "", "visible": true, "x": 280, "y": 246, "width": 56, "height": 110 },
-        { "id": 5, "gid": 1, "name": "arquivo-5", "rotation": 0, "type": "", "visible": true, "x": 900, "y": 246, "width": 56, "height": 110 },
-        { "id": 6, "gid": 1, "name": "arquivo-6", "rotation": 0, "type": "", "visible": true, "x": 964, "y": 246, "width": 56, "height": 110 },
-        { "id": 7, "gid": 1, "name": "arquivo-7", "rotation": 0, "type": "", "visible": true, "x": 1028, "y": 246, "width": 56, "height": 110 },
-        { "id": 8, "gid": 2, "name": "terminal-central", "rotation": 0, "type": "", "visible": true, "x": 585, "y": 380, "width": 110, "height": 122 },
-        { "id": 9, "gid": 3, "name": "armario", "rotation": 0, "type": "", "visible": true, "x": 1188, "y": 314, "width": 56, "height": 134 },
-        { "id": 10, "gid": 5, "name": "caixote-lona", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 640, "width": 72, "height": 86 },
-        { "id": 11, "gid": 4, "name": "caixote", "rotation": 0, "type": "", "visible": true, "x": 170, "y": 620, "width": 56, "height": 52 }
+        {
+          "id": 1,
+          "gid": 2,
+          "name": "rack-e1",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 88,
+          "y": 240,
+          "width": 48,
+          "height": 112
+        },
+        {
+          "id": 2,
+          "gid": 3,
+          "name": "rack-e2",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 140,
+          "y": 240,
+          "width": 60,
+          "height": 112
+        },
+        {
+          "id": 3,
+          "gid": 2,
+          "name": "rack-e3",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 204,
+          "y": 240,
+          "width": 48,
+          "height": 112
+        },
+        {
+          "id": 4,
+          "gid": 2,
+          "name": "rack-e4",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 256,
+          "y": 240,
+          "width": 48,
+          "height": 112
+        },
+        {
+          "id": 5,
+          "gid": 2,
+          "name": "rack-d1",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 900,
+          "y": 240,
+          "width": 48,
+          "height": 112
+        },
+        {
+          "id": 6,
+          "gid": 3,
+          "name": "rack-d2",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 952,
+          "y": 240,
+          "width": 60,
+          "height": 112
+        },
+        {
+          "id": 7,
+          "gid": 2,
+          "name": "rack-d3",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 1016,
+          "y": 240,
+          "width": 48,
+          "height": 112
+        },
+        {
+          "id": 8,
+          "gid": 6,
+          "name": "painel-rede",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 400,
+          "y": 124,
+          "width": 52,
+          "height": 44
+        },
+        {
+          "id": 9,
+          "gid": 5,
+          "name": "torre",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 1196,
+          "y": 300,
+          "width": 32,
+          "height": 72
+        },
+        {
+          "id": 10,
+          "gid": 8,
+          "name": "monitor",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 1148,
+          "y": 300,
+          "width": 40,
+          "height": 40
+        },
+        {
+          "id": 11,
+          "gid": 4,
+          "name": "rack-tombado",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 316,
+          "y": 606,
+          "width": 88,
+          "height": 52
+        },
+        {
+          "id": 12,
+          "gid": 7,
+          "name": "bobina",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 96,
+          "y": 648,
+          "width": 44,
+          "height": 40
+        },
+        {
+          "id": 13,
+          "gid": 10,
+          "name": "caixa-ferramentas",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 152,
+          "y": 636,
+          "width": 40,
+          "height": 30
+        },
+        {
+          "id": 14,
+          "gid": 9,
+          "name": "nobreak",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 200,
+          "y": 652,
+          "width": 36,
+          "height": 48
+        },
+        {
+          "id": 15,
+          "gid": 11,
+          "name": "ventilador",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 1150,
+          "y": 640,
+          "width": 52,
+          "height": 60
+        },
+        {
+          "id": 16,
+          "gid": 1,
+          "name": "terminal-central",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 585,
+          "y": 380,
+          "width": 110,
+          "height": 122
+        }
       ]
     },
     {
@@ -76,12 +322,116 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 20, "name": "arquivos-esquerda", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 136, "width": 248, "height": 110 },
-        { "id": 21, "name": "arquivos-direita", "rotation": 0, "type": "", "visible": true, "x": 900, "y": 136, "width": 184, "height": 110 },
-        { "id": 22, "name": "terminal", "rotation": 0, "type": "", "visible": true, "x": 585, "y": 258, "width": 110, "height": 122 },
-        { "id": 23, "name": "armario", "rotation": 0, "type": "", "visible": true, "x": 1188, "y": 180, "width": 56, "height": 134 },
-        { "id": 24, "name": "caixote-lona", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 554, "width": 72, "height": 86 },
-        { "id": 25, "name": "caixote", "rotation": 0, "type": "", "visible": true, "x": 170, "y": 568, "width": 56, "height": 52 }
+        {
+          "id": 100,
+          "name": "racks-esquerda",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 88,
+          "y": 150,
+          "width": 216,
+          "height": 90
+        },
+        {
+          "id": 101,
+          "name": "racks-direita",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 900,
+          "y": 150,
+          "width": 164,
+          "height": 90
+        },
+        {
+          "id": 102,
+          "name": "terminal",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 585,
+          "y": 258,
+          "width": 110,
+          "height": 122
+        },
+        {
+          "id": 103,
+          "name": "torre",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 1196,
+          "y": 240,
+          "width": 32,
+          "height": 60
+        },
+        {
+          "id": 104,
+          "name": "monitor",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 1148,
+          "y": 270,
+          "width": 40,
+          "height": 30
+        },
+        {
+          "id": 105,
+          "name": "rack-tombado",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 316,
+          "y": 570,
+          "width": 88,
+          "height": 36
+        },
+        {
+          "id": 106,
+          "name": "bobina",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 96,
+          "y": 620,
+          "width": 44,
+          "height": 28
+        },
+        {
+          "id": 107,
+          "name": "caixa-ferramentas",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 152,
+          "y": 616,
+          "width": 40,
+          "height": 20
+        },
+        {
+          "id": 108,
+          "name": "nobreak",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 200,
+          "y": 620,
+          "width": 36,
+          "height": 32
+        },
+        {
+          "id": 109,
+          "name": "ventilador",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 1150,
+          "y": 600,
+          "width": 52,
+          "height": 40
+        }
       ]
     }
   ]

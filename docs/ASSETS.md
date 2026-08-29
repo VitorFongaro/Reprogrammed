@@ -90,11 +90,27 @@ Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte version
 - `client/assets/sprites/` — Cosmo, boss do ENIAC, blocos do puzzle, arma e projétil.
 - `client/assets/images/porao/porao_bg.png` — parede, porta, luminárias e emblema Elysium são
   procedurais (só o piso vem de pack).
-- Props em `client/assets/images/porao/props/` que **não** aparecem no `porao.json`
-  (`armario`, `banco`, `barril`, `caixote`, `caixote_grande`, `caixote_lona`, `dreno`, `mesa`,
-  `palete`, `prateleira`, `ventilador`) são da geração procedural anterior à troca pelos
-  packs. Estão sem uso; dá para apagar quando houver certeza de que nenhuma sala futura vai
-  reaproveitá-los.
+- Props procedurais anteriores à troca pelos packs. **Vários continuam em uso** por outras
+  salas — `caixote`, `banco`, `barril`, `mesa`, `palete` e `caixote_grande` aparecem nos mapas
+  do capítulo 1, então não saem sem antes conferir. Hoje estão sem referência em mapa nenhum:
+  `armario`, `caixote_lona`, `dreno`, `prateleira`, `ventilador` e `arquivo` (este último saiu
+  quando a sala de arquivos virou sala de servidores).
+- `client/assets/images/arquivos/props/server_*.png` e companhia são gerados por
+  `tools/servidores.py`, no mesmo estilo dos packs mas desenhados por script — ver a seção
+  seguinte.
+
+## Arte gerada por script
+
+`tools/servidores.py` desenha os props de sala de servidor (racks, torre, no-break, bobina,
+painel de rede, ventilador...) por código, em tamanho nativo, e exporta em 2x.
+
+Foi feito assim porque a perspectiva do jogo é 3/4 top-down com **faces alinhadas aos eixos**
+— a face de cima é um retângulo logo acima da frente, sem nenhuma diagonal — com contorno
+preto de 1px e paleta fechada. Modelos de imagem erram justamente essas três coisas: entregam
+isometria, anti-aliasing e paleta solta. Por script, saem certas por construção.
+
+Não usa nenhum asset de terceiros como entrada: a paleta foi medida dos props já presentes na
+sala, o que é leitura de cor, não reuso de arte.
 
 ## Arte gerada por IA
 
