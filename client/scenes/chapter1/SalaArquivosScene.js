@@ -2,7 +2,6 @@ import BaseRoomScene from "./BaseRoomScene";
 import Enemy from "../../characters/Enemy";
 import arquivosBg from "../../assets/images/arquivos/arquivos_bg.png";
 import arquivosMap from "../../assets/maps/arquivos.json";
-import laserUrl from "../../assets/sprites/laser/laser.png";
 
 // Capítulo 1, sala 2 — Sala de arquivos, agora o TUTORIAL da reprogramação
 // remota ([R]). Uma unidade de segurança (mech biped) fica trancada atrás de uma
@@ -15,14 +14,6 @@ import laserUrl from "../../assets/sprites/laser/laser.png";
 
 const BARRIER_X = 740;
 const BARRIER_W = 16;
-
-// Feixe do pack sci-fi (CC0, ver CREDITOS.txt): 2 quadros de 16x32 que empilham
-// na vertical. Escala 2 para casar com a densidade dos props (ver AGENTS.md).
-const BEAM_W = 16;
-const BEAM_H = 32;
-const BEAM_SCALE = 2;
-const BEAM_STEP = BEAM_H * BEAM_SCALE;
-const BEAM_TINT = 0xff4545;
 const ROBOT = { x: 1000, y: 470 };
 
 const ENTRY_SCRIPT = [
@@ -51,13 +42,6 @@ export default class SalaArquivosScene extends BaseRoomScene {
     preload() {
         super.preload();
         Enemy.preload(this);
-
-        if (!this.textures.exists("laser-feixe")) {
-            this.load.spritesheet("laser-feixe", laserUrl, {
-                frameWidth: BEAM_W,
-                frameHeight: BEAM_H
-            });
-        }
     }
 
     onRoomCreate() {
@@ -96,30 +80,11 @@ export default class SalaArquivosScene extends BaseRoomScene {
         this.barrierEmitters = this.add.graphics().setDepth(701);
         this.drawEmitters(0xff4545);
 
-        // Feixe: coluna de sprites empilhados, todos na mesma animação.
-        if (!this.anims.exists("laser-feixe-anim")) {
-            this.anims.create({
-                key: "laser-feixe-anim",
-                frames: this.anims.generateFrameNumbers("laser-feixe", { start: 0, end: 1 }),
-                frameRate: 8,
-                repeat: -1
-            });
-        }
-
-        // Só quadros inteiros: a sobra (menos de um quadro) fica escondida sob
-        // os emissores, em vez de esticar o último e deformar o padrão.
-        const tiles = Math.floor(h / BEAM_STEP);
-        const top = cy - (tiles * BEAM_STEP) / 2;
-        this.barrierBeams = [];
-
-        for (let i = 0; i < tiles; i += 1) {
-            const beam = this.add.sprite(BARRIER_X, top + i * BEAM_STEP + BEAM_STEP / 2, "laser-feixe")
-                .setScale(BEAM_SCALE)
-                .setTint(BEAM_TINT)
-                .setDepth(700);
-            beam.play({ key: "laser-feixe-anim", startFrame: i % 2 });
-            this.barrierBeams.push(beam);
-        }
+        // Feixe: glow largo + núcleo fino, ambos pulsando.
+        this.barrierGlow = this.add.rectangle(BARRIER_X, cy, 16, h - 8, 0xff4545, 0.22).setDepth(700);
+        this.barrierCore = this.add.rectangle(BARRIER_X, cy, 4, h - 8, 0xff4545, 1).setDepth(700);
+        this.tweens.add({ targets: this.barrierCore, alpha: { from: 0.8, to: 1 }, duration: 480, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
+        this.tweens.add({ targets: this.barrierGlow, alpha: { from: 0.14, to: 0.3 }, duration: 480, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
 
         // Parede sólida: a Artemis não atravessa (colisor só contra ela; as bolas
         // de energia do robô passam livres para poderem alcançá-la).
@@ -132,8 +97,8 @@ export default class SalaArquivosScene extends BaseRoomScene {
         const { y, h } = this.bounds;
         this.barrierEmitters.clear();
         this.barrierEmitters.fillStyle(color, 1);
-        this.barrierEmitters.fillRect(BARRIER_X - 12, y - 4, 24, 20);
-        this.barrierEmitters.fillRect(BARRIER_X - 12, y + h - 16, 24, 20);
+        this.barrierEmitters.fillRect(BARRIER_X - 10, y - 2, 20, 12);
+        this.barrierEmitters.fillRect(BARRIER_X - 10, y + h - 10, 20, 12);
     }
 
     dropBarrier() {
@@ -143,14 +108,16 @@ export default class SalaArquivosScene extends BaseRoomScene {
         this.barrierOn = false;
         this.barrierCollider?.destroy();
         this.barrierCollider = null;
+        this.tweens.killTweensOf(this.barrierCore);
+        this.tweens.killTweensOf(this.barrierGlow);
         this.drawEmitters(0x3a3f55);
         this.tweens.add({
-            targets: this.barrierBeams,
+            targets: [this.barrierCore, this.barrierGlow],
             alpha: 0,
             duration: 400,
             onComplete: () => {
-                this.barrierBeams.forEach((beam) => beam.destroy());
-                this.barrierBeams = [];
+                this.barrierCore?.destroy();
+                this.barrierGlow?.destroy();
             }
         });
     }

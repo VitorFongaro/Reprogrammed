@@ -1,9 +1,0 @@
-Feixe de laser recortado de `lasers_spritesheet.png` do pack Sci-Fi Facility.
-
-CC0 license:
-- TL; DR: use this however you like!
-- Crediting to Murphy's Dad (https://murphysdad.itch.io/) is appreciated but not necessary
-- https://murphysdad.itch.io/sci-fi-facility
-
-Recorte: linhas 0-1 da folha original (feixe vertical), 2 quadros de 16x32
-lado a lado. Usado na barreira da SalaArquivosScene, com tint vermelho.
