@@ -198,3 +198,64 @@ export const updateUserSettings = async (userId, accessToken, changes = {}) => {
 
   return data;
 };
+
+// =========================================================
+// TENTATIVAS (perfil de aprendizado)
+//
+// Entrada do sistema adaptativo. Uma linha = uma abertura do console, com
+// quantas vezes o jogador errou dentro dela.
+//
+// NAO faz parte do save: e gravado quando acontece e nunca revertido por
+// carregar um save. Toda a escrita vive na funcao record_puzzle_attempt, que
+// grava a tentativa e atualiza o desempenho por topico na mesma transacao.
+// =========================================================
+
+const MAX_ERRORS = 999;
+const MAX_SECONDS = 3600;
+
+const normalizeCount = (value, max, field) => {
+  if (value === undefined || value === null) {
+    return 0;
+  }
+
+  const n = Number(value);
+
+  if (!Number.isFinite(n) || n < 0) {
+    throw invalid(`${field} deve ser um numero maior ou igual a zero.`);
+  }
+
+  return Math.min(Math.round(n), max);
+};
+
+export const recordAttempt = async (userId, accessToken, payload = {}) => {
+  const slug = payload.puzzle;
+
+  if (typeof slug !== 'string' || !slug.trim() || slug.length > MAX_SLUG_LENGTH) {
+    throw invalid('puzzle deve ser o slug do desafio.');
+  }
+
+  if (typeof payload.correct !== 'boolean') {
+    throw invalid('correct deve ser true ou false.');
+  }
+
+  const client = createUserSupabaseClient(accessToken);
+  const { data, error } = await client.rpc('record_puzzle_attempt', {
+    p_puzzle_slug: slug.trim(),
+    p_correct: payload.correct,
+    p_errors: normalizeCount(payload.errors, MAX_ERRORS, 'errors'),
+    p_seconds: normalizeCount(payload.seconds, MAX_SECONDS, 'seconds')
+  });
+
+  if (error) {
+    throw mapProgressError(error, 'Nao foi possivel registrar a tentativa.');
+  }
+
+  // A funcao devolve o desempenho acumulado no topico do puzzle.
+  const performance = Array.isArray(data) ? data[0] : data;
+
+  return {
+    attempts: performance?.attempts ?? 0,
+    correctAttempts: performance?.correct_attempts ?? 0,
+    accuracy: Number(performance?.accuracy ?? 0)
+  };
+};

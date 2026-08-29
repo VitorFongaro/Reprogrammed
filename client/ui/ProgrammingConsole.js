@@ -5,6 +5,8 @@ import Phaser from "phaser";
 // Tipos suportados: int, float (ponto decimal), string (entre aspas) e boolean
 // (true/false). O tipo esperado é inferido de `puzzle.expected`.
 
+import { recordAttempt } from "../state/telemetry.js";
+
 const WIDTH = 1280;
 const HEIGHT = 720;
 
@@ -93,6 +95,8 @@ export default class ProgrammingConsole {
         this.puzzle = puzzle;
         this.onSolved = options.onSolved;
         this.onClose = options.onClose;
+        // Slug do puzzle: sem ele a tentativa não é medida.
+        this.puzzleId = options.puzzleId ?? null;
 
         this.isOpen = false;
         this.solved = false;
@@ -108,6 +112,7 @@ export default class ProgrammingConsole {
 
         this.isOpen = true;
         this.input = "";
+        this.startAttempt();
         if (!this.solved) {
             this.output = { text: this.puzzle.hint ?? "", color: COLOR.dim };
         }
@@ -148,6 +153,7 @@ export default class ProgrammingConsole {
         this.container?.destroy();
         this.container = null;
 
+        this.finishAttempt(this.solved);
         this.onClose?.();
     }
 
@@ -185,6 +191,7 @@ export default class ProgrammingConsole {
         const match = raw.match(ASSIGN_REGEX);
 
         if (!match) {
+            this.countError();
             this.setOutput("erro de sintaxe  -  use: nome = valor", COLOR.error);
             return;
         }
@@ -193,11 +200,13 @@ export default class ProgrammingConsole {
         const parsed = parseValue(valueToken);
 
         if (parsed.error) {
+            this.countError();
             this.setOutput(parsed.error, COLOR.error);
             return;
         }
 
         if (name !== this.puzzle.variable) {
+            this.countError();
             this.setOutput(`variável desconhecida: ${name}`, COLOR.error);
             return;
         }
@@ -205,12 +214,14 @@ export default class ProgrammingConsole {
         const expectedType = this.puzzle.type ?? inferType(this.puzzle.expected);
 
         if (!this.typeMatches(expectedType, parsed.type)) {
+            this.countError();
             this.setOutput(`tipo errado: ${name} guarda ${TYPE_LABELS[expectedType]}`, COLOR.error);
             return;
         }
 
         if (!this.valueMatches(parsed.value)) {
             const message = this.puzzle.wrongValueMessage ?? "valor incorreto";
+            this.countError();
             this.setOutput(`${name} = ${valueToken}  //  ${message}`, COLOR.error);
             return;
         }
@@ -220,6 +231,26 @@ export default class ProgrammingConsole {
         this.setOutput(`${name} = ${valueToken}  //  ${success}`, COLOR.success);
         this.onSolved?.();
         this.scene.time.delayedCall(900, () => this.close());
+    }
+
+    // --- Telemetria: uma tentativa = uma abertura do console ---
+    startAttempt() {
+        this.attemptErrors = 0;
+        this.attemptStartedAt = Date.now();
+    }
+
+    countError() {
+        this.attemptErrors = (this.attemptErrors ?? 0) + 1;
+    }
+
+    finishAttempt(correct) {
+        if (!this.attemptStartedAt) {
+            return;
+        }
+
+        const seconds = Math.round((Date.now() - this.attemptStartedAt) / 1000);
+        this.attemptStartedAt = null;
+        recordAttempt(this.puzzleId, { correct, errors: this.attemptErrors ?? 0, seconds });
     }
 
     typeMatches(expected, actual) {

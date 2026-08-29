@@ -46,6 +46,9 @@ export default class PuzzleDevice {
 
         const ConsoleClass = config.blocks ? BlockProgrammingConsole : ProgrammingConsole;
         this.console = new ConsoleClass(scene, config.puzzle, {
+            // O mesmo slug que identifica o puzzle no save identifica a
+            // tentativa na telemetria.
+            puzzleId: this.id,
             onSolved: () => this.handleSolved(),
             onClose: () => scene.player.setEnabled(true)
         });

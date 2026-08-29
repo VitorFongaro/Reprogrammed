@@ -12,9 +12,8 @@
 // Grava em dois lugares: na API (fonte da verdade, por usuário) e no
 // localStorage (espelho, para o jogo continuar salvando se o backend cair).
 
-import { API_BASE_URL } from "../config.js";
+import { apiFetch } from "./api.js";
 
-const AUTH_STORAGE_KEY = "reprogrammed.auth";
 const SAVE_STORAGE_KEY = "reprogrammed.save";
 
 // Onde um jogo novo começa (a intro leva para cá).
@@ -73,76 +72,6 @@ function writeLocalSave(data) {
     }
 }
 
-// --- Sessão ---
-
-function getAuthData() {
-    try {
-        return JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY)) || null;
-    } catch (error) {
-        return null;
-    }
-}
-
-async function refreshSession() {
-    const refreshToken = getAuthData()?.refreshToken;
-
-    if (!refreshToken) {
-        throw new Error("Sessão expirada. Faça login novamente.");
-    }
-
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken })
-    });
-    const data = await response.json().catch(() => null);
-
-    if (!response.ok) {
-        throw new Error(data?.error || "Sessão expirada. Faça login novamente.");
-    }
-
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
-        accessToken: data.session?.access_token || null,
-        refreshToken: data.session?.refresh_token || null,
-        user: data.user || null
-    }));
-
-    return data.session.access_token;
-}
-
-async function requestProgress(method, payload, allowRefresh = true) {
-    const token = getAuthData()?.accessToken;
-
-    if (!token) {
-        throw new Error("Sessão não encontrada.");
-    }
-
-    const response = await fetch(`${API_BASE_URL}/game/progress`, {
-        method,
-        headers: {
-            ...(payload ? { "Content-Type": "application/json" } : {}),
-            Authorization: `Bearer ${token}`
-        },
-        ...(payload ? { body: JSON.stringify(payload) } : {})
-    });
-    const data = await response.json().catch(() => null);
-
-    if (response.status === 401 && allowRefresh) {
-        await refreshSession();
-        return requestProgress(method, payload, false);
-    }
-
-    if (!response.ok) {
-        if (response.status === 404) {
-            throw new Error("Reinicie o backend para carregar a rota de progresso.");
-        }
-
-        throw new Error(data?.error || "Não foi possível acessar o progresso.");
-    }
-
-    return data?.progress ?? null;
-}
-
 // --- API pública do save ---
 
 // Grava o estado atual. O espelho local é escrito primeiro, para o save
@@ -152,7 +81,7 @@ export async function save() {
     writeLocalSave({ ...data, savedAt: new Date().toISOString() });
 
     try {
-        await requestProgress("PUT", data);
+        await apiFetch("/game/progress", { method: "PUT", body: data });
         return { ok: true, remote: true };
     } catch (error) {
         return { ok: true, remote: false, error: error.message };
@@ -165,7 +94,7 @@ export async function load() {
     let data = null;
 
     try {
-        data = await requestProgress("GET");
+        data = (await apiFetch("/game/progress"))?.progress ?? null;
     } catch (error) {
         data = null;
     }

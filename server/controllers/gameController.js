@@ -1,6 +1,7 @@
 import {
   getGameState,
   getUserSettings,
+  recordAttempt,
   saveGameState,
   updateUserSettings
 } from '../services/progressService.js';
@@ -24,6 +25,17 @@ export const saveProgress = async (req, res, next) => {
   try {
     const progress = await saveGameState(req.user.id, req.accessToken, req.body);
     res.json({ progress });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Telemetria de aprendizado: gravada quando acontece e nunca revertida por
+// carregar um save (ver "Save" no AGENTS.md).
+export const postAttempt = async (req, res, next) => {
+  try {
+    const performance = await recordAttempt(req.user.id, req.accessToken, req.body);
+    res.status(201).json({ performance });
   } catch (error) {
     next(error);
   }

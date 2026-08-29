@@ -20,6 +20,8 @@ import blocksUrl from "../assets/sprites/blocks/blocks.png";
 // O briefing descreve só o OBJETIVO; a estrutura do código sai no botão [DICA]
 // (texto de `puzzle.hint`, na voz do Cosmo, sob demanda).
 
+import { recordAttempt } from "../state/telemetry.js";
+
 const WIDTH = 1280;
 const HEIGHT = 720;
 
@@ -110,6 +112,8 @@ export default class BlockProgrammingConsole {
         this.puzzle = puzzle;
         this.onSolved = options.onSolved;
         this.onClose = options.onClose;
+        // Slug do puzzle: sem ele a tentativa não é medida.
+        this.puzzleId = options.puzzleId ?? null;
         this.singleAttempt = options.singleAttempt ?? false;
         this.timeLimitMs = options.timeLimitMs ?? null;
 
@@ -177,6 +181,7 @@ export default class BlockProgrammingConsole {
     open() {
         if (this.isOpen) return;
         this.isOpen = true;
+        this.startAttempt();
         this.build();
 
         if (this.timeLimitMs) {
@@ -213,7 +218,28 @@ export default class BlockProgrammingConsole {
         this.container?.destroy();
         this.container = null;
 
+        this.finishAttempt(this.solved);
         this.onClose?.();
+    }
+
+    // --- Telemetria: uma tentativa = uma abertura do console ---
+    startAttempt() {
+        this.attemptErrors = 0;
+        this.attemptStartedAt = Date.now();
+    }
+
+    countError() {
+        this.attemptErrors = (this.attemptErrors ?? 0) + 1;
+    }
+
+    finishAttempt(correct) {
+        if (!this.attemptStartedAt) {
+            return;
+        }
+
+        const seconds = Math.round((Date.now() - this.attemptStartedAt) / 1000);
+        this.attemptStartedAt = null;
+        recordAttempt(this.puzzleId, { correct, errors: this.attemptErrors ?? 0, seconds });
     }
 
     // --- Renderização ---
@@ -766,6 +792,7 @@ export default class BlockProgrammingConsole {
                 this.stopFloat(piece);
                 piece.dragArea.disableInteractive();
             });
+            this.countError();
             this.setOutput("TEMPO ESGOTADO", COLOR.error);
             this.scene.time.delayedCall(1200, () => this.close());
         }
@@ -841,6 +868,7 @@ export default class BlockProgrammingConsole {
     }
 
     handleFailure(wrongSlots) {
+        this.countError();
         this.setOutput(
             this.puzzle.gauge ? this.gaugeFailMessage(wrongSlots) : this.diagnose(wrongSlots),
             COLOR.error
