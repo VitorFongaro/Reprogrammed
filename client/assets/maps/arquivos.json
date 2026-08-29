@@ -25,14 +25,14 @@
       "name": "props",
       "spacing": 0,
       "tilecount": 11,
-      "tilewidth": 110,
-      "tileheight": 122,
+      "tilewidth": 112,
+      "tileheight": 124,
       "tiles": [
         {
           "id": 0,
-          "image": "../images/arquivos/props/terminal.png",
-          "imagewidth": 110,
-          "imageheight": 122
+          "image": "../images/arquivos/props/server_mainframe.png",
+          "imagewidth": 112,
+          "imageheight": 124
         },
         {
           "id": 1,
@@ -301,14 +301,14 @@
         {
           "id": 16,
           "gid": 1,
-          "name": "terminal-central",
+          "name": "servidor-central",
           "rotation": 0,
           "type": "",
           "visible": true,
-          "x": 585,
-          "y": 380,
-          "width": 110,
-          "height": 122
+          "x": 584,
+          "y": 382,
+          "width": 112,
+          "height": 124
         }
       ]
     },
@@ -346,14 +346,14 @@
         },
         {
           "id": 102,
-          "name": "terminal",
+          "name": "servidor-central",
           "rotation": 0,
           "type": "",
           "visible": true,
-          "x": 585,
-          "y": 258,
-          "width": 110,
-          "height": 122
+          "x": 584,
+          "y": 320,
+          "width": 112,
+          "height": 62
         },
         {
           "id": 103,

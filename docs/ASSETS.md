@@ -37,12 +37,15 @@ Shelter, então serve para as salas seguintes sem quebrar a unidade visual.
 ### Sci-Fi Facility — Murphy's Dad ([itch.io](https://murphysdad.itch.io/sci-fi-facility))
 
 Origem do **computador do ponto de salvamento** (`computer_spritesheet.png`, os 2 quadros
-do LED piscando) e da **tela de monitor** usada pelo `SaveConsole`.
+do LED piscando), da **tela de monitor** usada pelo `SaveConsole` e do **feixe de laser** da
+barreira da sala de arquivos (`lasers_spritesheet.png` → `client/assets/sprites/laser/`,
+2 quadros de 16×32 empilhados na vertical, com tint vermelho em runtime).
 
 > CC0: use this however you like. Crediting is appreciated but not necessary.
 
 Único pack sem restrição — é o mais seguro quando houver dúvida. A licença está copiada em
-`client/assets/sprites/computador/CREDITOS.txt`, junto dos arquivos usados.
+`client/assets/sprites/computador/CREDITOS.txt` e `client/assets/sprites/laser/CREDITOS.txt`,
+junto dos arquivos usados.
 
 ### Parede/piso (versão DEMO) — Trevor Pupkin ([itch.io](https://trevor-pupkin.itch.io/))
 

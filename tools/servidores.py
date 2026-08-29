@@ -306,7 +306,54 @@ def industrial_fan():
     return s
 
 
+def server_mainframe():
+    """Servidor central da sala - 56x62 nativo (112x124 exibido).
+
+    Irmao maior dos racks: mesma linguagem (topo claro, porta perfurada,
+    contorno preto), porem largo e com um painel de leitura, para ler como
+    "o computador principal" e nao como mais um rack da fileira.
+    """
+    s = Sprite(56, 62)
+    s.rect(2, 1, 52, 6, L2)                  # face de cima
+    s.line_h(2, 1, 52, L3)
+    s.vents(10, 3, 16, 2, D1, step=2)
+    s.vents(30, 3, 16, 2, D1, step=2)
+    s.rect(2, 7, 52, 48, M)                  # corpo
+    s.line_v(2, 7, 48, L1)
+    s.line_v(53, 7, 48, D2)
+    s.line_v(27, 7, 48, D2)                  # emenda entre os dois modulos
+
+    # Modulo esquerdo: painel de leitura aceso.
+    s.rect(5, 11, 19, 13, D3)
+    s.line_h(5, 11, 19, D1)
+    s.line_h(7, 14, 12, CYAN)
+    s.line_h(7, 17, 15, D1)
+    s.line_h(7, 20, 9, D1)
+    # Fileira de bandejas embaixo do painel.
+    for y in range(28, 50, 4):
+        s.rect(5, y, 19, 3, D2)
+        s.line_h(5, y, 19, D1)
+    s.dot(22, 29, CYAN)
+    s.dot(22, 33, RED)
+
+    # Modulo direito: porta perfurada, igual a dos racks da parede.
+    s.mesh(31, 11, 19, 39, D3, D2)
+    s.line_h(31, 11, 19, D1)
+    s.line_h(31, 49, 19, D1)
+    s.line_v(30, 11, 39, D1)
+    s.line_v(50, 11, 39, D1)
+    s.dot(48, 14, CYAN)
+    s.dot(48, 17, RED)
+
+    s.rect(3, 55, 50, 4, D2)                 # base
+    s.rect(5, 59, 4, 2, D3)                  # pes
+    s.rect(47, 59, 4, 2, D3)
+    s.outline()
+    return s
+
+
 SPRITES = {
+    "server_mainframe": server_mainframe,
     "server_rack_closed": server_rack_closed,
     "server_rack_open": server_rack_open,
     "server_rack_toppled": server_rack_toppled,
