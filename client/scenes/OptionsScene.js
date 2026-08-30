@@ -15,6 +15,7 @@ const KEY_FRAME = {
     A: 2 * KEY_SHEET_COLS + 0,
     D: 2 * KEY_SHEET_COLS + 3,
     E: 2 * KEY_SHEET_COLS + 4,
+    F: 2 * KEY_SHEET_COLS + 5,
     P: 3 * KEY_SHEET_COLS + 7,
     R: 4 * KEY_SHEET_COLS + 1,
     S: 4 * KEY_SHEET_COLS + 2,
@@ -268,12 +269,17 @@ export default class OptionsScene extends Phaser.Scene {
         const actionBindings = [
             { texture: "key-letters", frame: KEY_FRAME.E, action: "INTERAGIR" },
             { texture: "key-letters", frame: KEY_FRAME.R, action: "REPROGRAMAR REMOTO" },
+            { texture: "key-letters", frame: KEY_FRAME.F, action: "GOLPEAR" },
             { texture: "key-extras", frame: EXTRA_FRAME.SHIFT, action: "CORRER", wide: true },
             { texture: "key-letters", frame: KEY_FRAME.P, action: "PULAR DIÁLOGO" }
         ];
 
-        const rowSpacing = 70;
-        const startY = -((movementBindings.length - 1) * rowSpacing) / 2 + 8;
+        // As linhas das duas colunas se alinham: o startY sai da coluna MAIS
+        // LONGA, então a mais curta só termina antes. Espaçamento de 62 para as
+        // 5 ações caberem nos 350px de altura do painel.
+        const rowSpacing = 62;
+        const linhas = Math.max(movementBindings.length, actionBindings.length);
+        const startY = -((linhas - 1) * rowSpacing) / 2 + 8;
 
         this.renderBindingColumn(movementBindings, -300, -256, startY, rowSpacing);
         this.renderBindingColumn(actionBindings, 70, 145, startY, rowSpacing);

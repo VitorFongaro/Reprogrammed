@@ -131,13 +131,12 @@ export default class SalaArquivosScene extends BaseRoomScene {
 
     // --- Robô desligado: revela o nome, derruba a barreira, abre a porta ---
     handleRobotDefeated() {
+        // Sem texto de status: ele é desenhado no topo da tela, bem em cima da
+        // porta. O retorno vem da barreira caindo, da fala do robô e da luz da
+        // porta virando verde.
         this.dropBarrier();
-        this.setStatus("> UNIDADE DE SEGURANÇA DESATIVADA", "#51e36b");
         this.time.delayedCall(600, () => {
-            this.playDialogue(this.revealScript(), () => {
-                this.setStatus('> nome = "Artemis"', "#51e36b");
-                this.unlockDoor();
-            });
+            this.playDialogue(this.revealScript(), () => this.unlockDoor());
         });
     }
 
