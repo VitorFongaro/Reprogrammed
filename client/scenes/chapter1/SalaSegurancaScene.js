@@ -115,7 +115,6 @@ export default class SalaSegurancaScene extends BaseRoomScene {
         this.defeated = true;
         this.boss.powerDown();
         this.cameras.main.shake(500, 0.005);
-        this.setStatus("> ENIAC DESLIGADO", "#51e36b");
 
         this.time.delayedCall(600, () => {
             this.playDialogue(VICTORY_SCRIPT, () => this.unlockDoor());

@@ -153,7 +153,6 @@ export default class SentinelaScene extends BaseRoomScene {
             s.play(s.disabledKey);
             this.tweens.add({ targets: s, alpha: 0.75, duration: 500 });
         });
-        this.setStatus("> SENTINELAS OFFLINE", "#51e36b");
 
         this.time.delayedCall(600, () => {
             this.playDialogue(VICTORY_SCRIPT, () => this.unlockDoor());

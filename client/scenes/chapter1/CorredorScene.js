@@ -47,7 +47,6 @@ export default class CorredorScene extends BaseRoomScene {
         if (this.player.sprite.x >= TRANSMISSION_X) {
             this.transmissionDone = true;
             this.playDialogue(TRANSMISSION_SCRIPT, () => {
-                this.setStatus("> bloqueio de sinal enfraquecido", "#51e36b");
                 this.unlockDoor();
             });
         }

@@ -122,18 +122,10 @@ export default class SalaControleScene extends BaseRoomScene {
         this.playDialogue(ENTRY_SCRIPT);
     }
 
-    // Painéis que já vieram resolvidos do save: atualiza o placar e, se os dois
-    // estavam prontos, abre a porta sem repetir a fala do Cosmo.
+    // Save carregado com os dois painéis prontos: abre a porta sem repetir a
+    // fala do Cosmo.
     restoreFromSave() {
-        const solvedCount = this.solvedCount();
-
-        if (solvedCount === 0) {
-            return;
-        }
-
-        this.setStatus(`> SISTEMAS REATIVADOS: ${solvedCount}/2`, solvedCount === 2 ? "#51e36b" : "#7a8099");
-
-        if (solvedCount === 2) {
+        if (this.solvedCount() === 2) {
             this.unlockDoor();
         }
     }
@@ -143,10 +135,7 @@ export default class SalaControleScene extends BaseRoomScene {
     }
 
     checkAllSolved() {
-        const solvedCount = this.solvedCount();
-        this.setStatus(`> SISTEMAS REATIVADOS: ${solvedCount}/2`, solvedCount === 2 ? "#51e36b" : "#7a8099");
-
-        if (solvedCount < 2) {
+        if (this.solvedCount() < 2) {
             return;
         }
 

@@ -94,7 +94,6 @@ export default class TreinamentoScene extends BaseRoomScene {
 
     handleCleared() {
         this.cleared = true;
-        this.setStatus("> AMEAÇAS NEUTRALIZADAS", "#51e36b");
         this.time.delayedCall(700, () => {
             this.playDialogue(CLEARED_SCRIPT, () => this.unlockDoor());
         });
@@ -185,10 +184,7 @@ export default class TreinamentoScene extends BaseRoomScene {
             y: 330,
             blocks: true,
             puzzle: LASER_PUZZLE,
-            onSolved: () => {
-                this.disableLasers();
-                this.setStatus("> BARREIRA DESATIVADA", "#51e36b");
-            }
+            onSolved: () => this.disableLasers()
         });
     }
 }
