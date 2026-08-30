@@ -57,7 +57,6 @@ export default class TreinamentoScene extends BaseRoomScene {
     constructor() {
         super("cap1-treinamento", {
             title: "TREINAMENTO // SEGURANÇA",
-            footer: "WASD mover   SHIFT correr   [R] reprogramar   [F] golpear",
             nextScene: "cap1-sentinela",
             spawn: { x: 140, y: 400 },
             ySort: true,

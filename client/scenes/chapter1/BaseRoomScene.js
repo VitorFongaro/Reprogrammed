@@ -44,7 +44,6 @@ export default class BaseRoomScene extends Phaser.Scene {
     constructor(key, config = {}) {
         super(key);
         this.roomTitle = config.title ?? "";
-        this.footerHint = config.footer ?? "";
         this.nextSceneKey = config.nextScene ?? null;
         this.spawn = config.spawn ?? { x: 180, y: HEIGHT / 2 };
         this.doorLabel = config.doorLabel ?? "[E] SEGUIR";
@@ -933,15 +932,6 @@ export default class BaseRoomScene extends Phaser.Scene {
             fontSize: "16px",
             color: "#5b6178"
         }).setOrigin(1, 0.5).setDepth(900).setVisible(false);
-
-        if (this.footerHint) {
-            this.add.text(WIDTH / 2, HEIGHT - 28, this.footerHint, {
-                fontFamily: "VCR",
-                fontSize: "20px",
-                color: "#d9d9d9",
-                align: "center"
-            }).setOrigin(0.5);
-        }
     }
 
     setStatus(text, color = "#7a8099") {

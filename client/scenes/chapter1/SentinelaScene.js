@@ -58,7 +58,6 @@ const VICTORY_SCRIPT = [
 export default class SentinelaScene extends BaseRoomScene {
     constructor() {
         super("cap1-sentinela", {
-            footer: "WASD mover   SHIFT correr   [E] interagir",
             nextScene: "cap1-seguranca",
             spawn: { x: 150, y: 470 },
             bounds: { x: 34, y: 140, w: 1212, h: 526 },

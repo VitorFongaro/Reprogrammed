@@ -17,8 +17,10 @@ const DROP_ZONE = {
     height: 258
 };
 
+// CONTINUAR e INICIAR são excludentes: com save, só continuar; sem save, só
+// iniciar. Manter os dois deixaria o INICIAR do lado do CONTINUAR como um botão
+// de apagar o progresso sem aviso nenhum.
 const MENU_ITEMS = [
-    // CONTINUAR só entra quando existe save (ver buildMenuItems).
     {
         id: "continue",
         label: "CONTINUAR",
@@ -32,7 +34,8 @@ const MENU_ITEMS = [
         label: "INICIAR",
         icon: "play",
         accent: 0xf7f7f7,
-        executeText: "CARREGANDO JOGO..."
+        executeText: "CARREGANDO JOGO...",
+        requiresNoSave: true
     },
     {
         id: "options",
@@ -124,7 +127,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     drawMenuCards() {
-        const items = MENU_ITEMS.filter((item) => !item.requiresSave || hasLocalSave());
+        const temSave = hasLocalSave();
+        const items = MENU_ITEMS.filter((item) => (
+            (!item.requiresSave || temSave) && (!item.requiresNoSave || !temSave)
+        ));
         const spacing = 228;
         // Centraliza a fileira: o número de cards muda com a existência de save.
         const startX = WIDTH / 2 - (spacing * (items.length - 1)) / 2;

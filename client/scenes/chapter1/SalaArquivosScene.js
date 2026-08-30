@@ -14,6 +14,15 @@ import arquivosMap from "../../assets/maps/arquivos.json";
 
 const BARRIER_X = 740;
 const BARRIER_W = 16;
+
+// O feixe vai da BASE DA PAREDE até o FIM DO PISO, não dos bounds do jogador —
+// os bounds param antes da borda do mapa e deixavam o emissor de baixo boiando.
+// Fundo de 1280x704 centralizado no canvas de 720: parede acaba em 128 e o piso
+// em 672, ambos +8 do offset do mapa.
+const BARRIER_TOP = 136;
+const BARRIER_BOTTOM = 680;
+const BARRIER_H = BARRIER_BOTTOM - BARRIER_TOP;
+const BARRIER_CY = BARRIER_TOP + BARRIER_H / 2;
 const ROBOT = { x: 1000, y: 470 };
 
 const ENTRY_SCRIPT = [
@@ -28,7 +37,6 @@ export default class SalaArquivosScene extends BaseRoomScene {
     constructor() {
         super("cap1-arquivos", {
             nextScene: "cap1-controle",
-            footer: "WASD mover   [R] reprogramação remota",
             spawn: { x: 150, y: 450 },
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
             door: { x: 656, y: 98 },
@@ -72,8 +80,6 @@ export default class SalaArquivosScene extends BaseRoomScene {
 
     // --- Barreira de laser (parede sólida + feixe) ---
     createBarrier() {
-        const { y, h } = this.bounds;
-        const cy = y + h / 2;
         this.barrierOn = true;
 
         // Emissores no topo e na base do feixe.
@@ -81,24 +87,25 @@ export default class SalaArquivosScene extends BaseRoomScene {
         this.drawEmitters(0xff4545);
 
         // Feixe: glow largo + núcleo fino, ambos pulsando.
-        this.barrierGlow = this.add.rectangle(BARRIER_X, cy, 16, h - 8, 0xff4545, 0.22).setDepth(700);
-        this.barrierCore = this.add.rectangle(BARRIER_X, cy, 4, h - 8, 0xff4545, 1).setDepth(700);
+        this.barrierGlow = this.add.rectangle(BARRIER_X, BARRIER_CY, 16, BARRIER_H, 0xff4545, 0.22).setDepth(700);
+        this.barrierCore = this.add.rectangle(BARRIER_X, BARRIER_CY, 4, BARRIER_H, 0xff4545, 1).setDepth(700);
         this.tweens.add({ targets: this.barrierCore, alpha: { from: 0.8, to: 1 }, duration: 480, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
         this.tweens.add({ targets: this.barrierGlow, alpha: { from: 0.14, to: 0.3 }, duration: 480, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
 
         // Parede sólida: a Artemis não atravessa (colisor só contra ela; as bolas
         // de energia do robô passam livres para poderem alcançá-la).
-        this.barrierZone = this.add.zone(BARRIER_X, cy, BARRIER_W, h);
+        this.barrierZone = this.add.zone(BARRIER_X, BARRIER_CY, BARRIER_W, BARRIER_H);
         this.physics.add.existing(this.barrierZone, true);
         this.barrierCollider = this.physics.add.collider(this.player.sprite, this.barrierZone);
     }
 
     drawEmitters(color) {
-        const { y, h } = this.bounds;
+        // Emissores encostados: o de cima na base da parede, o de baixo no fim
+        // do piso, cada um mordendo a ponta do feixe.
         this.barrierEmitters.clear();
         this.barrierEmitters.fillStyle(color, 1);
-        this.barrierEmitters.fillRect(BARRIER_X - 10, y - 2, 20, 12);
-        this.barrierEmitters.fillRect(BARRIER_X - 10, y + h - 10, 20, 12);
+        this.barrierEmitters.fillRect(BARRIER_X - 10, BARRIER_TOP - 8, 20, 14);
+        this.barrierEmitters.fillRect(BARRIER_X - 10, BARRIER_BOTTOM - 6, 20, 14);
     }
 
     dropBarrier() {
