@@ -1,4 +1,5 @@
 import {
+  clearGameState,
   getGameState,
   getUserSettings,
   recordAttempt,
@@ -25,6 +26,15 @@ export const saveProgress = async (req, res, next) => {
   try {
     const progress = await saveGameState(req.user.id, req.accessToken, req.body);
     res.json({ progress });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteProgress = async (req, res, next) => {
+  try {
+    await clearGameState(req.user.id, req.accessToken);
+    res.json({ progress: null });
   } catch (error) {
     next(error);
   }

@@ -45,6 +45,43 @@
                     <span id="content-frame-title">ARQUIVO / PROGRESSO</span>
                     <span class="console-cursor" aria-hidden="true"></span>
                 </div>
+
+                <div class="panel" id="panel-progress">
+                    <section class="panel-block">
+                        <h2 class="panel-title">ÚLTIMO REGISTRO</h2>
+                        <p class="panel-line" id="save-scene">carregando...</p>
+                        <p class="panel-line panel-dim" id="save-date"></p>
+                    </section>
+
+                    <section class="panel-block panel-danger">
+                        <h2 class="panel-title">ZONA DE RISCO</h2>
+                        <p class="panel-line panel-dim">
+                            Zerar o progresso apaga o seu save: você volta para o começo do jogo
+                            e perde os desafios já resolvidos. Seu histórico de desempenho é
+                            mantido. <strong>Não tem como desfazer.</strong>
+                        </p>
+
+                        <div id="reset-idle">
+                            <button class="panel-button panel-button-danger" id="reset-button" type="button">
+                                ZERAR PROGRESSO
+                            </button>
+                        </div>
+
+                        <div id="reset-confirm" hidden>
+                            <p class="panel-line panel-warn">
+                                &gt; Confirma apagar o save? Esta ação é definitiva.
+                            </p>
+                            <button class="panel-button panel-button-danger" id="reset-yes" type="button">
+                                SIM, APAGAR
+                            </button>
+                            <button class="panel-button" id="reset-no" type="button">
+                                CANCELAR
+                            </button>
+                        </div>
+
+                        <p class="panel-line" id="reset-result" hidden></p>
+                    </section>
+                </div>
             </div>
         </section>
     </main>

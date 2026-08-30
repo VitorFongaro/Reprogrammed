@@ -154,6 +154,28 @@ export const saveGameState = async (userId, accessToken, payload = {}) => {
   };
 };
 
+// Zera o SAVE — e só ele. O perfil de aprendizado (puzzle_attempts,
+// user_topic_performance) fica intacto de proposito: e registro de
+// aprendizagem, nao estado de jogo, e apagar destruiria os dados do TCC.
+export const clearGameState = async (userId, accessToken) => {
+  const client = createUserSupabaseClient(accessToken);
+  const { error } = await client
+    .from('user_game_state')
+    .update({
+      current_scene: null,
+      current_level_id: null,
+      current_chapter_id: null,
+      solved_puzzles: []
+    })
+    .eq('user_id', userId);
+
+  if (error) {
+    throw mapProgressError(error, 'Nao foi possivel zerar o progresso.');
+  }
+
+  return { cleared: true };
+};
+
 export const getUserSettings = async (userId, accessToken) => {
   const client = createUserSupabaseClient(accessToken);
   const { data, error } = await client

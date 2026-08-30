@@ -118,6 +118,21 @@ export function hasLocalSave() {
     return Boolean(readLocalSave());
 }
 
+// Zera o save: apaga no servidor e no espelho local, e devolve a sessão ao
+// começo. NÃO toca no perfil de aprendizado — tentativas e dificuldade
+// adaptativa são registro de aprendizagem, não estado de jogo.
+export async function reset() {
+    clearLocalSave();
+    startNewGame();
+
+    try {
+        await apiFetch("/game/progress", { method: "DELETE" });
+        return { ok: true, remote: true };
+    } catch (error) {
+        return { ok: true, remote: false, error: error.message };
+    }
+}
+
 export function clearLocalSave() {
     try {
         localStorage.removeItem(SAVE_STORAGE_KEY);
