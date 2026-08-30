@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import wordmark from "../assets/images/reprogrammed-wordmark.png";
-import { hasLocalSave, load as loadProgress, startNewGame } from "../state/progress";
+import { hasLocalSave, loadLocal, startNewGame, FIRST_SCENE } from "../state/progress";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -17,9 +17,8 @@ const DROP_ZONE = {
     height: 258
 };
 
-// CONTINUAR e INICIAR são excludentes: com save, só continuar; sem save, só
-// iniciar. Manter os dois deixaria o INICIAR do lado do CONTINUAR como um botão
-// de apagar o progresso sem aviso nenhum.
+// INICIAR e CONTINUAR são excludentes: sem save (o jogador nunca começou), só
+// INICIAR aparece; com save, só CONTINUAR.
 const MENU_ITEMS = [
     {
         id: "continue",
@@ -342,25 +341,20 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    // CONTINUAR: o save vem da API (com o espelho local como reserva) e o jogo
-    // retoma direto na sala gravada, sem passar pela intro.
+    // CONTINUAR: lê o save do espelho LOCAL (instantâneo) e retoma direto na sala
+    // gravada, sem passar pela intro. Não espera a API (que dorme no Render e
+    // travava o CONTINUAR aqui); o menu só mostra CONTINUAR quando há save local.
     loadSavedGame(card) {
-        loadProgress()
-            .then((progress) => {
-                if (!progress) {
-                    this.statusText.setText("NENHUM SAVE ENCONTRADO");
-                    this.returnCard(card, false);
-                    return;
-                }
-
-                this.statusText.setText("SAVE CARREGADO");
-                this.time.delayedCall(350, () => this.scene.start(progress.scene));
-            })
-            .catch((error) => {
-                this.statusText.setText("FALHA AO LER O SAVE");
-                console.error(error);
-                this.returnCard(card, false);
-            });
+        const progress = loadLocal();
+        if (!progress) {
+            this.statusText.setText("NENHUM SAVE ENCONTRADO");
+            this.returnCard(card, false);
+            return;
+        }
+        // Save antigo apontando para uma sala que não existe mais: cai no começo.
+        const target = this.scene.get(progress.scene) ? progress.scene : FIRST_SCENE;
+        this.statusText.setText("SAVE CARREGADO");
+        this.time.delayedCall(350, () => this.scene.start(target));
     }
 
     flashDropZone(color) {

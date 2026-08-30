@@ -118,6 +118,19 @@ export function hasLocalSave() {
     return Boolean(readLocalSave());
 }
 
+// CONTINUAR do menu: carrega SÍNCRONO do espelho local e aplica na sessão. O menu
+// só mostra CONTINUAR quando há save local (hasLocalSave), então este é o caminho
+// certo — e evita travar esperando a API do Render (que dorme). Devolve o snapshot
+// aplicado, ou null se não houver espelho local.
+export function loadLocal() {
+    const data = readLocalSave();
+    if (!data) {
+        return null;
+    }
+    applySnapshot(data);
+    return snapshot();
+}
+
 // Zera o save: apaga no servidor e no espelho local, e devolve a sessão ao
 // começo. NÃO toca no perfil de aprendizado — tentativas e dificuldade
 // adaptativa são registro de aprendizagem, não estado de jogo.
