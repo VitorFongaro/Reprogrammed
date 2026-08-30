@@ -750,8 +750,10 @@ export default class BaseRoomScene extends Phaser.Scene {
         }
         const { index, disabled } = data.enemyReprogram;
         if (disabled) {
+            // Sem texto de status: ele é desenhado no topo da sala, em cima da
+            // porta. O robô caindo já é o retorno, e a própria batalha de
+            // reprogramação avisa antes de fechar.
             this.enemies[index]?.disable();
-            this.setStatus("> ROBÔ DESATIVADO", "#51e36b");
         }
         this.player.setEnabled(true);
     }
