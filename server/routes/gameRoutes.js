@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   deleteProgress,
   gameStatus,
+  getPlayerPanel,
   getProgress,
   getSettings,
   postAttempt,
@@ -17,6 +18,7 @@ router.get('/progress', requireAuth, getProgress);
 router.put('/progress', requireAuth, saveProgress);
 router.delete('/progress', requireAuth, deleteProgress);
 router.post('/attempts', requireAuth, postAttempt);
+router.get('/performance', requireAuth, getPlayerPanel);
 router.get('/settings', requireAuth, getSettings);
 router.patch('/settings', requireAuth, updateSettings);
 

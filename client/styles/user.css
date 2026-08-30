@@ -441,3 +441,78 @@ main {
     opacity: 0.5;
     cursor: default;
 }
+
+/* Barra de progresso e listas do painel */
+.panel-bar {
+    height: 14px;
+    border: 2px solid rgba(122, 122, 122, 0.6);
+    background: #0b0b0b;
+    margin: 4px 0 16px;
+}
+
+.panel-bar-fill {
+    height: 100%;
+    width: 0;
+    background: #4ad6ff;
+    transition: width 0.4s ease;
+}
+
+.panel-bar-fill.is-full {
+    background: #51e36b;
+}
+
+.panel-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.panel-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(122, 122, 122, 0.22);
+    font-size: 0.92rem;
+    color: #d9d9d9;
+}
+
+.panel-list li:last-child {
+    border-bottom: none;
+}
+
+.panel-list .is-done {
+    color: #51e36b;
+}
+
+.panel-list .is-empty {
+    color: #5b6178;
+}
+
+.topic-row {
+    margin-bottom: 18px;
+}
+
+.topic-row:last-child {
+    margin-bottom: 0;
+}
+
+.topic-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 0.95rem;
+    color: #d9d9d9;
+    margin-bottom: 6px;
+}
+
+.topic-level {
+    color: #4ad6ff;
+    letter-spacing: 0.1em;
+}
+
+.topic-numbers {
+    font-size: 0.85rem;
+    color: #7a8099;
+    margin-top: 6px;
+}

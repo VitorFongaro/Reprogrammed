@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../config.js';
 import { load as loadProgress, reset as resetProgress } from '../state/progress.js';
+import { apiFetch } from '../state/api.js';
 
 const AUTH_STORAGE_KEY = 'reprogrammed.auth';
 
@@ -16,6 +17,25 @@ const resetResult = document.getElementById('reset-result');
 const resetButton = document.getElementById('reset-button');
 const resetYes = document.getElementById('reset-yes');
 const resetNo = document.getElementById('reset-no');
+const chapterSummary = document.getElementById('chapter-summary');
+const chapterBar = document.getElementById('chapter-bar');
+const chapterList = document.getElementById('chapter-list');
+const topicList = document.getElementById('topic-list');
+
+const TOPIC_NAMES = {
+    variables: 'Variáveis',
+    operators: 'Operadores',
+    conditionals: 'Condicionais',
+    loops: 'Repetições',
+    functions: 'Funções',
+    mixed: 'Misto'
+};
+
+const LEVEL_NAMES = {
+    easy: 'FÁCIL',
+    medium: 'MÉDIA',
+    hard: 'DIFÍCIL'
+};
 
 // Nome legível de cada cena, para o painel não mostrar a chave crua do Phaser.
 const SCENE_NAMES = {
@@ -71,6 +91,7 @@ const carregarProgresso = async () => {
     if (!isLoggedIn()) {
         saveScene.textContent = '> faça login para ver o seu progresso';
         resetIdle.hidden = true;
+        chapterSummary.textContent = '';
         return;
     }
 
@@ -79,6 +100,86 @@ const carregarProgresso = async () => {
     } catch (error) {
         saveScene.textContent = '> não foi possível ler o progresso';
         saveDate.textContent = error.message;
+    }
+};
+
+const renderChapter = (panel) => {
+    const { solved, total } = panel;
+    chapterSummary.textContent = total
+        ? `> ${solved} de ${total} desafios resolvidos`
+        : '> nenhum desafio cadastrado ainda';
+    const pct = total ? Math.round((solved / total) * 100) : 0;
+    chapterBar.style.width = `${pct}%`;
+    chapterBar.classList.toggle('is-full', total > 0 && solved === total);
+
+    chapterList.innerHTML = '';
+    panel.levels.forEach((fase) => {
+        const li = document.createElement('li');
+        const nome = document.createElement('span');
+        nome.textContent = fase.title;
+
+        const marca = document.createElement('span');
+        if (fase.total === 0) {
+            // Salas sem console de puzzle (arquivos, arena, boss) não têm o que contar.
+            marca.textContent = 'sem desafio';
+            marca.className = 'is-empty';
+        } else {
+            marca.textContent = `${fase.solved}/${fase.total}`;
+            marca.className = fase.solved === fase.total ? 'is-done' : '';
+        }
+
+        li.append(nome, marca);
+        chapterList.appendChild(li);
+    });
+};
+
+const renderTopics = (topics) => {
+    topicList.innerHTML = '';
+
+    if (!topics.length) {
+        const vazio = document.createElement('p');
+        vazio.className = 'panel-line panel-dim';
+        vazio.textContent = '> ainda sem tentativas registradas — jogue um desafio para começar';
+        topicList.appendChild(vazio);
+        return;
+    }
+
+    topics.forEach((t) => {
+        const linha = document.createElement('div');
+        linha.className = 'topic-row';
+
+        const head = document.createElement('div');
+        head.className = 'topic-head';
+        const nome = document.createElement('span');
+        nome.textContent = `${TOPIC_NAMES[t.topic] || t.topic} — ${t.accuracy.toFixed(0)}% de acerto`;
+        const nivel = document.createElement('span');
+        nivel.className = 'topic-level';
+        nivel.textContent = `DIFICULDADE ${LEVEL_NAMES[t.level] || t.level}`;
+        head.append(nome, nivel);
+
+        const barra = document.createElement('div');
+        barra.className = 'panel-bar';
+        const fill = document.createElement('div');
+        fill.className = 'panel-bar-fill';
+        fill.style.width = `${Math.min(100, Math.max(0, t.accuracy))}%`;
+        barra.appendChild(fill);
+
+        const numeros = document.createElement('p');
+        numeros.className = 'topic-numbers';
+        numeros.textContent = `${t.attempts} tentativa(s) · ${t.correct} acerto(s) · ${t.wrong} erro(s)`;
+
+        linha.append(head, barra, numeros);
+        topicList.appendChild(linha);
+    });
+};
+
+const carregarPainel = async () => {
+    try {
+        const { panel } = await apiFetch('/game/performance');
+        renderChapter(panel);
+        renderTopics(panel.topics);
+    } catch (error) {
+        chapterSummary.textContent = `> não foi possível carregar o painel (${error.message})`;
     }
 };
 
@@ -106,6 +207,7 @@ const zerarProgresso = async () => {
     resetYes.disabled = false;
     resetNo.disabled = false;
     await carregarProgresso();
+    await carregarPainel();
 };
 
 const isLoggedIn = () => Boolean(getAuthData()?.accessToken);
@@ -156,3 +258,7 @@ resetYes.addEventListener('click', zerarProgresso);
 
 setActivePanel('progress');
 carregarProgresso();
+
+if (isLoggedIn()) {
+    carregarPainel();
+}

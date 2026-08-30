@@ -176,6 +176,68 @@ export const clearGameState = async (userId, accessToken) => {
   return { cleared: true };
 };
 
+// =========================================================
+// PAINEL DO JOGADOR
+//
+// Junta as duas metades numa chamada só: o progresso do capítulo (do SAVE,
+// reversível) e o desempenho por tópico (do PERFIL DE APRENDIZADO, monotônico).
+// Vêm juntos na resposta mas são coisas diferentes — zerar o progresso mexe só
+// na primeira.
+// =========================================================
+
+export const getPerformance = async (userId, accessToken) => {
+  const client = createUserSupabaseClient(accessToken);
+
+  const [levels, puzzles, state, topics] = await Promise.all([
+    client.from('levels').select('id, slug, title, order_index').order('order_index'),
+    client.from('puzzles').select('id, slug, title, level_id, order_index').order('order_index'),
+    client.from('user_game_state').select('solved_puzzles').eq('user_id', userId).maybeSingle(),
+    client
+      .from('user_topic_performance')
+      .select('topic, attempts, correct_attempts, wrong_attempts, accuracy, estimated_skill_level')
+      .eq('user_id', userId)
+  ]);
+
+  const falha = [levels, puzzles, state, topics].find((r) => r.error);
+
+  if (falha) {
+    throw mapProgressError(falha.error, 'Nao foi possivel carregar o painel.');
+  }
+
+  const resolvidos = new Set(state.data?.solved_puzzles ?? []);
+
+  const fases = (levels.data ?? []).map((level) => {
+    const doNivel = (puzzles.data ?? []).filter((p) => p.level_id === level.id);
+
+    return {
+      slug: level.slug,
+      title: level.title,
+      order: level.order_index,
+      total: doNivel.length,
+      solved: doNivel.filter((p) => resolvidos.has(p.slug)).length,
+      puzzles: doNivel.map((p) => ({
+        slug: p.slug,
+        title: p.title,
+        solved: resolvidos.has(p.slug)
+      }))
+    };
+  });
+
+  return {
+    levels: fases,
+    total: fases.reduce((n, f) => n + f.total, 0),
+    solved: fases.reduce((n, f) => n + f.solved, 0),
+    topics: (topics.data ?? []).map((t) => ({
+      topic: t.topic,
+      attempts: t.attempts,
+      correct: t.correct_attempts,
+      wrong: t.wrong_attempts,
+      accuracy: Number(t.accuracy ?? 0),
+      level: t.estimated_skill_level
+    }))
+  };
+};
+
 export const getUserSettings = async (userId, accessToken) => {
   const client = createUserSupabaseClient(accessToken);
   const { data, error } = await client

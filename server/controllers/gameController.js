@@ -1,6 +1,7 @@
 import {
   clearGameState,
   getGameState,
+  getPerformance,
   getUserSettings,
   recordAttempt,
   saveGameState,
@@ -46,6 +47,15 @@ export const postAttempt = async (req, res, next) => {
   try {
     const performance = await recordAttempt(req.user.id, req.accessToken, req.body);
     res.status(201).json({ performance });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPlayerPanel = async (req, res, next) => {
+  try {
+    const panel = await getPerformance(req.user.id, req.accessToken);
+    res.json({ panel });
   } catch (error) {
     next(error);
   }
