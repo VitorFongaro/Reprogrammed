@@ -60,7 +60,7 @@ export default class TreinamentoScene extends BaseRoomScene {
             nextScene: "cap1-sentinela",
             spawn: { x: 140, y: 400 },
             ySort: true,
-            hp: 20
+            combat: true
         });
     }
 

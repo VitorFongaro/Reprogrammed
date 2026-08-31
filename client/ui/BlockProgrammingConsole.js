@@ -112,6 +112,10 @@ export default class BlockProgrammingConsole {
         this.puzzle = puzzle;
         this.onSolved = options.onSolved;
         this.onClose = options.onClose;
+        // Sair pelo [ESC] ANTES de completar uma tentativa é um CANCELAMENTO: se o
+        // chamador passar onCancel, ele é chamado em vez de onClose e a saída não
+        // conta como tentativa (no combate: volta ao menu sem perder o turno).
+        this.onCancel = options.onCancel;
         // Slug do puzzle: sem ele a tentativa não é medida.
         this.puzzleId = options.puzzleId ?? null;
         this.singleAttempt = options.singleAttempt ?? false;
@@ -119,6 +123,7 @@ export default class BlockProgrammingConsole {
 
         this.isOpen = false;
         this.solved = false;
+        this.attempted = false;   // virou true quando o tabuleiro cheio foi avaliado
 
         this.buildModel();
     }
@@ -198,13 +203,13 @@ export default class BlockProgrammingConsole {
         this.scene.time.delayedCall(0, () => {
             if (!this.isOpen) return;
             this.escHandler = (event) => {
-                if (event.key === "Escape") this.close();
+                if (event.key === "Escape") this.close(true);
             };
             this.scene.input.keyboard.on("keydown", this.escHandler);
         });
     }
 
-    close() {
+    close(viaEsc = false) {
         if (!this.isOpen) return;
         this.isOpen = false;
 
@@ -217,6 +222,14 @@ export default class BlockProgrammingConsole {
         this.pieces.forEach((piece) => this.stopFloat(piece));
         this.container?.destroy();
         this.container = null;
+
+        // Cancelou: saiu pelo [ESC] sem resolver e sem chegar a submeter uma
+        // tentativa, e o chamador quer tratar isso (ex.: combate — voltar ao menu
+        // sem perder o turno). Não conta como tentativa no perfil de aprendizagem.
+        if (viaEsc && !this.solved && !this.attempted && this.onCancel) {
+            this.onCancel();
+            return;
+        }
 
         this.finishAttempt(this.solved);
         this.onClose?.();
@@ -792,6 +805,7 @@ export default class BlockProgrammingConsole {
                 this.stopFloat(piece);
                 piece.dragArea.disableInteractive();
             });
+            this.attempted = true;   // estourou o tempo: conta como tentativa
             this.countError();
             this.setOutput("TEMPO ESGOTADO", COLOR.error);
             this.scene.time.delayedCall(1200, () => this.close());
@@ -800,6 +814,7 @@ export default class BlockProgrammingConsole {
 
     checkSolution() {
         if (this.slots.some((slot) => !slot.piece)) return;
+        this.attempted = true;   // tabuleiro cheio avaliado: já não é mais cancelamento
 
         const wrongSlots = this.slots.filter((slot) => slot.piece.label !== slot.expected);
 

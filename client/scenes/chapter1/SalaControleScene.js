@@ -79,7 +79,7 @@ export default class SalaControleScene extends BaseRoomScene {
             ySort: true,
             bg: controleBg,
             map: controleMap,
-            hp: 20
+            combat: true
         });
     }
 

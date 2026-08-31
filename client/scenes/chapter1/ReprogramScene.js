@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import Enemy from "../../characters/Enemy";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import DodgeBox from "../../ui/DodgeBox";
+import { getHp, getMaxHp, damage as damageVitals, fullHeal } from "../../state/vitals";
 
 // Batalha de REPROGRAMAÇÃO de um inimigo (aberta pelo modo [R] da sala via
 // scene.launch + pause). Ao invadir: telinha "HACKING EFETUADO"; então o robô
@@ -14,8 +15,6 @@ import DodgeBox from "../../ui/DodgeBox";
 const WIDTH = 1280;
 const HEIGHT = 720;
 
-const REPROG_HP = 20;
-const REPROG_HP_PER_STAGE = 10;   // HP extra do jogador por estágio além do 1º.
 const DODGE_HIT_DAMAGE = 3;
 const PUZZLE_TIME = 14000;
 const PORTRAIT_SCALE = 6;
@@ -43,12 +42,14 @@ export default class ReprogramScene extends Phaser.Scene {
 
     create() {
         Enemy.createAnimations(this);
-        // O robô resiste a N estágios (cada um = uma esquiva + um puzzle). O HP do
-        // jogador cresce com os estágios para a luta longa não virar desgaste.
+        // O robô resiste a N estágios (cada um = uma esquiva + um puzzle).
         this.enemyStages = this.config.stages ?? 1;
         this.enemyStage = 0;
-        this.maxReprogHp = REPROG_HP + (this.enemyStages - 1) * REPROG_HP_PER_STAGE;
-        this.hp = this.maxReprogHp;
+        // HP GLOBAL da Artemis (state/vitals): a MESMA vida das salas e da batalha.
+        // Entra com o HP atual e sem escala por estágio — quanto mais ferida chega,
+        // mais arriscado é reprogramar.
+        this.maxHp = getMaxHp();
+        this.hp = getHp();
         this.solvedThisRun = false;
         this.finished = false;
 
@@ -125,14 +126,14 @@ export default class ReprogramScene extends Phaser.Scene {
 
     updateHpBar() {
         const bar = { x: 70, y: 650, w: 200, h: 10 };
-        const ratio = this.hp / this.maxReprogHp;
+        const ratio = this.hp / this.maxHp;
         const color = ratio > 0.5 ? 0x51e36b : ratio > 0.25 ? 0xffb347 : 0xff4545;
         this.hpGraphics.clear();
         this.hpGraphics.lineStyle(1, 0x4ad6ff, 0.6);
         this.hpGraphics.strokeRect(bar.x, bar.y, bar.w, bar.h);
         this.hpGraphics.fillStyle(color, 0.9);
         this.hpGraphics.fillRect(bar.x + 1, bar.y + 1, (bar.w - 2) * ratio, bar.h - 2);
-        this.hpText.setText(`${this.hp}/${this.maxReprogHp}`);
+        this.hpText.setText(`${this.hp}/${this.maxHp}`);
     }
 
     // Integridade do NÚCLEO do robô: um segmento por estágio (só aparece quando
@@ -204,7 +205,7 @@ export default class ReprogramScene extends Phaser.Scene {
     }
 
     onDodgeHit() {
-        this.hp = Math.max(0, this.hp - DODGE_HIT_DAMAGE);
+        this.hp = damageVitals(DODGE_HIT_DAMAGE);
         this.updateHpBar();
         this.cameras.main.shake(120, 0.004);
         if (this.hp <= 0) {
@@ -278,6 +279,10 @@ export default class ReprogramScene extends Phaser.Scene {
 
     fail() {
         this.finished = true;
+        // HP zerado é uma "derrota": restaura a vitalidade (reset de checkpoint,
+        // como a morte na sala e o restart do embate), então a Artemis recua e
+        // volta à sala inteira em vez de chegar lá com 0 de HP.
+        fullHeal();
         this.setStatus("REPROGRAMAÇÃO FALHOU — RECUANDO", "#ff4545");
         this.cameras.main.flash(300, 255, 40, 40);
         this.time.delayedCall(1100, () => this.finish(false));

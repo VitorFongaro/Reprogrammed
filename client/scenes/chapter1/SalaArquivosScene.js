@@ -41,7 +41,7 @@ export default class SalaArquivosScene extends BaseRoomScene {
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
             door: { x: 656, y: 98 },
             ySort: true,
-            hp: 18,
+            combat: true,
             bg: arquivosBg,
             map: arquivosMap
         });

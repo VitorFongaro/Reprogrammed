@@ -4,6 +4,7 @@ import CosmoCompanion from "../../characters/CosmoCompanion";
 import DialogueBox from "../../ui/DialogueBox";
 import { tiledColliders, placeTiledObjects, preloadProps } from "../../utils/tiledMap";
 import { enterScene } from "../../state/progress";
+import { getHp, getMaxHp, damage as damageVitals, heal as healVitals, fullHeal, enterChapterScene } from "../../state/vitals";
 
 // Cena-base das salas do capítulo 1: desenha a sala (mapa em imagem ou grade),
 // cria jogador/Cosmo/diálogo, gerencia interagíveis ([E] no mais próximo), a
@@ -59,9 +60,10 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.bgKey = config.bgKey ?? `bg-${key}`;
         this.mapData = config.map ?? null;
         this.mapOffset = config.mapOffset ?? DEFAULT_MAP_OFFSET;
-        // HP da sala (0 = sala sem combate). Ligado nas salas com inimigos; o
-        // dano vem de contato/tiro e zerar reinicia o jogador no spawn.
-        this.maxHp = config.hp ?? 0;
+        // Sala com combate? Liga o dano por contato/tiro dos inimigos. O HP em si
+        // é GLOBAL (state/vitals) — a MESMA vida dentro e fora de batalha; aqui só
+        // decidimos se esta sala causa dano. (Aceita o antigo `hp` como fallback.)
+        this.combatEnabled = config.combat ?? (config.hp ?? 0) > 0;
     }
 
     preload() {
@@ -78,6 +80,9 @@ export default class BaseRoomScene extends Phaser.Scene {
         // O save grava a sala onde o jogador está; registrar aqui vale para
         // todas as salas de uma vez.
         enterScene(this.scene.key);
+        // Troca de capítulo cura por completo (única cura automática); passar de
+        // sala dentro do mesmo capítulo NÃO cura.
+        enterChapterScene(this.scene.key);
 
         this.interactables = [];
         this.reprogrammables = [];
@@ -88,7 +93,8 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.afterimageAccumulator = 0;
         this.doorUnlocked = false;
         this.transitioning = false;
-        this.hp = this.maxHp;
+        this.maxHp = getMaxHp();
+        this.hp = getHp();
         this.playerInvulnUntil = 0;
 
         this.drawRoom();
@@ -98,9 +104,19 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.cosmo = new CosmoCompanion(this, this.player);
         this.dialogue = new DialogueBox(this);
 
-        if (this.maxHp > 0) {
+        if (this.combatEnabled) {
             this.setupCombat();
         }
+        // HP é global: mostra a barra nas salas de combate e também quando a
+        // Artemis chega ferida a uma sala tranquila (para saber que precisa curar).
+        if (this.combatEnabled || this.hp < this.maxHp) {
+            this.drawHpBar();
+        }
+        // Ao voltar de uma sub-cena (batalha, reprograma, inventário), o vitals
+        // pode ter mudado: ressincroniza a barra. `on` (não `once`) para sobreviver
+        // ao resume do menu de pausa (que consome listeners de uso único).
+        this.events.on("resume", this.resyncHp, this);
+        this.events.once("shutdown", () => this.events.off("resume", this.resyncHp, this));
 
         if (this.mapData) {
             this.addObjectsFromTiled(this.mapData, "objetos", this.mapOffset);
@@ -311,6 +327,11 @@ export default class BaseRoomScene extends Phaser.Scene {
 
         if (event.code === "KeyF") {
             this.tryMelee();
+            return;
+        }
+
+        if (event.code === "KeyI") {
+            this.openInventory();
             return;
         }
 
@@ -554,8 +575,6 @@ export default class BaseRoomScene extends Phaser.Scene {
             alpha: { start: 0.6, end: 0 }, tint: 0xc98cff, blendMode: Phaser.BlendModes.ADD, emitting: false
         }).setDepth(755);
 
-        this.drawHpBar();
-
         // Retorno da batalha de reprogramação (scene.resume com dados). Usa `on`
         // (não `once`): o menu de pausa também dá resume e consumiria o listener.
         this.onSceneResume = (_sys, data) => this.handleSceneResume(data);
@@ -634,12 +653,12 @@ export default class BaseRoomScene extends Phaser.Scene {
     }
 
     damagePlayer(amount) {
-        if (this.maxHp <= 0 || !this.player.enabled || this.time.now < this.playerInvulnUntil) {
+        if (!this.combatEnabled || !this.player.enabled || this.time.now < this.playerInvulnUntil) {
             return;
         }
         this.playerInvulnUntil = this.time.now + PLAYER_IFRAME_MS;
 
-        this.hp = Math.max(0, this.hp - amount);
+        this.hp = damageVitals(amount);
         this.updateHpBar();
         this.cameras.main.shake(150, 0.004);
         this.tweens.add({
@@ -653,14 +672,15 @@ export default class BaseRoomScene extends Phaser.Scene {
         }
     }
 
-    // HP zerado: reinicia a Artemis no spawn (sem reiniciar a sala inteira).
+    // HP zerado: reinicia a Artemis no spawn (sem reiniciar a sala inteira). A
+    // "derrota" restaura o HP — é o reset do checkpoint, não uma cura de jogo.
     onPlayerDowned() {
         this.player.setEnabled(false);
         this.cameras.main.flash(400, 255, 40, 40);
         this.setStatus("> SISTEMAS CRÍTICOS — REINICIANDO", "#ff4545");
         this.time.delayedCall(900, () => {
             this.player.sprite.setPosition(this.spawn.x, this.spawn.y);
-            this.hp = this.maxHp;
+            this.hp = fullHeal();
             this.updateHpBar();
             this.playerInvulnUntil = this.time.now + PLAYER_IFRAME_MS;
             this.player.setEnabled(true);
@@ -677,6 +697,21 @@ export default class BaseRoomScene extends Phaser.Scene {
         }).setOrigin(0, 0.5).setDepth(900);
         this.hpBarGraphics = this.add.graphics().setDepth(900);
         this.updateHpBar();
+    }
+
+    // Volta de uma sub-cena que mexeu no HP global (batalha/reprograma/inventário):
+    // alinha o this.hp e a barra com o vitals, desenhando a barra se a Artemis
+    // voltou ferida a uma sala que estava sem ela.
+    resyncHp() {
+        if (this.hp === getHp()) {
+            return;
+        }
+        this.hp = getHp();
+        if (!this.hpBarGraphics && this.hp < this.maxHp) {
+            this.drawHpBar();
+        } else {
+            this.updateHpBar();
+        }
     }
 
     updateHpBar() {
@@ -775,6 +810,43 @@ export default class BaseRoomScene extends Phaser.Scene {
         // launch vem sem dados (mesmo cuidado do launch da BattleScene).
         this.scene.launch("pause-menu", { roomScene: this.scene.key });
         this.scene.pause();
+    }
+
+    // --- Inventário ([I]) ---
+    // Abre por cima da sala (que fica pausada). Só enquanto a Artemis anda — nunca
+    // em diálogo/console/transição (mesma regra da pausa).
+    openInventory() {
+        if (!this.canPause()) {
+            return;
+        }
+        this.scene.launch("inventory", {
+            config: {
+                returnScene: this.scene.key,
+                status: [{ label: "HP", value: this.hp, max: this.maxHp, color: 0x51e36b }],
+                useItem: (item) => this.useInventoryItem(item)
+            }
+        });
+        this.scene.pause();
+    }
+
+    // Aplica o efeito do item na Artemis. Curar mexe no HP GLOBAL (state/vitals),
+    // então funciona em QUALQUER sala — de combate ou não.
+    useInventoryItem(item) {
+        if (item.category === "cura") {
+            if (this.hp >= this.maxHp) {
+                return { ok: false, message: "HP já está cheio" };
+            }
+            this.hp = healVitals(item.heal ?? 0);
+            // A sala pode não ter barra (chegou cheia a uma sala tranquila): então
+            // desenha uma agora, para a cura ter retorno visual.
+            if (!this.hpBarGraphics) {
+                this.drawHpBar();
+            } else {
+                this.updateHpBar();
+            }
+            return { ok: true, message: `+${item.heal} HP` };
+        }
+        return { ok: false, message: "não dá para usar isto aqui" };
     }
 
     // --- Diálogo (desabilita o jogador enquanto fala) ---

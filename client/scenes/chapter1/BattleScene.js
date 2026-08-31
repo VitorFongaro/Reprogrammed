@@ -3,6 +3,7 @@ import EniacBoss from "../../characters/EniacBoss";
 import BattleMenu from "../../ui/BattleMenu";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import projetilUrl from "../../assets/sprites/projetil/projetil.png";
+import { MAX_HP, getHp, setHp, fullHeal } from "../../state/vitals";
 
 // Tela de COMBATE POR TURNOS contra o ENIAC (estilo Undertale), aberta pela
 // SalaSegurancaScene via scene.launch + pause. Layout: boss no topo (com barra
@@ -15,6 +16,10 @@ import projetilUrl from "../../assets/sprites/projetil/projetil.png";
 // com WASD) e uma sequência lógica de DEFESA com tempo limite no console.
 // Vitória: scene.resume("cap1-seguranca", { victory: true }). Derrota: o embate
 // reinicia do zero (HP, boss e variáveis).
+//
+// HP: a Artemis tem UMA vida só (state/vitals) — entra na batalha com o HP que
+// trouxe das salas e sai com o que sobrou. A derrota restaura o HP para o
+// recomeço do embate (reset de checkpoint, não cura de jogo).
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -27,7 +32,7 @@ const HUD_DEPTH = 40;
 
 // --- Calibragem do combate ---
 const BOSS_MAX_HP = 60;
-const PLAYER_MAX_HP = 20;
+const PLAYER_MAX_HP = MAX_HP;       // HP global da Artemis (state/vitals).
 const BASE_DAMAGE = 5;              // ataque padrão, sem a variável forca.
 const FORCA_INICIAL = 10;           // criada no primeiro REPROGRAMAR.
 const PROJECTILE_DAMAGE = 3;
@@ -174,11 +179,12 @@ export default class BattleScene extends Phaser.Scene {
 
     create() {
         this.bossHp = this.config.maxHp;
-        this.hp = PLAYER_MAX_HP;
+        this.hp = getHp();              // entra com o HP que trouxe das salas.
         this.forca = null;
         this.bossAttackIndex = 0;
         this.dodgeActive = false;
         this.invulnUntil = 0;
+        this.itemUsedThisTurn = false;
         this.dodgeIndex = 0;
         this.dodgePatterns = this.config.dodgePatterns ?? [this.config.dodgePattern];
         this.bounceBalls = [];
@@ -206,6 +212,7 @@ export default class BattleScene extends Phaser.Scene {
             actions: [
                 { id: "atacar", label: "ATACAR" },
                 { id: "reprogramar", label: "REPROGRAMAR" },
+                { id: "itens", label: "ITENS" },
                 { id: "analisar", label: "ANALISAR" }
             ],
             onSelect: (id) => this.handleAction(id)
@@ -217,6 +224,11 @@ export default class BattleScene extends Phaser.Scene {
             down: Phaser.Input.Keyboard.KeyCodes.S,
             right: Phaser.Input.Keyboard.KeyCodes.D
         });
+
+        // Retorno do inventário (ação ITENS): usar item consome o turno.
+        this.onInventoryResume = () => this.handleInventoryResume();
+        this.events.on("resume", this.onInventoryResume);
+        this.events.once("shutdown", () => this.events.off("resume", this.onInventoryResume));
 
         this.cameras.main.fadeIn(400, 0, 0, 0);
         this.setBattleStatus(`${this.config.name} :: COMBATE INICIADO`, "#7a8099");
@@ -495,8 +507,57 @@ export default class BattleScene extends Phaser.Scene {
             this.attack();
         } else if (id === "reprogramar") {
             this.reprogram();
+        } else if (id === "itens") {
+            this.openItems();
         } else {
             this.analyze();
+        }
+    }
+
+    // --- Itens (inventário na batalha) ---
+    openItems() {
+        this.itemUsedThisTurn = false;
+        this.scene.launch("inventory", {
+            config: {
+                returnScene: this.scene.key,
+                battle: true,
+                status: [
+                    { label: "HP", value: this.hp, max: PLAYER_MAX_HP, color: 0x51e36b },
+                    { label: "FORÇA", value: this.forca ?? 0, text: this.forca === null ? "--" : String(this.forca) }
+                ],
+                useItem: (item) => this.useBattleItem(item)
+            }
+        });
+        this.scene.pause();
+    }
+
+    useBattleItem(item) {
+        if (item.category === "cura") {
+            if (this.hp >= PLAYER_MAX_HP) {
+                return { ok: false, message: "HP já está cheio" };
+            }
+            this.hp = setHp(this.hp + (item.heal ?? 0));
+            this.updateHpBar();
+            this.itemUsedThisTurn = true;
+            return { ok: true, message: `+${item.heal} HP` };
+        }
+        if (item.category === "reprogramacao") {
+            // Efeito real depende do design dos itens; por ora, consome o turno.
+            this.itemUsedThisTurn = true;
+            return { ok: true, message: "módulo ativado" };
+        }
+        return { ok: false, message: "não dá para usar isto em batalha" };
+    }
+
+    // Inventário fechou: usar item passa o turno para o boss; só olhar volta ao menu.
+    handleInventoryResume() {
+        this.input.keyboard.resetKeys?.();
+        if (this.itemUsedThisTurn) {
+            this.itemUsedThisTurn = false;
+            this.setBattleStatus("> ITEM USADO", "#51e36b");
+            this.time.delayedCall(700, () => this.bossTurn());
+        } else {
+            this.playerTurn();
         }
     }
 
@@ -530,6 +591,11 @@ export default class BattleScene extends Phaser.Scene {
             singleAttempt: true,
             onSolved: () => {
                 solvedThisRun = true;
+            },
+            // Mudou de ideia antes de montar a instrução: [ESC] volta ao menu de
+            // ações SEM perder o turno (só cancela quem não chegou a tentar).
+            onCancel: () => {
+                this.playerTurn();
             },
             onClose: () => {
                 if (solvedThisRun) {
@@ -879,7 +945,7 @@ export default class BattleScene extends Phaser.Scene {
 
     // Aplica dano à Artemis; retorna true se ela foi derrotada.
     damagePlayer(amount) {
-        this.hp = Math.max(0, this.hp - amount);
+        this.hp = setHp(this.hp - amount);
         this.updateHpBar();
         this.cameras.main.shake(150, 0.004);
 
@@ -899,7 +965,7 @@ export default class BattleScene extends Phaser.Scene {
         this.setBattleStatus("> UNIDADE NEUTRALIZADA — REINICIANDO SISTEMAS...", "#ff4545");
 
         this.time.delayedCall(2200, () => {
-            this.hp = PLAYER_MAX_HP;
+            this.hp = fullHeal();
             this.bossHp = this.config.maxHp;
             this.forca = null;
             this.bossAttackIndex = 0;
