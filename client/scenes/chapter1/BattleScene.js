@@ -35,6 +35,9 @@ const BOSS_MAX_HP = 60;
 const PLAYER_MAX_HP = MAX_HP;       // HP global da Artemis (state/vitals).
 const BASE_DAMAGE = 5;              // ataque padrão, sem a variável forca.
 const FORCA_INICIAL = 10;           // criada no primeiro REPROGRAMAR.
+const MAX_REPROGRAMS = 3;           // limite de reprogramações por embate: o núcleo
+                                    // da Artemis sobrecarrega e trava (anti-snowball
+                                    // da forca dobrando). Override via config.maxReprograms.
 const PROJECTILE_DAMAGE = 3;
 const DEFENSE_FAIL_DAMAGE = 5;      // dano ao falhar a sequência de defesa.
 const DEFENSE_TIME_LIMIT = 15000;   // tempo limite da defesa (ms).
@@ -181,6 +184,8 @@ export default class BattleScene extends Phaser.Scene {
         this.bossHp = this.config.maxHp;
         this.hp = getHp();              // entra com o HP que trouxe das salas.
         this.forca = null;
+        this.reprogramCount = 0;
+        this.maxReprograms = this.config.maxReprograms ?? MAX_REPROGRAMS;
         this.bossAttackIndex = 0;
         this.dodgeActive = false;
         this.invulnUntil = 0;
@@ -374,7 +379,8 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     updateForca() {
-        this.forcaText.setText(this.forca === null ? "FORÇA: --" : `FORÇA: ${this.forca}`);
+        const forca = this.forca === null ? "FORÇA: --" : `FORÇA: ${this.forca}`;
+        this.forcaText.setText(`${forca}   REPROG: ${this.reprogramCount}/${this.maxReprograms}`);
     }
 
     setBattleStatus(text, color = "#7a8099") {
@@ -584,6 +590,14 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     reprogram() {
+        // Limite anti-sobrecarga: o núcleo da Artemis não aguenta reprogramar
+        // indefinidamente. Bater no teto NÃO gasta o turno — volta ao menu.
+        if (this.reprogramCount >= this.maxReprograms) {
+            this.setBattleStatus("> NÚCLEO EM SOBRECARGA — REPROGRAMAÇÃO BLOQUEADA", "#ff4545");
+            this.time.delayedCall(1100, () => this.playerTurn());
+            return;
+        }
+
         const puzzle = this.forca === null ? CREATE_FORCA_PUZZLE : DOUBLE_FORCA_PUZZLE;
         let solvedThisRun = false;
 
@@ -599,9 +613,14 @@ export default class BattleScene extends Phaser.Scene {
             },
             onClose: () => {
                 if (solvedThisRun) {
+                    this.reprogramCount += 1;
                     this.forca = this.forca === null ? FORCA_INICIAL : this.forca * 2;
                     this.updateForca();
-                    this.setBattleStatus(`> ATAQUE REPROGRAMADO: FORÇA = ${this.forca}`, "#51e36b");
+                    const left = this.maxReprograms - this.reprogramCount;
+                    const tail = left > 0
+                        ? `  (mais ${left})`
+                        : "  (LIMITE: núcleo em sobrecarga)";
+                    this.setBattleStatus(`> ATAQUE REPROGRAMADO: FORÇA = ${this.forca}${tail}`, "#51e36b");
                 } else {
                     this.setBattleStatus("> REPROGRAMAÇÃO FALHOU — TURNO PERDIDO", "#ff4545");
                 }
@@ -617,14 +636,18 @@ export default class BattleScene extends Phaser.Scene {
         const forcaLine = this.forca === null
             ? "Nenhuma variável de ataque na memória."
             : `Sua variável forca vale ${this.forca}.`;
-        const hintLine = this.forca === null
-            ? "Dica: REPROGRAMAR cria a variável forca."
-            : "Dica: REPROGRAMAR dobra a força (forca = forca * 2).";
+        const reprogLeft = this.maxReprograms - this.reprogramCount;
+        const hintLine = reprogLeft <= 0
+            ? "Núcleo em sobrecarga: sem mais REPROGRAMAR neste embate."
+            : this.forca === null
+                ? "Dica: REPROGRAMAR cria a variável forca."
+                : "Dica: REPROGRAMAR dobra a força (forca = forca * 2).";
 
         this.analysisText.setText([
             this.config.analysisLine,
             `INTEGRIDADE: ${this.bossHp}/${this.config.maxHp}`,
             forcaLine,
+            `REPROGRAMAÇÕES: ${this.reprogramCount}/${this.maxReprograms}`,
             hintLine
         ].join("\n")).setVisible(true);
 
@@ -968,6 +991,7 @@ export default class BattleScene extends Phaser.Scene {
             this.hp = fullHeal();
             this.bossHp = this.config.maxHp;
             this.forca = null;
+            this.reprogramCount = 0;
             this.bossAttackIndex = 0;
             this.invulnUntil = 0;
             this.updateHpBar();

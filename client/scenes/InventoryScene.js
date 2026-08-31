@@ -223,13 +223,6 @@ export default class InventoryScene extends Phaser.Scene {
         this.selectCursor.play("inv-select-anim");
         this.content.add(this.selectCursor);
 
-        // Aviso de inventário vazio (centralizado na bandeja).
-        this.emptyLabel = this.add.text(GRID.x + GRID_W / 2, GRID.y + GRID_H / 2,
-            "INVENTÁRIO VAZIO\nos itens coletados nas fases aparecem aqui", {
-                fontFamily: "VCR", fontSize: "18px", color: C.dim, align: "center", lineSpacing: 8
-            }).setOrigin(0.5).setVisible(false);
-        this.content.add(this.emptyLabel);
-
         const hint = this.add.text(WIDTH / 2, PANEL.y + PANEL.h - 26,
             "[WASD] navegar    [E] abrir    [Q] trocar aba    [ESC] fechar", {
                 fontFamily: "VCR", fontSize: "17px", color: "#9db3c9"
@@ -262,14 +255,13 @@ export default class InventoryScene extends Phaser.Scene {
         this.selectCursor.setPosition(cell.cx, cell.cy).setVisible(true);
     }
 
-    // Reaplica o estado da grade após usar/descartar (vazio → aviso; senão cursor).
+    // Reaplica o estado da grade após usar/descartar (vazio → sem cursor; senão
+    // seleciona o item mais próximo do índice atual).
     refreshAfterChange() {
         if (this.items.length === 0) {
             this.cells.forEach((c) => c.bg.setTexture("inv-slot"));
             this.selectCursor?.setVisible(false);
-            this.emptyLabel?.setVisible(true);
         } else {
-            this.emptyLabel?.setVisible(false);
             this.select(Math.min(this.index, this.items.length - 1));
         }
     }
