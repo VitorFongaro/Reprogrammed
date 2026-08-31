@@ -14,6 +14,11 @@ import BattleScene from './scenes/chapter1/BattleScene';
 import ReprogramScene from './scenes/chapter1/ReprogramScene';
 import CorredorScene from './scenes/chapter1/CorredorScene';
 import SaguaoScene from './scenes/chapter1/SaguaoScene';
+import InventoryScene from './scenes/InventoryScene';
+import { loadInventory } from './state/inventory.js';
+
+// Carrega o inventário (localStorage) antes de qualquer cena abri-lo.
+loadInventory();
 
 const config = {
     type: Phaser.AUTO,
@@ -47,7 +52,8 @@ const config = {
         CorredorScene,
         SaguaoScene,
         // Overlays por último: renderizam por cima das salas (ver bringToTop).
-        PauseMenuScene
+        PauseMenuScene,
+        InventoryScene
     ]
 };
 

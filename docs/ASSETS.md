@@ -82,6 +82,16 @@ shoot/damage/broken) + `Projectile.png` (2 quadros 8×8). `tools/car_slice.py` f
 um PNG por animação (nomes minúsculos) e normaliza o projétil pra `projectile.png`. **Confirmar
 autor, licença e forma de crédito com quem baixou** antes da entrega do TCC.
 
+### Complete UI Essential Pack — UI do inventário — Crusenho ([itch.io](https://crusenho.itch.io))
+
+Origem da UI do **inventário** (`client/assets/ui/`): `inv_slot.png` (FrameSlot02a, slot azul),
+`inv_slot_sel.png` (FrameSlot02b, slot ciano do item selecionado) e `inv_select.png` (os 4 quadros
+de `Select01a` do `UI_FlatAnimated`, os cantos que animam sobre o item selecionado). O painel, as
+abas e os botões (USAR/DESCARTAR/FECHAR) são desenhados no código na paleta azul-ciano do jogo; os
+ícones de item ainda são placeholder procedural (o pack não traz ícones de item). Licença
+**CC BY 4.0**: uso/edição livres (inclusive comercial), **exige atribuição** (creditar "Crusenho
+Agus Hennihuno" + link da licença). Creditar no TCC.
+
 ## Arte feita no projeto
 
 Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte versionado ao lado do
