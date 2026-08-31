@@ -92,6 +92,18 @@ abas e os botões (USAR/DESCARTAR/FECHAR) são desenhados no código na paleta a
 **CC BY 4.0**: uso/edição livres (inclusive comercial), **exige atribuição** (creditar "Crusenho
 Agus Hennihuno" + link da licença). Creditar no TCC.
 
+### Super Pixel Effects Gigapack (Free) — Will Tice / unTied Games ([itch.io](https://untiedgames.itch.io/super-pixel-effects-gigapack))
+
+Efeitos dos **padrões novos do boss ENIAC** (`client/assets/sprites/effects/`), spritesheets
+horizontais recortados do pack: `fx_lightning.png` (lightning_strike, 7×128, violeta — padrão
+`lightning`), `fx_warp.png` (scifi_warp, 10×128, verde) e `fx_explosion.png` (symmetrical_explosion,
+8×64, laranja — padrão `warpMines`), `fx_charge.png` (scifi_charge_up, 12×96) e `fx_spark.png`
+(scifi_spark_burst, 12×128 — padrão `nova`). Carregados/animados na `BattleScene` (tabela
+`BOSS_FX`). Licença unTied Games: uso comercial e não-comercial OK e **empacotar com o jogo é
+permitido**, mas **não se pode redistribuir o pack solto** (nem subir para asset store) e **exige
+atribuição** — creditar "Super Pixel Effects Gigapack — Will Tice / unTied Games". Creditar no TCC.
+(Só a versão FREE está no repo; a paga tem mais efeitos/cores.)
+
 ## Arte feita no projeto
 
 Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte versionado ao lado do

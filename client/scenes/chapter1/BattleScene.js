@@ -4,6 +4,11 @@ import BattleMenu from "../../ui/BattleMenu";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import projetilUrl from "../../assets/sprites/projetil/projetil.png";
 import { MAX_HP, getHp, setHp, fullHeal } from "../../state/vitals";
+import fxLightningUrl from "../../assets/sprites/effects/fx_lightning.png";
+import fxWarpUrl from "../../assets/sprites/effects/fx_warp.png";
+import fxExplosionUrl from "../../assets/sprites/effects/fx_explosion.png";
+import fxChargeUrl from "../../assets/sprites/effects/fx_charge.png";
+import fxSparkUrl from "../../assets/sprites/effects/fx_spark.png";
 
 // Tela de COMBATE POR TURNOS contra o ENIAC (estilo Undertale), aberta pela
 // SalaSegurancaScene via scene.launch + pause. Layout: boss no topo (com barra
@@ -35,17 +40,31 @@ const BOSS_MAX_HP = 60;
 const PLAYER_MAX_HP = MAX_HP;       // HP global da Artemis (state/vitals).
 const BASE_DAMAGE = 5;              // ataque padrão, sem a variável forca.
 const FORCA_INICIAL = 10;           // criada no primeiro REPROGRAMAR.
-const MAX_REPROGRAMS = 3;           // limite de reprogramações por embate: o núcleo
+const MAX_REPROGRAMS = 2;           // limite de reprogramações por embate: o núcleo
                                     // da Artemis sobrecarrega e trava (anti-snowball
-                                    // da forca dobrando). Override via config.maxReprograms.
+                                    // da forca dobrando). Cresce nos próximos capítulos
+                                    // via config.maxReprograms (cap. 1 = 2).
 const PROJECTILE_DAMAGE = 3;
 const DEFENSE_FAIL_DAMAGE = 5;      // dano ao falhar a sequência de defesa.
 const DEFENSE_TIME_LIMIT = 15000;   // tempo limite da defesa (ms).
+const DEFENSE_CHANCE = 0.35;        // a defesa (puzzle) é OCASIONAL: os padrões de
+                                    // bullet hell dominam e a defesa aparece de vez em
+                                    // quando (nunca no 1º turno nem duas seguidas).
 const DODGE_DURATION = 5000;        // duração do bullet hell (ms).
 const PROJECTILE_INTERVAL = 300;
 const PROJECTILE_SPEED = { min: 170, max: 260 };
 const PROJECTILE_DRIFT = 50;
 const AIMED_CHANCE = 0.4;           // chance do projétil nascer sobre a alma.
+
+// Efeitos do Super Pixel Effects Gigapack (Will Tice / unTied Games) usados pelos
+// padrões novos do ENIAC: [chave, url, tamanho do quadro, nº de quadros, fps].
+const BOSS_FX = [
+    ["fx-lightning", fxLightningUrl, 128, 7, 20],
+    ["fx-warp", fxWarpUrl, 128, 10, 16],
+    ["fx-explosion", fxExplosionUrl, 64, 8, 18],
+    ["fx-charge", fxChargeUrl, 96, 12, 15],
+    ["fx-spark", fxSparkUrl, 128, 12, 26]
+];
 const IFRAME_MS = 700;
 const SOUL_SPEED = 240;
 
@@ -151,7 +170,11 @@ const DEFAULT_CONFIG = {
     analysisLine: "ENIAC — UNIDADE DE CUSTÓDIA, 1946.",
     // Padrão do bullet hell: "rain" (chuva vertical, ENIAC) ou "sweep"
     // (varredura lateral em fileiras com brecha, sentinela).
-    dodgePattern: "rain"
+    dodgePattern: "rain",
+    // O ENIAC (boss final) CICLA quatro padrões a cada turno de esquiva: a chuva
+    // clássica + três com os efeitos do pack (raios, fendas que explodem e a nova
+    // carregada).
+    dodgePatterns: ["rain", "lightning", "warpMines", "nova"]
 };
 
 export default class BattleScene extends Phaser.Scene {
@@ -169,6 +192,11 @@ export default class BattleScene extends Phaser.Scene {
         if (!this.textures.exists("projetil")) {
             this.load.spritesheet("projetil", projetilUrl, { frameWidth: 32, frameHeight: 32 });
         }
+        BOSS_FX.forEach(([key, url, size]) => {
+            if (!this.textures.exists(key)) {
+                this.load.spritesheet(key, url, { frameWidth: size, frameHeight: size });
+            }
+        });
         // Combatentes customizados (ex.: dupla de sentinelas): sheets via config.
         (this.config.combatants ?? []).forEach((c) => {
             if (!this.textures.exists(`${c.key}-walk`)) {
@@ -187,12 +215,15 @@ export default class BattleScene extends Phaser.Scene {
         this.reprogramCount = 0;
         this.maxReprograms = this.config.maxReprograms ?? MAX_REPROGRAMS;
         this.bossAttackIndex = 0;
+        this.lastWasDefense = false;
         this.dodgeActive = false;
         this.invulnUntil = 0;
         this.itemUsedThisTurn = false;
         this.dodgeIndex = 0;
         this.dodgePatterns = this.config.dodgePatterns ?? [this.config.dodgePattern];
         this.bounceBalls = [];
+        this.patternFx = [];   // efeitos/telegrafos ativos dos padrões (limpos no stopDodge)
+        this.hazards = [];     // zonas de perigo ativas (coluna do raio / raio da explosão)
 
         this.drawBackdrop();
         this.createTextures();
@@ -275,6 +306,7 @@ export default class BattleScene extends Phaser.Scene {
 
         if (this.dodgeActive) {
             this.updateSplitBounce();
+            this.updateHazards();
         }
     }
 
@@ -422,6 +454,18 @@ export default class BattleScene extends Phaser.Scene {
                 repeat: -1
             });
         }
+
+        // Efeitos do pack (tocam uma vez): raio, portal, explosão, carga, faísca.
+        BOSS_FX.forEach(([key, , , frames, rate]) => {
+            if (!this.anims.exists(`${key}-anim`)) {
+                this.anims.create({
+                    key: `${key}-anim`,
+                    frames: this.anims.generateFrameNumbers(key, { start: 0, end: frames - 1 }),
+                    frameRate: rate,
+                    repeat: 0
+                });
+            }
+        });
     }
 
     createSoul() {
@@ -657,17 +701,21 @@ export default class BattleScene extends Phaser.Scene {
         });
     }
 
-    // --- Turno do ENIAC: bullet hell OU sequência de defesa com tempo ---
+    // --- Turno do ENIAC: bullet hell (padrão) OU, de vez em quando, a sequência
+    // de defesa com tempo. Os padrões de esquiva DOMINAM; a defesa é OCASIONAL —
+    // nunca no 1º turno e nunca duas seguidas, para não virar "só o puzzle". ---
     bossTurn() {
-        const useDodge = !this.config.defenseEnabled
-            || this.bossAttackIndex === 0
-            || Math.random() < 0.5;
+        const canDefend = this.config.defenseEnabled
+            && this.bossAttackIndex > 0
+            && !this.lastWasDefense;
+        const useDefense = canDefend && Math.random() < DEFENSE_CHANCE;
         this.bossAttackIndex += 1;
+        this.lastWasDefense = useDefense;
 
-        if (useDodge) {
-            this.dodgeTurn();
-        } else {
+        if (useDefense) {
             this.defenseTurn();
+        } else {
+            this.dodgeTurn();
         }
     }
 
@@ -677,8 +725,8 @@ export default class BattleScene extends Phaser.Scene {
         this.currentPattern = pattern;
 
         this.setBattleStatus(`> TURNO DE ${this.config.name} — DESVIE COM WASD!`, "#ff4545");
-        // Na espiral as balas nascem no centro: começa a alma mais embaixo.
-        const startY = pattern === "spiral" ? BOX.y + BOX.h / 2 - 30 : BOX.y;
+        // Espiral e nova nascem no centro: começa a alma mais embaixo, longe do foco.
+        const startY = pattern === "spiral" || pattern === "nova" ? BOX.y + BOX.h / 2 - 30 : BOX.y;
         this.soul.body.reset(BOX.x, startY);
         this.soul.setVisible(true);
         this.dodgeActive = true;
@@ -687,8 +735,10 @@ export default class BattleScene extends Phaser.Scene {
             if (!this.dodgeActive) {
                 return;
             }
-            this.startPattern(pattern);
+            // Agenda o fim do turno ANTES de montar o padrão: assim o turno sempre
+            // termina e volta para o menu, mesmo se um padrão específico falhar.
             this.dodgeTimer = this.time.delayedCall(this.config.dodgeDuration, () => this.endDodge());
+            this.startPattern(pattern);
         });
     }
 
@@ -713,6 +763,9 @@ export default class BattleScene extends Phaser.Scene {
             this.centralBall = null;
         }
         this.bounceBalls = [];
+        this.patternFx?.forEach((o) => { this.tweens.killTweensOf(o); o.destroy(); });
+        this.patternFx = [];
+        this.hazards = [];
         this.projectiles?.clear(true, true);
         this.soul?.setVisible(false);
     }
@@ -730,6 +783,18 @@ export default class BattleScene extends Phaser.Scene {
         }
         if (name === "touhouCross") {
             this.startTouhouCross();
+            return;
+        }
+        if (name === "lightning") {
+            this.startLightning();
+            return;
+        }
+        if (name === "warpMines") {
+            this.startWarpMines();
+            return;
+        }
+        if (name === "nova") {
+            this.startNova();
             return;
         }
         const spawn = name === "sweep" ? () => this.spawnSweepWave() : () => this.spawnProjectile();
@@ -936,6 +1001,173 @@ export default class BattleScene extends Phaser.Scene {
         this.damagePlayer(PROJECTILE_DAMAGE);
     }
 
+    // === Padrões novos do ENIAC (usam os efeitos do pack) ======================
+
+    // Toca um efeito do pack (spritesheet) uma vez e some sozinho. Rastreado em
+    // patternFx para o stopDodge limpar o que ainda estiver na tela.
+    spawnFx(key, x, y, { scale = 1, scaleY = null, depth = 26 } = {}) {
+        const spr = this.add.sprite(x, y, key).setDepth(depth);
+        spr.setScale(scale, scaleY ?? scale);
+        spr.play(`${key}-anim`);
+        spr.once("animationcomplete", () => this.destroyFx(spr));
+        this.patternFx.push(spr);
+        return spr;
+    }
+
+    // Remove um efeito/telegrafo rastreado, matando antes qualquer tween nele (o
+    // pulso infinito da faixa/linha-guia erraria ao rodar sobre um objeto morto).
+    destroyFx(obj) {
+        const i = this.patternFx.indexOf(obj);
+        if (i >= 0) {
+            this.patternFx.splice(i, 1);
+        }
+        this.tweens.killTweensOf(obj);
+        obj.destroy();
+    }
+
+    // Zonas de perigo dos padrões de área (raio/explosão): enquanto ativas, a alma
+    // dentro delas leva dano (com i-frames, igual aos projéteis). "column" = faixa
+    // vertical do raio; "circle" = raio da explosão.
+    updateHazards() {
+        if (!this.hazards.length) {
+            return;
+        }
+        const now = this.time.now;
+        this.hazards = this.hazards.filter((h) => now <= h.until);
+        if (now < this.invulnUntil) {
+            return;
+        }
+        const sx = this.soul.x;
+        const sy = this.soul.y;
+        const hit = this.hazards.some((h) => {
+            if (now < h.from) {
+                return false;
+            }
+            return h.shape === "column"
+                ? Math.abs(sx - h.x) <= h.halfW
+                : (sx - h.x) ** 2 + (sy - h.y) ** 2 <= h.r * h.r;
+        });
+        if (!hit) {
+            return;
+        }
+        this.invulnUntil = now + IFRAME_MS;
+        this.tweens.add({
+            targets: this.soul, alpha: 0.25, duration: 90, yoyo: true, repeat: 3,
+            onComplete: () => this.soul.setAlpha(1)
+        });
+        this.damagePlayer(PROJECTILE_DAMAGE);
+    }
+
+    // PADRÃO 4 — RAIOS: uma coluna é telegrafada (faixa violeta) e um relâmpago cai
+    // ali; o clarão é a zona de dano por um instante. Desvio horizontal.
+    startLightning() {
+        this.spawnLightning();
+        this.spawnTimer = this.time.addEvent({ delay: 900, loop: true, callback: () => this.spawnLightning() });
+    }
+
+    spawnLightning() {
+        if (!this.dodgeActive) {
+            return;
+        }
+        const margin = 44;
+        const colX = Phaser.Math.Between(BOX.x - BOX.w / 2 + margin, BOX.x + BOX.w / 2 - margin);
+        const halfW = 26;
+
+        const tele = this.add.rectangle(colX, BOX.y, halfW * 2, BOX.h - 14, 0xb14aff, 0.14)
+            .setStrokeStyle(1, 0xb14aff, 0.55).setDepth(24);
+        this.patternFx.push(tele);
+        this.tweens.add({ targets: tele, alpha: 0.30, duration: 190, yoyo: true, repeat: -1 });
+
+        this.time.delayedCall(600, () => {
+            if (!this.dodgeActive) {
+                this.destroyFx(tele);
+                return;
+            }
+            this.spawnFx("fx-lightning", colX, BOX.y, {
+                depth: 27,
+                scale: (halfW * 2 + 18) / 128,
+                scaleY: (BOX.h + 24) / 128
+            });
+            this.hazards.push({ shape: "column", x: colX, halfW, from: this.time.now, until: this.time.now + 240 });
+            this.tweens.add({
+                targets: tele, alpha: 0, duration: 200,
+                onComplete: () => this.destroyFx(tele)
+            });
+        });
+    }
+
+    // PADRÃO 5 — FENDAS: portais sci-fi se abrem (aviso) e EXPLODEM; o estouro é uma
+    // zona de dano circular. Fuja do raio da explosão.
+    startWarpMines() {
+        this.spawnWarpMine();
+        this.spawnTimer = this.time.addEvent({ delay: 760, loop: true, callback: () => this.spawnWarpMine() });
+    }
+
+    spawnWarpMine() {
+        if (!this.dodgeActive) {
+            return;
+        }
+        const margin = 56;
+        const x = Phaser.Math.Between(BOX.x - BOX.w / 2 + margin, BOX.x + BOX.w / 2 - margin);
+        const y = Phaser.Math.Between(BOX.y - BOX.h / 2 + margin, BOX.y + BOX.h / 2 - margin);
+
+        this.spawnFx("fx-warp", x, y, { depth: 24, scale: 0.7 });
+        this.time.delayedCall(470, () => {
+            if (!this.dodgeActive) {
+                return;
+            }
+            this.spawnFx("fx-explosion", x, y, { depth: 29, scale: 1.9 });
+            this.hazards.push({ shape: "circle", x, y, r: 48, from: this.time.now + 30, until: this.time.now + 330 });
+        });
+    }
+
+    // PADRÃO 6 — NOVA CARREGADA: o núcleo carrega (aviso + linha-guia do corredor
+    // seguro) e dispara um anel de balas com UMA abertura que gira a cada nova.
+    startNova() {
+        this.novaGap = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        this.chargeNova();
+        this.spawnTimer = this.time.addEvent({ delay: 1500, loop: true, callback: () => this.chargeNova() });
+    }
+
+    chargeNova() {
+        if (!this.dodgeActive) {
+            return;
+        }
+        this.spawnFx("fx-charge", BOX.x, BOX.y, { depth: 26, scale: 0.95 });
+
+        // Linha-guia verde apontando para a abertura segura do próximo anel.
+        const gx = BOX.x + Math.cos(this.novaGap) * (BOX.w / 2 + 10);
+        const gy = BOX.y + Math.sin(this.novaGap) * (BOX.h / 2 + 10);
+        const guide = this.add.graphics().setDepth(25);
+        guide.lineStyle(2, 0x51e36b, 0.5);
+        guide.lineBetween(BOX.x, BOX.y, gx, gy);
+        this.patternFx.push(guide);
+        this.tweens.add({ targets: guide, alpha: 0.15, duration: 220, yoyo: true, repeat: -1 });
+
+        this.time.delayedCall(800, () => {
+            this.destroyFx(guide);
+            if (!this.dodgeActive) {
+                return;
+            }
+            this.spawnFx("fx-spark", BOX.x, BOX.y, { depth: 27, scale: 0.9 });
+            this.fireNovaRing();
+            this.novaGap += 0.9;
+        });
+    }
+
+    fireNovaRing() {
+        const n = 20;
+        const gapHalf = Math.PI / 5;   // ~36° de cada lado do centro do corredor.
+        const speed = 130;
+        for (let i = 0; i < n; i += 1) {
+            const a = (i / n) * Math.PI * 2;
+            if (Math.abs(Phaser.Math.Angle.Wrap(a - this.novaGap)) < gapHalf) {
+                continue;
+            }
+            this.spawnRadial(BOX.x, BOX.y, a, speed);
+        }
+    }
+
     defenseTurn() {
         this.setBattleStatus("> SEQUÊNCIA HOSTIL A CAMINHO — DEFENDA-SE!", "#ff4545");
         const puzzle = Phaser.Utils.Array.GetRandom(DEFENSE_PUZZLES);
@@ -993,6 +1225,7 @@ export default class BattleScene extends Phaser.Scene {
             this.forca = null;
             this.reprogramCount = 0;
             this.bossAttackIndex = 0;
+            this.lastWasDefense = false;
             this.invulnUntil = 0;
             this.updateHpBar();
             this.updateBossHp();
