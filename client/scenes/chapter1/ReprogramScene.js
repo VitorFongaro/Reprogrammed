@@ -3,6 +3,7 @@ import Enemy from "../../characters/Enemy";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import DodgeBox from "../../ui/DodgeBox";
 import { getHp, getMaxHp, damage as damageVitals, fullHeal } from "../../state/vitals";
+import Sfx from "../../ui/Sfx";
 
 // Batalha de REPROGRAMAÇÃO de um inimigo (aberta pelo modo [R] da sala via
 // scene.launch + pause). Ao invadir: telinha "HACKING EFETUADO"; então o robô
@@ -87,6 +88,7 @@ export default class ReprogramScene extends Phaser.Scene {
 
     // Telinha rápida antes do combate.
     showHackScreen() {
+        Sfx.play(this, "hack");   // robô inimigo invadido
         const banner = this.add.text(WIDTH / 2, HEIGHT / 2, "HACKING EFETUADO", {
             fontFamily: "VCR", fontSize: "52px", color: "#51e36b", align: "center"
         }).setOrigin(0.5).setDepth(60).setScale(0.6);

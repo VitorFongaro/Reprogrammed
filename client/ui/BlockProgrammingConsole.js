@@ -21,6 +21,7 @@ import blocksUrl from "../assets/sprites/blocks/blocks.png";
 // (texto de `puzzle.hint`, na voz do Cosmo, sob demanda).
 
 import { recordAttempt } from "../state/telemetry.js";
+import Sfx from "./Sfx";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -105,6 +106,7 @@ export default class BlockProgrammingConsole {
         if (!scene.textures.exists("blocks")) {
             scene.load.spritesheet("blocks", blocksUrl, { frameWidth: BLOCK_W, frameHeight: BLOCK_H });
         }
+        Sfx.preload(scene);
     }
 
     constructor(scene, puzzle, options = {}) {
@@ -754,6 +756,7 @@ export default class BlockProgrammingConsole {
     placeInSlot(piece, slot) {
         slot.piece = piece;
         piece.slot = slot;
+        Sfx.play(this.scene, "select");   // bloco encaixado num espaço
         this.updateGauge();
         this.drawSlots();
         this.scene.tweens.add({
@@ -807,6 +810,7 @@ export default class BlockProgrammingConsole {
             });
             this.attempted = true;   // estourou o tempo: conta como tentativa
             this.countError();
+            Sfx.play(this.scene, "error");   // tempo esgotado = falhou o código
             this.setOutput("TEMPO ESGOTADO", COLOR.error);
             this.scene.time.delayedCall(1200, () => this.close());
         }
@@ -860,6 +864,7 @@ export default class BlockProgrammingConsole {
 
     handleSuccess() {
         this.solved = true;
+        Sfx.play(this.scene, "confirm");   // código do jogador correto
         this.timerEvent?.remove();
         this.timerEvent = null;
         this.setOutput(this.puzzle.successMessage ?? "OK", COLOR.success);
@@ -884,6 +889,7 @@ export default class BlockProgrammingConsole {
 
     handleFailure(wrongSlots) {
         this.countError();
+        Sfx.play(this.scene, "error");   // combinação de código errada
         this.setOutput(
             this.puzzle.gauge ? this.gaugeFailMessage(wrongSlots) : this.diagnose(wrongSlots),
             COLOR.error

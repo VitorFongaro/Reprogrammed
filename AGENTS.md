@@ -57,7 +57,8 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   `enterChapterScene` quando o prefixo `capN` da cena muda). Espelha no `localStorage`
   (`reprogrammed.vitals`, desacoplado do save do servidor por ora, como o inventário), então o HP
   **sobrevive ao recarregar a página**; novo jogo (`resetVitals`) e troca de capítulo restauram. O
-  `BaseRoomScene` (dano/cura/`resyncHp` ao voltar de sub-cenas) e a `BattleScene` (`getHp`/`setHp`)
+  `BaseRoomScene` (dano/cura/`resyncHp` ao voltar de sub-cenas; `playHealFx` toca um coração verde
+  do pack de efeitos sobre a Artemis ao usar item de cura na sala) e a `BattleScene` (`getHp`/`setHp`)
   leem daqui; a "derrota" (morte na sala / restart do embate / falha no `[R]`) faz `fullHeal` — é
   reset de checkpoint, não cura de jogo. A `ReprogramScene` (`[R]`) também usa o HP global: entra
   com o HP atual, **sem** escala por estágio (chegar ferida torna reprogramar mais arriscado).
@@ -75,6 +76,12 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   que a Artemis ganha nas fases). Slots (azul/ciano) e a animação de seleção vêm do Complete UI
   Essential Pack (Crusenho, CC BY 4.0, ver docs/ASSETS.md); painel/abas/botões são desenhados no
   código e os ícones de item são procedurais por categoria (placeholder).
+- `state/audio.js` + `ui/Sfx.js` — **efeitos sonoros** (pack Kenney Interface Sounds, CC0, em
+  `assets/audio/*.ogg`). `Sfx.preload(scene)` no `preload` (já embutido em `BlockProgrammingConsole.preload`)
+  e `Sfx.play(scene, nome)` no evento: `"select"` (bloco encaixado), `"confirm"` (código correto),
+  `"error"` (código errado / tempo esgotado) e `"hack"` (robô invadido, na `ReprogramScene`). O volume
+  vem do slider de EFEITOS SONOROS da `OptionsScene`, espelhado em `state/audio.js` (`getSfxVolume`),
+  então os sons tocam de qualquer cena sem consultar a API.
 - `assets/` — `fonts/` (VCR_OSD_MONO), `cursors/`, `sprites/`, `audio/`, `icons/`, `images/`, `ui/`.
 - `pages/`, `scripts/`, `styles/` — páginas HTML auxiliares e auth fora do canvas Phaser.
 

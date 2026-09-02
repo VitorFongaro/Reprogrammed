@@ -99,10 +99,21 @@ horizontais recortados do pack: `fx_lightning.png` (lightning_strike, 7×128, vi
 `lightning`), `fx_warp.png` (scifi_warp, 10×128, verde) e `fx_explosion.png` (symmetrical_explosion,
 8×64, laranja — padrão `warpMines`), `fx_charge.png` (scifi_charge_up, 12×96) e `fx_spark.png`
 (scifi_spark_burst, 12×128 — padrão `nova`). Carregados/animados na `BattleScene` (tabela
-`BOSS_FX`). Licença unTied Games: uso comercial e não-comercial OK e **empacotar com o jogo é
+`BOSS_FX`). O mesmo diretório traz `fx_heal.png` (spell_heal, 16×128, um coração que estoura) —
+tocado pelo `BaseRoomScene` (`playHealFx`) **tingido de verde** (`setTint` na cor de cura do jogo)
+sobre a Artemis quando ela usa um item de cura FORA da batalha. Licença unTied Games: uso comercial e não-comercial OK e **empacotar com o jogo é
 permitido**, mas **não se pode redistribuir o pack solto** (nem subir para asset store) e **exige
 atribuição** — creditar "Super Pixel Effects Gigapack — Will Tice / unTied Games". Creditar no TCC.
 (Só a versão FREE está no repo; a paga tem mais efeitos/cores.)
+
+### Interface Sounds — Kenney ([kenney.nl](https://kenney.nl/assets/interface-sounds))
+
+Efeitos sonoros da UI (`client/assets/audio/`, `.ogg`): `select.ogg` (bloco encaixado),
+`confirm.ogg` (código correto), `error.ogg` (código errado / tempo esgotado) e `hack.ogg` (robô
+inimigo invadido, na `ReprogramScene`). Carregados/tocados pelo helper `client/ui/Sfx.js`
+(`Sfx.preload`/`Sfx.play`) no volume do slider de EFEITOS SONOROS da OptionsScene (`state/audio.js`).
+Licença **CC0** (domínio público): uso livre (pessoal/educacional/comercial), **sem atribuição
+obrigatória** — creditar "Kenney / kenney.nl" é apreciado (vale pôr no TCC).
 
 ## Arte feita no projeto
 

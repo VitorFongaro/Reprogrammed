@@ -5,6 +5,7 @@ import DialogueBox from "../../ui/DialogueBox";
 import { tiledColliders, placeTiledObjects, preloadProps } from "../../utils/tiledMap";
 import { enterScene } from "../../state/progress";
 import { getHp, getMaxHp, damage as damageVitals, heal as healVitals, fullHeal, enterChapterScene } from "../../state/vitals";
+import fxHealUrl from "../../assets/sprites/effects/fx_heal.png";
 
 // Cena-base das salas do capítulo 1: desenha a sala (mapa em imagem ou grade),
 // cria jogador/Cosmo/diálogo, gerencia interagíveis ([E] no mais próximo), a
@@ -73,6 +74,11 @@ export default class BaseRoomScene extends Phaser.Scene {
 
         if (this.bgUrl && !this.textures.exists(this.bgKey)) {
             this.load.image(this.bgKey, this.bgUrl);
+        }
+        // Efeito de cura (Super Pixel Effects Gigapack — spell_heal, 16 quadros
+        // 128x128); tocado sobre a Artemis quando ela usa um item de cura na sala.
+        if (!this.textures.exists("fx-heal")) {
+            this.load.spritesheet("fx-heal", fxHealUrl, { frameWidth: 128, frameHeight: 128 });
         }
     }
 
@@ -703,15 +709,41 @@ export default class BaseRoomScene extends Phaser.Scene {
     // alinha o this.hp e a barra com o vitals, desenhando a barra se a Artemis
     // voltou ferida a uma sala que estava sem ela.
     resyncHp() {
-        if (this.hp === getHp()) {
+        if (this.hp !== getHp()) {
+            this.hp = getHp();
+            if (!this.hpBarGraphics && this.hp < this.maxHp) {
+                this.drawHpBar();
+            } else {
+                this.updateHpBar();
+            }
+        }
+        // Efeito de cura pendente do inventário: a cura rodou com a sala pausada,
+        // então toca o efeito agora, com a sala ativa e sobre a Artemis.
+        if (this.pendingHealFx) {
+            this.pendingHealFx = false;
+            this.playHealFx();
+        }
+    }
+
+    // Efeito de cura (coração do pack) sobre a Artemis, tingido no verde da cura.
+    playHealFx() {
+        if (!this.player || !this.textures.exists("fx-heal")) {
             return;
         }
-        this.hp = getHp();
-        if (!this.hpBarGraphics && this.hp < this.maxHp) {
-            this.drawHpBar();
-        } else {
-            this.updateHpBar();
+        if (!this.anims.exists("fx-heal-anim")) {
+            this.anims.create({
+                key: "fx-heal-anim",
+                frames: this.anims.generateFrameNumbers("fx-heal", { start: 0, end: 15 }),
+                frameRate: 20,
+                repeat: 0
+            });
         }
+        const fx = this.add.sprite(this.player.sprite.x, this.player.sprite.y - 6, "fx-heal")
+            .setDepth(850)
+            .setScale(0.9)
+            .setTint(0x51e36b);
+        fx.play("fx-heal-anim");
+        fx.once("animationcomplete", () => fx.destroy());
     }
 
     updateHpBar() {
@@ -844,6 +876,9 @@ export default class BaseRoomScene extends Phaser.Scene {
             } else {
                 this.updateHpBar();
             }
+            // A cura acontece com a sala PAUSADA (inventário aberto); marca para
+            // tocar o efeito sobre a Artemis quando a sala voltar (ver resyncHp).
+            this.pendingHealFx = true;
             return { ok: true, message: `+${item.heal} HP` };
         }
         return { ok: false, message: "não dá para usar isto aqui" };

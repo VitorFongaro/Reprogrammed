@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { API_BASE_URL } from "../config";
+import { setSfxVolume } from "../state/audio";
+import Sfx from "../ui/Sfx";
 import keyboardLetters from "../assets/icons/keys/keyboard-letters.png";
 import keyboardExtras from "../assets/icons/keys/keyboard-extras.png";
 
@@ -44,6 +46,8 @@ export default class OptionsScene extends Phaser.Scene {
     preload() {
         this.load.spritesheet("key-letters", keyboardLetters, { frameWidth: 16, frameHeight: 16 });
         this.load.spritesheet("key-extras", keyboardExtras, { frameWidth: 32, frameHeight: 16 });
+        // Carrega os SFX para tocar uma amostra ao mexer no slider de efeitos.
+        Sfx.preload(this);
     }
 
     create(data) {
@@ -430,6 +434,18 @@ export default class OptionsScene extends Phaser.Scene {
             this.updateVolumeControl(control);
         }
 
+        // Reflete o volume dos efeitos no player de SFX na hora (o slider passa a
+        // controlar de verdade os sons do jogo) e toca uma AMOSTRA no volume novo,
+        // para o usuário OUVIR o ajuste (com throttle, para não empilhar sons no
+        // arraste).
+        if (field === "sfx_volume") {
+            setSfxVolume(this.settings.sfx_volume);
+            if (this.time.now - (this.lastSfxPreviewAt ?? 0) > 140) {
+                this.lastSfxPreviewAt = this.time.now;
+                Sfx.play(this, "select");
+            }
+        }
+
         if (shouldSave) {
             this.saveSettings({ [field]: this.settings[field] });
         }
@@ -533,6 +549,7 @@ export default class OptionsScene extends Phaser.Scene {
         try {
             this.settings = this.normalizeSettings(await this.requestSettings());
             this.settingsMessage = "";
+            setSfxVolume(this.settings.sfx_volume);   // aplica o volume salvo aos efeitos
         } catch (error) {
             this.settingsMessage = "NÃO FOI POSSÍVEL CARREGAR";
         }
