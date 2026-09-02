@@ -18,6 +18,7 @@ const KEY_FRAME = {
     D: 2 * KEY_SHEET_COLS + 3,
     E: 2 * KEY_SHEET_COLS + 4,
     F: 2 * KEY_SHEET_COLS + 5,
+    I: 3 * KEY_SHEET_COLS + 0,
     P: 3 * KEY_SHEET_COLS + 7,
     R: 4 * KEY_SHEET_COLS + 1,
     S: 4 * KEY_SHEET_COLS + 2,
@@ -263,18 +264,21 @@ export default class OptionsScene extends Phaser.Scene {
     renderControlsTab() {
         // Duas colunas: movimento à esquerda, ações à direita — usa a largura
         // toda do painel em vez de empilhar tudo colado na borda esquerda.
+        // CORRER fica com o movimento (é movimento), o que também deixa as duas
+        // colunas com 5 linhas — com 6 de um lado a última passava do painel.
         const movementBindings = [
             { texture: "key-letters", frame: KEY_FRAME.W, action: "CIMA" },
             { texture: "key-letters", frame: KEY_FRAME.A, action: "ESQUERDA" },
             { texture: "key-letters", frame: KEY_FRAME.S, action: "BAIXO" },
-            { texture: "key-letters", frame: KEY_FRAME.D, action: "DIREITA" }
+            { texture: "key-letters", frame: KEY_FRAME.D, action: "DIREITA" },
+            { texture: "key-extras", frame: EXTRA_FRAME.SHIFT, action: "CORRER", wide: true }
         ];
 
         const actionBindings = [
             { texture: "key-letters", frame: KEY_FRAME.E, action: "INTERAGIR" },
             { texture: "key-letters", frame: KEY_FRAME.R, action: "REPROGRAMAR REMOTO" },
             { texture: "key-letters", frame: KEY_FRAME.F, action: "GOLPEAR" },
-            { texture: "key-extras", frame: EXTRA_FRAME.SHIFT, action: "CORRER", wide: true },
+            { texture: "key-letters", frame: KEY_FRAME.I, action: "INVENTÁRIO" },
             { texture: "key-letters", frame: KEY_FRAME.P, action: "PULAR DIÁLOGO" }
         ];
 
@@ -285,7 +289,9 @@ export default class OptionsScene extends Phaser.Scene {
         const linhas = Math.max(movementBindings.length, actionBindings.length);
         const startY = -((linhas - 1) * rowSpacing) / 2 + 8;
 
-        this.renderBindingColumn(movementBindings, -300, -256, startY, rowSpacing);
+        // -312/-250: o SHIFT tem o dobro da largura e encostava no rótulo no
+        // offset antigo (-300/-256).
+        this.renderBindingColumn(movementBindings, -312, -250, startY, rowSpacing);
         this.renderBindingColumn(actionBindings, 70, 145, startY, rowSpacing);
     }
 
