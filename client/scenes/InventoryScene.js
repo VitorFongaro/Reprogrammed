@@ -4,6 +4,7 @@ import { CATEGORIES } from "../data/items.js";
 import slotUrl from "../assets/ui/inv_slot.png";
 import slotSelUrl from "../assets/ui/inv_slot_sel.png";
 import selectUrl from "../assets/ui/inv_select.png";
+import Sfx from "../ui/Sfx";
 
 // INVENTÁRIO (overlay) no Complete UI Essential Pack (cyan): painel escuro do
 // jogo, grade de slots do pack centralizada e duas ABAS no topo — INVENTÁRIO
@@ -74,10 +75,12 @@ export default class InventoryScene extends Phaser.Scene {
         if (!this.textures.exists("inv-select")) {
             this.load.spritesheet("inv-select", selectUrl, { frameWidth: 32, frameHeight: 32 });
         }
+        Sfx.preload(this);   // sons de abrir/fechar o inventário
     }
 
     create() {
         this.scene.bringToTop();
+        Sfx.play(this, "menuIn");   // inventário abriu
         this.createIcons();
         if (!this.anims.exists("inv-select-anim")) {
             this.anims.create({
@@ -480,6 +483,7 @@ export default class InventoryScene extends Phaser.Scene {
     }
 
     close() {
+        Sfx.play(this, "menuOut");   // inventário fechou (som toca no manager global)
         if (this.keyHandler) {
             this.input.keyboard.off("keydown", this.keyHandler);
             this.keyHandler = null;

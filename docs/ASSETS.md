@@ -115,6 +115,17 @@ inimigo invadido, na `ReprogramScene`). Carregados/tocados pelo helper `client/u
 Licença **CC0** (domínio público): uso livre (pessoal/educacional/comercial), **sem atribuição
 obrigatória** — creditar "Kenney / kenney.nl" é apreciado (vale pôr no TCC).
 
+### SweetSounds SFX — Coffee "Valen" Bat ([itch.io](https://valenbat.itch.io/sweetsounds))
+
+Efeitos sonoros de **inimigos, menu e inventário** (`client/assets/audio/`, chiptune estilo Game Boy,
+convertidos de WAV para `.ogg`): `gun.ogg` (tiro de inimigo com arma — pistol/shotgun, no
+`Enemy.shoot`), `laser.ogg` (tiro da torreta do carro, no `Enemy.carShoot`), `bump.ogg` (o biped
+atingindo o chão no slam, no `Enemy.slamAttack`), `crunch.ogg` (card iniciar/continuar encaixado no
+espaço EXECUTAR do menu, no `GameScene.executeCard`), `menu_in.ogg` e `menu_out.ogg` (inventário
+abrindo/fechando, na `InventoryScene`). Tocados pelo mesmo helper `Sfx` (tiros com `volumeScale`
+menor para não dominarem). Licença: uso livre inclusive comercial; **atribuição pedida** — creditar
+"Sound Effects by Coffee 'Valen' Bat" (doar no itch.io é apreciado). Creditar no TCC.
+
 ## Arte feita no projeto
 
 Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte versionado ao lado do

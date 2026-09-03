@@ -17,6 +17,7 @@ import carActivate from "../assets/sprites/enemies/car/activate.png";
 import carShoot from "../assets/sprites/enemies/car/shoot.png";
 import carBroken from "../assets/sprites/enemies/car/broken.png";
 import carProjectile from "../assets/sprites/enemies/car/projectile.png";
+import Sfx from "../ui/Sfx";
 
 // Inimigos do capítulo 1 (packs SteamRobotsPack + biped_robot, quadros 32×32).
 // Cada inimigo anda/persegue a Artemis e ataca (contato ou tiro), tirando HP da
@@ -131,6 +132,7 @@ export default class Enemy {
         if (!scene.textures.exists("car-projectile")) {
             scene.load.spritesheet("car-projectile", carProjectile, { frameWidth: 8, frameHeight: 8 });
         }
+        Sfx.preload(scene);   // sons dos inimigos (tiro, laser, bump do slam)
     }
 
     static createAnimations(scene) {
@@ -321,6 +323,7 @@ export default class Enemy {
     }
 
     carShoot(angle) {
+        Sfx.play(this.scene, "laser", 0.7);   // tiro do carro (torreta)
         this.sprite.play(this.def.shootKey);
         this.sprite.once("animationcomplete", () => {
             if (!this.disabled && this.carState === "armed") {
@@ -358,6 +361,7 @@ export default class Enemy {
                 }
                 this.sprite.body.enable = true;
                 this.sprite.body.reset(gx, gy);
+                Sfx.play(this.scene, "bump");   // o biped atingiu o chão
                 this.scene.cameras.main.shake(200, 0.006);
                 const d = Math.PI / 4;
                 [d, 3 * d, 5 * d, 7 * d].forEach((a) => this.scene.spawnEnergyBall?.(gx, gy, a));
@@ -378,6 +382,7 @@ export default class Enemy {
 
     shoot(player) {
         const angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
+        Sfx.play(this.scene, "gun", 0.7);   // tiro do inimigo com arma
         if (this.weapon) {
             this.weapon.play(this.def.weaponKey, true).once("animationcomplete", () => {
                 if (this.weapon && !this.disabled) this.weapon.setFrame(0);
