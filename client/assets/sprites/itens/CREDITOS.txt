@@ -1,0 +1,6 @@
+Ícones de item (32x32) — gerados por IA a partir de prompt e pós-processados
+aqui: recorte por componente, redução para 32x32, endurecimento do alfa e
+quantização em 16 cores por ícone.
+
+Não usam nenhum asset de terceiros como entrada. Ver docs/ASSETS.md, seção
+"Arte gerada por IA" — precisa ser declarado no TCC.

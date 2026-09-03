@@ -4,6 +4,7 @@ import { CATEGORIES } from "../data/items.js";
 import slotUrl from "../assets/ui/inv_slot.png";
 import slotSelUrl from "../assets/ui/inv_slot_sel.png";
 import selectUrl from "../assets/ui/inv_select.png";
+import Sfx from "../ui/Sfx";
 
 // INVENTÁRIO (overlay) no Complete UI Essential Pack (cyan): painel escuro do
 // jogo, grade de slots do pack centralizada e duas ABAS no topo — INVENTÁRIO
@@ -56,6 +57,12 @@ const C = {
     discard: "#ff6b6b"
 };
 
+// Vite resolve o glob no build; a chave vira o nome do arquivo sem extensão.
+const ICON_URLS = Object.fromEntries(
+    Object.entries(import.meta.glob("../assets/sprites/itens/*.png", { eager: true, query: "?url", import: "default" }))
+        .map(([caminho, url]) => [caminho.split("/").pop().replace(".png", ""), url])
+);
+
 export default class InventoryScene extends Phaser.Scene {
     constructor() {
         super("inventory");
@@ -69,15 +76,24 @@ export default class InventoryScene extends Phaser.Scene {
     }
 
     preload() {
+        // Um ícone POR ITEM (32x32). O glob é resolvido pelo Vite no build, então
+        // item novo em data/items.js só precisa do PNG na pasta.
+        Object.entries(ICON_URLS).forEach(([nome, url]) => {
+            const key = `inv-item-${nome}`;
+            if (!this.textures.exists(key)) this.load.image(key, url);
+        });
+
         if (!this.textures.exists("inv-slot")) this.load.image("inv-slot", slotUrl);
         if (!this.textures.exists("inv-slot-sel")) this.load.image("inv-slot-sel", slotSelUrl);
         if (!this.textures.exists("inv-select")) {
             this.load.spritesheet("inv-select", selectUrl, { frameWidth: 32, frameHeight: 32 });
         }
+        Sfx.preload(this);   // sons de abrir/fechar o inventário
     }
 
     create() {
         this.scene.bringToTop();
+        Sfx.play(this, "menuIn");   // inventário abriu
         this.createIcons();
         if (!this.anims.exists("inv-select-anim")) {
             this.anims.create({
@@ -101,6 +117,13 @@ export default class InventoryScene extends Phaser.Scene {
     }
 
     // Ícones procedurais por categoria (placeholder até haver arte de item).
+    // Textura do item: o ícone próprio quando existe, senão o procedural da
+    // categoria (item novo sem arte ainda não fica invisível).
+    iconKey(item) {
+        const key = `inv-item-${item.icon ?? item.id}`;
+        return this.textures.exists(key) ? key : `inv-icon-${item.category}`;
+    }
+
     createIcons() {
         const make = (key, draw) => {
             if (this.textures.exists(key)) return;
@@ -206,7 +229,8 @@ export default class InventoryScene extends Phaser.Scene {
             const cx = GRID.x + SLOT / 2 + col * (SLOT + GAP);
             const cy = GRID.y + SLOT / 2 + row * (SLOT + GAP);
             const bg = this.add.image(cx, cy, "inv-slot").setDisplaySize(SLOT, SLOT);
-            const icon = this.add.image(cx, cy, "inv-icon-cura").setDisplaySize(42, 42).setVisible(false);
+            // 64 = 2x de 32: escala inteira, senão o pixel do ícone borra.
+            const icon = this.add.image(cx, cy, "inv-icon-cura").setDisplaySize(64, 64).setVisible(false);
             const count = this.add.text(cx + SLOT / 2 - 8, cy + SLOT / 2 - 6, "", {
                 fontFamily: "VCR", fontSize: "17px", color: C.text, stroke: "#08111c", strokeThickness: 4
             }).setOrigin(1, 1);
@@ -237,7 +261,7 @@ export default class InventoryScene extends Phaser.Scene {
         this.cells.forEach((cell, i) => {
             const item = this.items[i];
             if (item) {
-                cell.icon.setTexture(`inv-icon-${item.category}`).setVisible(true);
+                cell.icon.setTexture(this.iconKey(item)).setVisible(true);
                 cell.count.setText(item.count > 1 ? `x${item.count}` : "");
             } else {
                 cell.icon.setVisible(false);
@@ -288,7 +312,7 @@ export default class InventoryScene extends Phaser.Scene {
         win.add(g);
 
         const cat = CATEGORIES[item.category];
-        win.add(this.add.image(POP.x + 44, POP.y + 40, `inv-icon-${item.category}`).setDisplaySize(64, 64).setOrigin(0, 0));
+        win.add(this.add.image(POP.x + 44, POP.y + 40, this.iconKey(item)).setDisplaySize(64, 64).setOrigin(0, 0));
         win.add(this.add.text(POP.x + 128, POP.y + 34, item.name, {
             fontFamily: "VCR", fontSize: "25px", color: C.text, wordWrap: { width: POP.w - 160 }
         }));
@@ -432,7 +456,7 @@ export default class InventoryScene extends Phaser.Scene {
                 const g = this.add.graphics();
                 g.fillStyle(C.recess, 1); g.fillRect(x, cy, w, 78);
                 g.lineStyle(1, C.outline, 1); g.strokeRect(x, cy, w, 78);
-                const icon = this.add.image(x + 42, cy + 39, "inv-icon-upgrade").setDisplaySize(44, 44);
+                const icon = this.add.image(x + 42, cy + 39, this.iconKey(up)).setDisplaySize(64, 64);
                 const nm = this.add.text(x + 80, cy + 12, up.name, { fontFamily: "VCR", fontSize: "20px", color: "#ffcf6b" });
                 const ds = this.add.text(x + 80, cy + 40, up.description, { fontFamily: "VCR", fontSize: "15px", color: C.text, wordWrap: { width: w - 96 } });
                 this.content.add([g, icon, nm, ds]);
@@ -480,6 +504,7 @@ export default class InventoryScene extends Phaser.Scene {
     }
 
     close() {
+        Sfx.play(this, "menuOut");   // inventário fechou (som toca no manager global)
         if (this.keyHandler) {
             this.input.keyboard.off("keydown", this.keyHandler);
             this.keyHandler = null;

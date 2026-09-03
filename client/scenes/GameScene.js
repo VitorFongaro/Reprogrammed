@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import wordmark from "../assets/images/reprogrammed-wordmark.png";
 import { hasLocalSave, loadLocal, startNewGame, FIRST_SCENE } from "../state/progress";
 import { resetVitals } from "../state/vitals";
+import Sfx from "../ui/Sfx";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -60,6 +61,7 @@ export default class GameScene extends Phaser.Scene {
 
     preload() {
         this.load.image("menu-wordmark", wordmark);
+        Sfx.preload(this);   // som "crunch" ao encaixar iniciar/continuar
     }
 
     create() {
@@ -283,6 +285,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     executeCard(card) {
+        // Bloco iniciar/continuar encaixado no espaço EXECUTAR (menu inicial).
+        if (card.item.id === "start" || card.item.id === "continue") {
+            Sfx.play(this, "crunch");
+        }
         this.stopCardFloat(card);
         const dragArea = card.list.find((child) => child.cardOwner === card);
         dragArea.disableInteractive();

@@ -76,12 +76,17 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   que a Artemis ganha nas fases). Slots (azul/ciano) e a animação de seleção vêm do Complete UI
   Essential Pack (Crusenho, CC BY 4.0, ver docs/ASSETS.md); painel/abas/botões são desenhados no
   código e os ícones de item são procedurais por categoria (placeholder).
-- `state/audio.js` + `ui/Sfx.js` — **efeitos sonoros** (pack Kenney Interface Sounds, CC0, em
-  `assets/audio/*.ogg`). `Sfx.preload(scene)` no `preload` (já embutido em `BlockProgrammingConsole.preload`)
-  e `Sfx.play(scene, nome)` no evento: `"select"` (bloco encaixado), `"confirm"` (código correto),
-  `"error"` (código errado / tempo esgotado) e `"hack"` (robô invadido, na `ReprogramScene`). O volume
-  vem do slider de EFEITOS SONOROS da `OptionsScene`, espelhado em `state/audio.js` (`getSfxVolume`),
-  então os sons tocam de qualquer cena sem consultar a API.
+- `state/audio.js` + `ui/Sfx.js` — **efeitos sonoros** (packs Kenney Interface Sounds e SweetSounds,
+  em `assets/audio/*.ogg`; ver docs/ASSETS.md). `Sfx.preload(scene)` no `preload` (já embutido em
+  `BlockProgrammingConsole.preload` e `Enemy.preload`) e `Sfx.play(scene, nome, volumeScale?)` no
+  evento — UI: `"select"` (bloco encaixado), `"confirm"` (código correto), `"error"` (código errado /
+  tempo esgotado), `"hack"` (robô invadido, na `ReprogramScene`); inimigos: `"gun"` (tiro de
+  pistol/shotgun), `"laser"` (tiro do carro) e `"bump"` (o biped atingindo o chão no slam) — os tiros
+  usam `volumeScale` menor para não dominarem; menu/inventário: `"crunch"` (card iniciar/continuar
+  encaixado no espaço EXECUTAR, na `GameScene`) e `"menuIn"`/`"menuOut"` (inventário abre/fecha). O
+  volume vem do slider de EFEITOS SONOROS da
+  `OptionsScene`, espelhado em `state/audio.js` (`getSfxVolume`), então os sons tocam de qualquer cena
+  sem consultar a API.
 - `assets/` — `fonts/` (VCR_OSD_MONO), `cursors/`, `sprites/`, `audio/`, `icons/`, `images/`, `ui/`.
 - `pages/`, `scripts/`, `styles/` — páginas HTML auxiliares e auth fora do canvas Phaser.
 

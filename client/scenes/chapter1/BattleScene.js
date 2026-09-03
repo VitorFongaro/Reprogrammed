@@ -219,6 +219,9 @@ export default class BattleScene extends Phaser.Scene {
         this.dodgeActive = false;
         this.invulnUntil = 0;
         this.itemUsedThisTurn = false;
+        // Efeitos de item que valem por um turno (Overclock e Dissipador).
+        this.ataqueDobrado = false;
+        this.danoReduzido = false;
         this.dodgeIndex = 0;
         this.dodgePatterns = this.config.dodgePatterns ?? [this.config.dodgePattern];
         this.bounceBalls = [];
@@ -548,6 +551,8 @@ export default class BattleScene extends Phaser.Scene {
 
     // --- Turno do jogador ---
     playerTurn() {
+        // O Dissipador protege UM turno do boss; ao voltar a vez, já foi gasto.
+        this.danoReduzido = false;
         this.setBattleStatus("> SEU TURNO — ESCOLHA UMA AÇÃO", "#4ad6ff");
         this.menu.show();
     }
@@ -582,21 +587,53 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     useBattleItem(item) {
+        if (item.usableInBattle === false) {
+            return { ok: false, message: "não dá para usar isto em batalha" };
+        }
+
         if (item.category === "cura") {
             if (this.hp >= PLAYER_MAX_HP) {
                 return { ok: false, message: "HP já está cheio" };
             }
+            const antes = this.hp;
             this.hp = setHp(this.hp + (item.heal ?? 0));
             this.updateHpBar();
             this.itemUsedThisTurn = true;
-            return { ok: true, message: `+${item.heal} HP` };
+            return { ok: true, message: `+${this.hp - antes} HP` };
         }
+
         if (item.category === "reprogramacao") {
-            // Efeito real depende do design dos itens; por ora, consome o turno.
+            const efeito = this.applyBattleEffect(item);
+            if (!efeito.ok) {
+                return efeito;
+            }
             this.itemUsedThisTurn = true;
-            return { ok: true, message: "módulo ativado" };
+            return efeito;
         }
+
         return { ok: false, message: "não dá para usar isto em batalha" };
+    }
+
+    // Efeitos de combate. São flags lidas no ataque, no dano e no limite de
+    // reprogramações — nada aqui muda o fluxo de turno, que é do useBattleItem.
+    applyBattleEffect(item) {
+        if (item.battleEffect === "dobrarAtaque") {
+            this.ataqueDobrado = true;
+            return { ok: true, message: "próximo ataque dobrado" };
+        }
+
+        if (item.battleEffect === "reduzirDano") {
+            this.danoReduzido = true;
+            return { ok: true, message: "dano reduzido no próximo turno" };
+        }
+
+        if (item.battleEffect === "maisUmaReprogramacao") {
+            this.maxReprograms += 1;
+            this.updateForca();
+            return { ok: true, message: "+1 reprogramação neste embate" };
+        }
+
+        return { ok: false, message: "sem efeito nesta batalha" };
     }
 
     // Inventário fechou: usar item passa o turno para o boss; só olhar volta ao menu.
@@ -612,7 +649,10 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     attack() {
-        const damage = this.forca ?? BASE_DAMAGE;
+        // O Overclock vale por UM ataque e some depois de gastar.
+        const base = this.forca ?? BASE_DAMAGE;
+        const damage = this.ataqueDobrado ? base * 2 : base;
+        this.ataqueDobrado = false;
 
         this.foeHit();
         this.cameras.main.shake(220, 0.004);
@@ -1200,7 +1240,9 @@ export default class BattleScene extends Phaser.Scene {
 
     // Aplica dano à Artemis; retorna true se ela foi derrotada.
     damagePlayer(amount) {
-        this.hp = setHp(this.hp - amount);
+        // O Dissipador corta o dano pela metade enquanto o turno do boss dura.
+        const real = this.danoReduzido ? Math.max(1, Math.round(amount / 2)) : amount;
+        this.hp = setHp(this.hp - real);
         this.updateHpBar();
         this.cameras.main.shake(150, 0.004);
 
@@ -1224,6 +1266,10 @@ export default class BattleScene extends Phaser.Scene {
             this.bossHp = this.config.maxHp;
             this.forca = null;
             this.reprogramCount = 0;
+            // O embate recomeça do zero: o bônus do Cache e o Overclock somem
+            // junto com o resto (os itens em si já foram consumidos).
+            this.maxReprograms = this.config.maxReprograms ?? MAX_REPROGRAMS;
+            this.ataqueDobrado = false;
             this.bossAttackIndex = 0;
             this.lastWasDefense = false;
             this.invulnUntil = 0;
