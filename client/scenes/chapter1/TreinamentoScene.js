@@ -2,6 +2,8 @@ import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import Enemy from "../../characters/Enemy";
+import treinamentoBg from "../../assets/images/treinamento/treinamento_bg.png";
+import treinamentoMap from "../../assets/maps/treinamento.json";
 
 // Capítulo 1, sala de treinamento (sala 4): barreira de laser + INIMIGOS. A
 // barreira corta a sala num ciclo (atravesse na janela apagada; o painel do
@@ -9,7 +11,11 @@ import Enemy from "../../characters/Enemy";
 // direito. Cada robô se neutraliza reprogramando ([R] seleciona direto → batalha
 // de reprogramação) ou no melee ([F], placeholder). Encostar/levar tiro tira HP
 // (base); zerar reinicia a Artemis no spawn. A porta abre com o laser desligado
-// e todos os robôs desativados. Cenário procedural até a arte ficar pronta.
+// e todos os robôs desativados.
+//
+// Cenário: fundo gerado por tools/treinamento_bg.py (mesma parede e mesmo tile
+// de piso das outras salas) + props/colisões no Tiled. A faixa amarela pintada
+// no chão marca onde a barreira corta — o aviso existe antes de o feixe acender.
 
 const LASER_X = 600;
 const LASER_CYCLE = { warn: 500, on: 1100, off: 1400 };
@@ -59,6 +65,10 @@ export default class TreinamentoScene extends BaseRoomScene {
             title: "TREINAMENTO // SEGURANÇA",
             nextScene: "cap1-sentinela",
             spawn: { x: 140, y: 400 },
+            bounds: { x: 34, y: 140, w: 1212, h: 526 },
+            door: { x: 1152, y: 98 },
+            bg: treinamentoBg,
+            map: treinamentoMap,
             ySort: true,
             combat: true
         });
