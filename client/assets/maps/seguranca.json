@@ -11,7 +11,7 @@
   "version": "1.10",
   "type": "map",
   "nextlayerid": 4,
-  "nextobjectid": 40,
+  "nextobjectid": 60,
   "tilesets": [
     {
       "columns": 0,
@@ -20,13 +20,20 @@
       "margin": 0,
       "name": "props",
       "spacing": 0,
-      "tilecount": 3,
-      "tilewidth": 88,
-      "tileheight": 80,
+      "tilecount": 10,
+      "tilewidth": 92,
+      "tileheight": 136,
       "tiles": [
-        { "id": 0, "image": "../images/porao/props/caixote_grande.png", "imagewidth": 88, "imageheight": 80 },
-        { "id": 1, "image": "../images/porao/props/barril.png", "imagewidth": 40, "imageheight": 58 },
-        { "id": 2, "image": "../images/porao/props/caixote.png", "imagewidth": 56, "imageheight": 52 }
+        { "id": 0, "image": "../images/porao/props/prateleira_cheia.png", "imagewidth": 92, "imageheight": 136 },
+        { "id": 1, "image": "../images/porao/props/armario_fechado.png", "imagewidth": 40, "imageheight": 116 },
+        { "id": 2, "image": "../images/porao/props/armario_aberto.png", "imagewidth": 40, "imageheight": 116 },
+        { "id": 3, "image": "../images/porao/props/placa_perigo.png", "imagewidth": 50, "imageheight": 44 },
+        { "id": 4, "image": "../images/porao/props/cilindro_grande.png", "imagewidth": 32, "imageheight": 64 },
+        { "id": 5, "image": "../images/porao/props/cilindro_pequeno.png", "imagewidth": 32, "imageheight": 52 },
+        { "id": 6, "image": "../images/porao/props/bancada.png", "imagewidth": 64, "imageheight": 60 },
+        { "id": 7, "image": "../images/porao/props/barril_azul.png", "imagewidth": 36, "imageheight": 58 },
+        { "id": 8, "image": "../images/porao/props/caixote_amarelo.png", "imagewidth": 48, "imageheight": 60 },
+        { "id": 9, "image": "../images/porao/props/caixote_alto.png", "imagewidth": 36, "imageheight": 62 }
       ]
     }
   ],
@@ -51,9 +58,17 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 1, "gid": 1, "name": "caixote-grande", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 640, "width": 88, "height": 80 },
-        { "id": 2, "gid": 2, "name": "barril", "rotation": 0, "type": "", "visible": true, "x": 190, "y": 600, "width": 40, "height": 58 },
-        { "id": 3, "gid": 3, "name": "caixote", "rotation": 0, "type": "", "visible": true, "x": 1120, "y": 640, "width": 56, "height": 52 }
+        { "id": 1, "gid": 4, "name": "placa-perigo", "rotation": 0, "type": "", "visible": true, "x": 52, "y": 76, "width": 50, "height": 44 },
+        { "id": 2, "gid": 1, "name": "prateleira", "rotation": 0, "type": "", "visible": true, "x": 44, "y": 264, "width": 92, "height": 136 },
+        { "id": 3, "gid": 2, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 140, "y": 244, "width": 40, "height": 116 },
+        { "id": 4, "gid": 3, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 181, "y": 244, "width": 40, "height": 116 },
+        { "id": 5, "gid": 5, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 1064, "y": 196, "width": 32, "height": 64 },
+        { "id": 6, "gid": 6, "name": "cilindro-pequeno", "rotation": 0, "type": "", "visible": true, "x": 1210, "y": 186, "width": 32, "height": 52 },
+        { "id": 7, "gid": 7, "name": "bancada", "rotation": 0, "type": "", "visible": true, "x": 70, "y": 610, "width": 64, "height": 60 },
+        { "id": 8, "gid": 8, "name": "barril-1", "rotation": 0, "type": "", "visible": true, "x": 250, "y": 628, "width": 36, "height": 58 },
+        { "id": 9, "gid": 8, "name": "barril-2", "rotation": 0, "type": "", "visible": true, "x": 288, "y": 612, "width": 36, "height": 58 },
+        { "id": 10, "gid": 9, "name": "caixote-amarelo", "rotation": 0, "type": "", "visible": true, "x": 1096, "y": 624, "width": 48, "height": 60 },
+        { "id": 11, "gid": 10, "name": "caixote-alto", "rotation": 0, "type": "", "visible": true, "x": 1152, "y": 634, "width": 36, "height": 62 }
       ]
     },
     {
@@ -68,9 +83,16 @@
       "objects": [
         { "id": 20, "name": "eniac", "rotation": 0, "type": "", "visible": true, "x": 220, "y": 122, "width": 840, "height": 162 },
         { "id": 21, "name": "nucleo", "rotation": 0, "type": "", "visible": true, "x": 592, "y": 269, "width": 96, "height": 123 },
-        { "id": 22, "name": "caixote-grande", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 560, "width": 88, "height": 80 },
-        { "id": 23, "name": "barril", "rotation": 0, "type": "", "visible": true, "x": 190, "y": 542, "width": 40, "height": 58 },
-        { "id": 24, "name": "caixote", "rotation": 0, "type": "", "visible": true, "x": 1120, "y": 588, "width": 56, "height": 52 }
+        { "id": 22, "name": "prateleira", "rotation": 0, "type": "", "visible": true, "x": 44, "y": 214, "width": 92, "height": 50 },
+        { "id": 23, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 140, "y": 204, "width": 40, "height": 40 },
+        { "id": 24, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 181, "y": 204, "width": 40, "height": 40 },
+        { "id": 25, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 1064, "y": 166, "width": 32, "height": 30 },
+        { "id": 26, "name": "cilindro-pequeno", "rotation": 0, "type": "", "visible": true, "x": 1210, "y": 160, "width": 32, "height": 26 },
+        { "id": 27, "name": "bancada", "rotation": 0, "type": "", "visible": true, "x": 70, "y": 570, "width": 64, "height": 40 },
+        { "id": 28, "name": "barril-1", "rotation": 0, "type": "", "visible": true, "x": 250, "y": 593, "width": 36, "height": 35 },
+        { "id": 29, "name": "barril-2", "rotation": 0, "type": "", "visible": true, "x": 288, "y": 577, "width": 36, "height": 35 },
+        { "id": 30, "name": "caixote-amarelo", "rotation": 0, "type": "", "visible": true, "x": 1096, "y": 584, "width": 48, "height": 40 },
+        { "id": 31, "name": "caixote-alto", "rotation": 0, "type": "", "visible": true, "x": 1152, "y": 594, "width": 36, "height": 40 }
       ]
     }
   ]

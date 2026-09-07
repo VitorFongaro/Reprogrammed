@@ -7,6 +7,13 @@ piso de tile do pack e as marcações de campo de tiro.
 A parede usa a mesma fórmula das outras salas (ver tools/porao_parede.lua) e o
 piso o mesmo tile e tom (ver tools/piso_tile.py), para a sala não destoar.
 
+A PORTA não é desenhada aqui: ela é CARIMBADA a partir de controle_bg.png. A
+porta padrão do capítulo (batente recuado, duas folhas, placa acesa e o tapete
+listrado no piso) foi desenhada no Aseprite e não tem gerador versionado, então
+copiar a arte existente é o único jeito de a sala não ficar com uma porta
+diferente das outras — foi exatamente o que aconteceu na primeira versão, que
+desenhava um portão de ripas por conta própria.
+
 Uso (o caminho do pack é local de cada dev):
     python tools/treinamento_bg.py --tiles "<pack>/tileset x2.png"
 """
@@ -33,8 +40,22 @@ SEED = 21
 POOLS = [(300, 210, 118, 52), (640, 172, 94, 38), (980, 210, 118, 52)]
 
 # Porta no fundo, à direita — combina com o fluxo da sala (o jogador entra pela
-# esquerda, atravessa a barreira e sai lá).
-DOOR = (1104, 40, 96, 88)
+# esquerda, atravessa a barreira e sai lá). DOOR_X é o centro, e tem que bater
+# com o `door.x` da TreinamentoScene.
+DOOR_X = 1152
+
+# Recorte da porta padrão em controle_bg.png. A parede (0..WALL_H) é copiada
+# inteira: os dois fundos têm a mesma fórmula e o mesmo tom, então não há
+# emenda visível. O tapete listrado vem à parte porque cai no PISO, que é
+# diferente em cada sala.
+DOOR_SRC_X = 640                       # centro da porta no fundo de origem
+DOOR_PLATE = (612, 0, 668, 10)         # placa acesa e o letreiro, acima do batente
+DOOR_BAND = (580, 10, 700, WALL_H)     # batente, folhas e a parede em volta
+DOOR_MAT = (593, 128, 687, 137)        # tapete listrado, já no piso
+
+# A faixa de cima é estreita de propósito: na sala de origem passa uma linha de
+# painel em x=672, e ela cairia FORA da grade de 96px daqui — um risco vertical
+# solto ao lado da porta. Recortando só a placa, a grade da sala continua a dela.
 
 # Faixas de perigo pintadas no chão, marcando a linha da barreira de laser
 # (LASER_X = 600 na cena) e a zona de tiro.
@@ -48,6 +69,10 @@ def clamp(v, lo=0, hi=255):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tiles", required=True)
+    ap.add_argument("--porta", default=os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "..", "client", "assets", "images", "controle", "controle_bg.png"),
+        help="fundo de onde a porta padrão é copiada")
     ap.add_argument("--out", default=os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "..", "client", "assets", "images", "treinamento", "treinamento_bg.png"))
@@ -95,22 +120,7 @@ def main():
                 if 0 <= y + j < fy + fh:
                     px[LASER_X + dx, y + j] = (120, 96, 30, 255)
 
-    # 4) Porta desenhada na parede.
-    dx0, dy0, dw, dh = DOOR
-    for y in range(dy0, dy0 + dh):
-        for x in range(dx0, dx0 + dw):
-            px[x, y] = (18, 20, 26, 255)
-    for x in range(dx0, dx0 + dw):
-        px[x, dy0] = (58, 62, 76, 255)
-        px[x, dy0 + dh - 1] = (10, 11, 14, 255)
-    for y in range(dy0, dy0 + dh):
-        px[dx0, y] = (58, 62, 76, 255)
-        px[dx0 + dw - 1, y] = (10, 11, 14, 255)
-    for y in range(dy0 + 8, dy0 + dh - 8, 12):      # ripas da porta
-        for x in range(dx0 + 6, dx0 + dw - 6):
-            px[x, y] = (26, 28, 36, 255)
-
-    # 5) Luz: sombra da parede, poças das luminárias e vinheta.
+    # 4) Luz: sombra da parede, poças das luminárias e vinheta.
     def light(x, y, f):
         if not (fx <= x < fx + fw and fy <= y < fy + fh):
             return
@@ -135,6 +145,22 @@ def main():
         for x in range(fx, fx + fw):
             d = math.hypot(x - vcx, y - vcy) / maxd
             light(x, y, 1 - 0.35 * max(0.0, min(1.0, (d - 0.55) / 0.45)))
+
+    # 5) Porta padrão, carimbada de controle_bg.png. Vai por ÚLTIMO porque o
+    # recorte já traz a própria iluminação: passar a vinheta por cima
+    # escureceria o tapete e denunciaria o remendo.
+    porta = Image.open(args.porta).convert("RGB")
+    pp = porta.load()
+
+    def stamp(rect):
+        x0, y0, x1, y1 = rect
+        for y in range(y0, y1):
+            for x in range(x0, x1):
+                px[x - DOOR_SRC_X + DOOR_X, y] = pp[x, y] + (255,)
+
+    stamp(DOOR_PLATE)
+    stamp(DOOR_BAND)
+    stamp(DOOR_MAT)
 
     os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
     im.save(args.out)

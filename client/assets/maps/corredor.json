@@ -11,7 +11,7 @@
   "version": "1.10",
   "type": "map",
   "nextlayerid": 4,
-  "nextobjectid": 30,
+  "nextobjectid": 40,
   "tilesets": [
     {
       "columns": 0,
@@ -20,13 +20,14 @@
       "margin": 0,
       "name": "props",
       "spacing": 0,
-      "tilecount": 3,
-      "tilewidth": 72,
-      "tileheight": 58,
+      "tilecount": 4,
+      "tilewidth": 48,
+      "tileheight": 64,
       "tiles": [
-        { "id": 0, "image": "../images/porao/props/barril.png", "imagewidth": 40, "imageheight": 58 },
-        { "id": 1, "image": "../images/porao/props/palete.png", "imagewidth": 72, "imageheight": 48 },
-        { "id": 2, "image": "../images/porao/props/caixote.png", "imagewidth": 56, "imageheight": 52 }
+        { "id": 0, "image": "../images/porao/props/barril_azul.png", "imagewidth": 36, "imageheight": 58 },
+        { "id": 1, "image": "../images/porao/props/cilindro_grande.png", "imagewidth": 32, "imageheight": 64 },
+        { "id": 2, "image": "../images/porao/props/caixote_amarelo.png", "imagewidth": 48, "imageheight": 60 },
+        { "id": 3, "image": "../images/porao/props/caixote_aberto.png", "imagewidth": 48, "imageheight": 44 }
       ]
     }
   ],
@@ -51,9 +52,10 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 1, "gid": 1, "name": "barril", "rotation": 0, "type": "", "visible": true, "x": 200, "y": 380, "width": 40, "height": 58 },
-        { "id": 2, "gid": 2, "name": "palete", "rotation": 0, "type": "", "visible": true, "x": 690, "y": 386, "width": 72, "height": 48 },
-        { "id": 3, "gid": 3, "name": "caixote-no-palete", "rotation": 0, "type": "", "visible": true, "x": 698, "y": 368, "width": 56, "height": 52 }
+        { "id": 1, "gid": 1, "name": "barril", "rotation": 0, "type": "", "visible": true, "x": 200, "y": 380, "width": 36, "height": 58 },
+        { "id": 2, "gid": 2, "name": "cilindro", "rotation": 0, "type": "", "visible": true, "x": 430, "y": 376, "width": 32, "height": 64 },
+        { "id": 3, "gid": 4, "name": "caixote-empilhado", "rotation": 0, "type": "", "visible": true, "x": 696, "y": 334, "width": 48, "height": 44 },
+        { "id": 4, "gid": 3, "name": "caixote-base", "rotation": 0, "type": "", "visible": true, "x": 690, "y": 386, "width": 48, "height": 60 }
       ]
     },
     {
@@ -66,8 +68,9 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 20, "name": "barril", "rotation": 0, "type": "", "visible": true, "x": 200, "y": 322, "width": 40, "height": 58 },
-        { "id": 21, "name": "palete-caixote", "rotation": 0, "type": "", "visible": true, "x": 690, "y": 316, "width": 72, "height": 70 }
+        { "id": 20, "name": "barril", "rotation": 0, "type": "", "visible": true, "x": 200, "y": 345, "width": 36, "height": 35 },
+        { "id": 21, "name": "cilindro", "rotation": 0, "type": "", "visible": true, "x": 430, "y": 346, "width": 32, "height": 30 },
+        { "id": 22, "name": "caixotes", "rotation": 0, "type": "", "visible": true, "x": 690, "y": 346, "width": 48, "height": 40 }
       ]
     }
   ]

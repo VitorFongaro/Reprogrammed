@@ -4,6 +4,8 @@ import BattleMenu from "../../ui/BattleMenu";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import projetilUrl from "../../assets/sprites/projetil/projetil.png";
 import { MAX_HP, getHp, setHp, fullHeal } from "../../state/vitals";
+import { addItem } from "../../state/inventory";
+import { itemDef } from "../../data/items";
 import fxLightningUrl from "../../assets/sprites/effects/fx_lightning.png";
 import fxWarpUrl from "../../assets/sprites/effects/fx_warp.png";
 import fxExplosionUrl from "../../assets/sprites/effects/fx_explosion.png";
@@ -168,6 +170,12 @@ const DEFAULT_CONFIG = {
     projectileSpeed: PROJECTILE_SPEED,
     bossTint: null,
     analysisLine: "ENIAC — UNIDADE DE CUSTÓDIA, 1946.",
+    // Espólio da vitória (id do catálogo de itens) ou null. Só o BOSS FINAL de
+    // cada capítulo larga alguma coisa: o chip de CACHE, que libera uma
+    // reprogramação extra por embate. É a peça mais forte do jogo, então a
+    // escassez é o balanceamento — um por capítulo, e ponto. Arena de treino e
+    // demais embates passam `reward: null`.
+    reward: "cache",
     // Padrão do bullet hell: "rain" (chuva vertical, ENIAC) ou "sweep"
     // (varredura lateral em fileiras com brecha, sentinela).
     dodgePattern: "rain",
@@ -1288,9 +1296,40 @@ export default class BattleScene extends Phaser.Scene {
         this.cameras.main.shake(600, 0.006);
         this.setBattleStatus(`> ${this.config.name} OFFLINE`, "#51e36b");
 
-        this.time.delayedCall(1800, () => {
+        const dropped = this.dropReward();
+
+        this.time.delayedCall(dropped ? 2800 : 1800, () => {
             this.scene.stop();
             this.scene.resume(this.config.returnScene, { victory: true });
         });
+    }
+
+    // Espólio do boss: entra no inventário e é ANUNCIADO na tela — item que o
+    // jogador não vê cair é item que ele nunca usa. Devolve se houve drop, para
+    // a vitória segurar mais um pouco antes de voltar para a sala.
+    dropReward() {
+        const item = itemDef(this.config.reward);
+        if (!item) {
+            return false;
+        }
+
+        addItem(item.id, 1);
+
+        const label = this.add.text(WIDTH / 2, HEIGHT / 2, `+ ${item.name.toUpperCase()}`, {
+            fontFamily: "VCR",
+            fontSize: "30px",
+            color: "#ffb347"
+        }).setOrigin(0.5).setDepth(1000).setAlpha(0);
+
+        this.tweens.add({
+            targets: label,
+            alpha: 1,
+            y: HEIGHT / 2 - 26,
+            delay: 900,
+            duration: 500,
+            ease: "Sine.easeOut"
+        });
+
+        return true;
     }
 }

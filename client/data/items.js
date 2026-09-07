@@ -94,7 +94,7 @@ export const ITEMS = {
         name: "Cache",
         icon: "cache",
         category: "reprogramacao",
-        description: "Memória de acesso rápido que alivia a sobrecarga: libera MAIS UMA reprogramação neste embate.",
+        description: "Memória de acesso rápido que alivia a sobrecarga: libera MAIS UMA reprogramação neste embate. Só cai do guardião de cada andar.",
         battleEffect: "maisUmaReprogramacao",
         usableInBattle: true,
         usableInRoom: false,

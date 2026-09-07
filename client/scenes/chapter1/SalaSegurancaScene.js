@@ -23,6 +23,8 @@ const ENTRY_SCRIPT = [
 
 const VICTORY_SCRIPT = [
     { speaker: "ENIAC", color: ENIAC_COLOR, text: "CUSTÓDIA... ENCERRADA... ......" },
+    { speaker: "COSMO", text: "Puxei um chip de cache do núcleo dele. Guarde bem: com ele você reprograma uma vez a mais dentro de um embate." },
+    { speaker: "COSMO", text: "Só o guardião de cada andar carrega um desses. Não conte com o segundo tão cedo." },
     { speaker: "COSMO", text: "Caminho livre. Espera... com o ENIAC fora, o bloqueio de sinal caiu — estou recebendo algo—" }
 ];
 

@@ -134,16 +134,23 @@ Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte version
 - `client/assets/sprites/` — Cosmo, boss do ENIAC, blocos do puzzle, arma e projétil.
 - `client/assets/images/porao/porao_bg.png` — parede, porta, luminárias e emblema Elysium são
   procedurais (só o piso vem de pack).
-- Props procedurais anteriores à troca pelos packs. **Vários continuam em uso** por outras
-  salas — `caixote`, `banco`, `barril`, `mesa`, `palete` e `caixote_grande` aparecem nos mapas
-  do capítulo 1, então não saem sem antes conferir. Hoje estão sem referência em mapa nenhum:
-  `armario`, `caixote_lona`, `dreno`, `prateleira`, `ventilador` e `arquivo` (este último saiu
-  quando a sala de arquivos virou sala de servidores).
+- Props procedurais anteriores à troca pelos packs. Sobraram numa sala só: `caixote`, `banco`,
+  `barril`, `mesa`, `palete` e `caixote_grande` são usados **apenas pela sala de controle**
+  (as últimas duas salas — segurança e corredor — já passaram para os props de pack). Se um
+  dia a sala de controle também trocar, todos viram órfãos de uma vez. Hoje já estão sem
+  referência em mapa nenhum: `armario`, `caixote_lona`, `dreno`, `prateleira`, `ventilador` e
+  `arquivo` (este último saiu quando a sala de arquivos virou sala de servidores).
 - `client/assets/images/arquivos/props/server_*.png` e companhia são gerados por
   `tools/servidores.py`, no mesmo estilo dos packs mas desenhados por script — ver a seção
   seguinte.
 
 ## Arte gerada por script
+
+`tools/treinamento_bg.py` monta o fundo da sala de treinamento (parede, piso do pack e as
+marcações do campo de tiro) e **carimba a porta a partir de `controle_bg.png`**. A porta padrão
+do capítulo foi desenhada no Aseprite e não tem gerador versionado, então copiar a arte é o
+único jeito de a sala não ficar com uma porta diferente das outras — foi exatamente o que
+aconteceu na primeira versão, que desenhava um portão de ripas por conta própria.
 
 `tools/servidores.py` desenha os props de sala de servidor (racks, torre, no-break, bobina,
 painel de rede, ventilador...) por código, em tamanho nativo, e exporta em 2x.

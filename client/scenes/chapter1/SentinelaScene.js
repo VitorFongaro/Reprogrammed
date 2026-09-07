@@ -39,6 +39,7 @@ const BATTLE_CONFIG = {
     projectileInterval: 300,
     projectileSpeed: { min: 150, max: 210 },
     analysisLine: "DUPLA DE SENTINELAS — UNIDADES DE TREINO DA ELYSIUM.",
+    reward: null,                    // chip de cache é espólio de BOSS FINAL; aqui é treino.
     combatants: [
         { key: "sentTeal", walkUrl: tealWalk, disabledUrl: tealDisabled, x: WIDTH / 2 - 95, y: 150, scale: 2.6 },
         { key: "sentViolet", walkUrl: violetWalk, disabledUrl: violetDisabled, x: WIDTH / 2 + 95, y: 150, scale: 2.6 }
