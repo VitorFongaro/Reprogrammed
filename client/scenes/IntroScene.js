@@ -33,11 +33,14 @@ export default class IntroScene extends Phaser.Scene {
         CosmoCompanion.preload(this);
         preloadProps(this);
         this.load.image("porao-bg", poraoBg);
-        Music.preload(this);
+        Music.preload(this, "cap1");   // usada no fim do diálogo, com o card
     }
 
     create() {
         this.finished = false;
+        // O tema do menu para aqui: a abertura corre em SILÊNCIO até o fim do
+        // diálogo, e é o card de capítulo que traz a música de volta (ver finish).
+        Music.stop();
 
         this.drawBasement();
         this.createAndroid();

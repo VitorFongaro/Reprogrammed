@@ -109,15 +109,21 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   volume vem do slider de EFEITOS SONOROS da
   `OptionsScene`, espelhado em `state/audio.js` (`getSfxVolume`), então os sons tocam de qualquer cena
   sem consultar a API.
-- `ui/Music.js` — **música de fundo** (faixa por capítulo, em `assets/audio/music/`). O
+- `ui/Music.js` — **música de fundo** (`assets/audio/music/`: `menu.mp3` no menu principal e
+  `cap1_subsolo.mp3` no capítulo 1). `Music.preload(scene, nome)` carrega UMA faixa — são vários MB
+  cada, o menu não deve baixar a do capítulo antes de abrir. Como o menu é a primeira tela e o
+  navegador só libera áudio na primeira interação, o `play` detecta o contexto travado
+  (`scene.sound.locked`) e adia a faixa para o evento `unlocked`, em vez de perder o play. O
   `SoundManager` do Phaser é GLOBAL (criado pelo Game, não pela cena), então a faixa **atravessa as
   trocas de cena sozinha**: ela começa na `IntroScene`, no fim do diálogo de abertura, junto do card
   "CAPÍTULO 1 :: SUBSOLO" (estilo Katana Zero), e segue tocando por todas as salas. `Music.play` é
   IDEMPOTENTE — o `BaseRoomScene` chama a cada sala só para cobrir quem entrou direto pelo CONTINUAR,
   sem passar pela intro, e isso NÃO reinicia a faixa. O boss de capítulo cala a música enquanto dura
   o embate (`config.pauseChapterMusic`, default `true` na `BattleScene`) porque terá tema próprio, e
-  devolve de onde parou ao sair; a arena de treino das sentinelas passa `false` e mantém a faixa. Voltar
-  ao menu (`GameScene`) dá `Music.stop()`. Volume pelo slider de MÚSICA da `OptionsScene`
+  devolve de onde parou ao sair; a arena de treino das sentinelas passa `false` e mantém a faixa.
+  Voltar ao menu troca de volta para o tema do menu (`Music.play` troca a faixa sozinho); a
+  `IntroScene` dá `Music.stop()` no `create`, porque a abertura corre em SILÊNCIO até o card.
+  Volume pelo slider de MÚSICA da `OptionsScene`
   (`getMusicVolume` em `state/audio.js`; `Music.applyVolume()` aplica na faixa que já está tocando).
 - `assets/` — `fonts/` (VCR_OSD_MONO), `cursors/`, `sprites/`, `audio/` (SFX soltos + `music/`), `icons/`, `images/`, `ui/`.
 - `pages/`, `scripts/`, `styles/` — páginas HTML auxiliares e auth fora do canvas Phaser.

@@ -62,12 +62,13 @@ export default class GameScene extends Phaser.Scene {
     preload() {
         this.load.image("menu-wordmark", wordmark);
         Sfx.preload(this);   // som "crunch" ao encaixar iniciar/continuar
+        Music.preload(this, "menu");
     }
 
     create() {
-        // Voltar ao menu (pelo "sair" da pausa) encerra a música do capítulo — ela
-        // recomeça na abertura, ou na primeira sala quando o jogador dá CONTINUAR.
-        Music.stop();
+        // Tema do menu. Troca a faixa do capítulo quando o jogador volta pelo
+        // "sair" da pausa, e é idempotente ao voltar das opções (não reinicia).
+        Music.play(this, "menu");
 
         this.cards = [];
         this.activeCard = null;

@@ -81,7 +81,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         if (!this.textures.exists("fx-heal")) {
             this.load.spritesheet("fx-heal", fxHealUrl, { frameWidth: 128, frameHeight: 128 });
         }
-        Music.preload(this);
+        Music.preload(this, "cap1");
     }
 
     create() {

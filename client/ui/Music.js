@@ -12,22 +12,25 @@
 // O volume vem do slider de MÚSICA da OptionsScene (state/audio.js).
 
 import { getMusicVolume } from "../state/audio";
+import menuUrl from "../assets/audio/music/menu.mp3";
 import cap1Url from "../assets/audio/music/cap1_subsolo.mp3";
 
 const TRACKS = {
-    cap1: { key: "music-cap1", url: cap1Url }   // capítulo 1 (subsolo)
+    menu: { key: "music-menu", url: menuUrl },   // menu principal
+    cap1: { key: "music-cap1", url: cap1Url }    // capítulo 1 (subsolo)
 };
 
 let current = null;       // Phaser.Sound em execução (ou pausada).
 let currentName = null;
 
 const Music = {
-    preload(scene) {
-        Object.values(TRACKS).forEach(({ key, url }) => {
-            if (!scene.cache.audio.exists(key)) {
-                scene.load.audio(key, url);
-            }
-        });
+    // Carrega UMA faixa (as músicas têm alguns MB — o menu não deve baixar a do
+    // capítulo antes de abrir, nem vice-versa).
+    preload(scene, name) {
+        const track = TRACKS[name];
+        if (track && !scene.cache.audio.exists(track.key)) {
+            scene.load.audio(track.key, track.url);
+        }
     },
 
     play(scene, name) {
@@ -47,6 +50,22 @@ const Music = {
         Music.stop();
         current = scene.sound.add(track.key, { loop: true, volume: getMusicVolume() });
         currentName = name;
+
+        // O navegador só libera áudio depois da PRIMEIRA interação do usuário, e o
+        // menu é a primeira tela — o contexto costuma estar travado ali. Em vez de
+        // perder o play, espera o Phaser destravar (no 1º clique/tecla) e só então
+        // toca. O guard `current === pending` evita que uma faixa já trocada (ex.:
+        // clicou INICIAR antes de destravar) volte a tocar por cima da nova.
+        if (scene.sound.locked) {
+            const pending = current;
+            scene.sound.once("unlocked", () => {
+                if (current === pending) {
+                    pending.play();
+                }
+            });
+            return;
+        }
+
         current.play();
     },
 
