@@ -8,8 +8,10 @@ import computadorUrl from "../assets/sprites/computador/computador.png";
 // Sprite do pack sci-fi (CC0, ver CREDITOS.txt): 32x16 com dois quadros, o LED
 // da tela aceso e apagado — a animação alterna os dois.
 //
-// O salvamento em si ainda não existe; `config.onSave` liga a estação ao
-// sistema quando ele chegar (ver SaveConsole).
+// `config.onSave` liga a estação ao sistema de save (ver SaveConsole): o porão e
+// o corredor do elevador passam o `saveGame()` da própria sala. Sem `onSave`, o
+// console avisa que o nó de arquivo não está conectado em vez de fingir que
+// gravou.
 
 const FRAME_W = 16;
 const FRAME_H = 16;

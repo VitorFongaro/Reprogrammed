@@ -39,6 +39,9 @@ export const getProgressServiceStatus = () => 'ready';
 const MAX_SOLVED_PUZZLES = 200;
 const MAX_SLUG_LENGTH = 60;
 const MAX_SCENE_LENGTH = 100;
+const MAX_HP = 999;               // teto de sanidade; o MAX_HP real e do cliente.
+const MAX_INVENTORY_ITEMS = 100;
+const MAX_ITEM_QUANTITY = 999;
 
 const invalid = (message) => {
   const error = new Error(message);
@@ -84,6 +87,61 @@ const normalizeSolvedPuzzles = (solvedPuzzles) => {
   return [...new Set(slugs)];
 };
 
+// HP e itens sao estado de JOGO, entao entram no save (reversivel). `hp` aceita
+// nulo: save gravado antes desta coluna existir volta sem vida definida, e o
+// cliente trata isso como vida cheia em vez de punir quem ja tinha save.
+const normalizeHp = (hp) => {
+  if (hp === undefined || hp === null) {
+    return null;
+  }
+
+  const value = Number(hp);
+
+  if (!Number.isInteger(value) || value < 0 || value > MAX_HP) {
+    throw invalid(`hp deve ser um numero inteiro entre 0 e ${MAX_HP}.`);
+  }
+
+  return value;
+};
+
+// Inventario e um mapa { idDoItem: quantidade }. O servidor NAO conhece o
+// catalogo (ele vive no cliente, em data/items.js), entao valida so a forma:
+// chave curta, quantidade inteira e positiva. Item desconhecido e ignorado na
+// leitura pelo proprio cliente.
+const normalizeInventory = (inventory) => {
+  if (inventory === undefined || inventory === null) {
+    return {};
+  }
+
+  if (typeof inventory !== 'object' || Array.isArray(inventory)) {
+    throw invalid('inventory deve ser um objeto { item: quantidade }.');
+  }
+
+  const entries = Object.entries(inventory);
+
+  if (entries.length > MAX_INVENTORY_ITEMS) {
+    throw invalid(`inventory deve ter no maximo ${MAX_INVENTORY_ITEMS} itens.`);
+  }
+
+  return entries.reduce((acc, [id, quantity]) => {
+    if (typeof id !== 'string' || !id.trim() || id.length > MAX_SLUG_LENGTH) {
+      throw invalid('Cada item do inventory deve ter um id de ate 60 caracteres.');
+    }
+
+    const value = Number(quantity);
+
+    if (!Number.isInteger(value) || value < 0 || value > MAX_ITEM_QUANTITY) {
+      throw invalid(`Cada quantidade do inventory deve ser um inteiro entre 0 e ${MAX_ITEM_QUANTITY}.`);
+    }
+
+    if (value > 0) {
+      acc[id.trim()] = value;
+    }
+
+    return acc;
+  }, {});
+};
+
 // A cena e a unica coisa que o cliente manda; capitulo e fase saem dela, para
 // o cliente nao precisar conhecer os ids gerados do banco.
 const resolveLevel = async (client, scene) => {
@@ -105,7 +163,7 @@ export const getGameState = async (userId, accessToken) => {
   const client = createUserSupabaseClient(accessToken);
   const { data, error } = await client
     .from('user_game_state')
-    .select('current_scene, current_level_id, current_chapter_id, solved_puzzles, last_saved_at')
+    .select('current_scene, current_level_id, current_chapter_id, solved_puzzles, hp, inventory, last_saved_at')
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -120,6 +178,8 @@ export const getGameState = async (userId, accessToken) => {
   return {
     scene: data.current_scene,
     solvedPuzzles: data.solved_puzzles ?? [],
+    hp: data.hp ?? null,
+    inventory: data.inventory ?? {},
     savedAt: data.last_saved_at
   };
 };
@@ -127,6 +187,8 @@ export const getGameState = async (userId, accessToken) => {
 export const saveGameState = async (userId, accessToken, payload = {}) => {
   const scene = normalizeScene(payload.scene);
   const solvedPuzzles = normalizeSolvedPuzzles(payload.solvedPuzzles);
+  const hp = normalizeHp(payload.hp);
+  const inventory = normalizeInventory(payload.inventory);
 
   const client = createUserSupabaseClient(accessToken);
   const level = await resolveLevel(client, scene);
@@ -138,9 +200,11 @@ export const saveGameState = async (userId, accessToken, payload = {}) => {
       current_scene: scene,
       current_level_id: level.id,
       current_chapter_id: level.chapter_id,
-      solved_puzzles: solvedPuzzles
+      solved_puzzles: solvedPuzzles,
+      hp,
+      inventory
     }, { onConflict: 'user_id' })
-    .select('current_scene, solved_puzzles, last_saved_at')
+    .select('current_scene, solved_puzzles, hp, inventory, last_saved_at')
     .single();
 
   if (error) {
@@ -150,6 +214,8 @@ export const saveGameState = async (userId, accessToken, payload = {}) => {
   return {
     scene: data.current_scene,
     solvedPuzzles: data.solved_puzzles ?? [],
+    hp: data.hp ?? null,
+    inventory: data.inventory ?? {},
     savedAt: data.last_saved_at
   };
 };
@@ -165,7 +231,9 @@ export const clearGameState = async (userId, accessToken) => {
       current_scene: null,
       current_level_id: null,
       current_chapter_id: null,
-      solved_puzzles: []
+      solved_puzzles: [],
+      hp: null,
+      inventory: {}
     })
     .eq('user_id', userId);
 

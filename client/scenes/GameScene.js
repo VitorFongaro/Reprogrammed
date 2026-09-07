@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import wordmark from "../assets/images/reprogrammed-wordmark.png";
 import { hasLocalSave, loadLocal, startNewGame, FIRST_SCENE } from "../state/progress";
-import { resetVitals } from "../state/vitals";
 import Sfx from "../ui/Sfx";
 
 const WIDTH = 1280;
@@ -318,9 +317,9 @@ export default class GameScene extends Phaser.Scene {
         if (card.item.id === "start") {
             this.statusText.setText("JOGO INICIADO");
             // Jogo novo começa do zero: sem isso, um save carregado antes nesta
-            // mesma sessão deixaria os puzzles marcados como resolvidos.
+            // mesma sessão deixaria os puzzles marcados como resolvidos. O
+            // startNewGame também zera HP e inventário.
             startNewGame();
-            resetVitals();   // HP cheio e controle de capítulo zerado.
             this.time.delayedCall(350, () => {
                 this.scene.start("intro-scene");
             });

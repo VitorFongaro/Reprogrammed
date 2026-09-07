@@ -4,6 +4,11 @@
 // puzzles à vontade, mas se sair sem passar pelo computador de salvamento, os
 // puzzles resolvidos depois do último save voltam a ser pedidos.
 //
+// O save carrega tudo que é estado de JOGO: a sala, os puzzles resolvidos, o HP
+// da Artemis e o inventário. Os dois últimos moram em state/vitals.js e
+// state/inventory.js — aqui só entram e saem do snapshot, para não haver dois
+// donos da mesma verdade.
+//
 // O que NÃO passa por aqui: tentativas, acertos e a dificuldade adaptativa da
 // IA. Isso é registro de aprendizagem, é gravado no momento em que acontece e
 // nunca é revertido por um load — senão o jogador zeraria a dificuldade só
@@ -13,6 +18,8 @@
 // localStorage (espelho, para o jogo continuar salvando se o backend cair).
 
 import { apiFetch } from "./api.js";
+import { getHp, applySavedHp, adoptChapter, resetVitals } from "./vitals.js";
+import { snapshotInventory, applyInventory, resetInventory } from "./inventory.js";
 
 const SAVE_STORAGE_KEY = "reprogrammed.save";
 
@@ -23,9 +30,13 @@ export const FIRST_SCENE = "cap1-porao";
 let currentScene = FIRST_SCENE;
 let solved = new Set();
 
+// Jogo novo: zera TUDO que é estado de jogo. Vida e itens inclusive — senão a
+// partida nova começaria com o HP e a mochila da anterior.
 export function startNewGame() {
     currentScene = FIRST_SCENE;
     solved = new Set();
+    resetVitals();
+    resetInventory();
 }
 
 export function enterScene(sceneKey) {
@@ -45,12 +56,22 @@ export function isSolved(puzzleId) {
 }
 
 export function snapshot() {
-    return { scene: currentScene, solvedPuzzles: [...solved] };
+    return {
+        scene: currentScene,
+        solvedPuzzles: [...solved],
+        hp: getHp(),
+        inventory: snapshotInventory()
+    };
 }
 
 export function applySnapshot(data) {
     currentScene = data?.scene || FIRST_SCENE;
     solved = new Set(Array.isArray(data?.solvedPuzzles) ? data.solvedPuzzles : []);
+    applySavedHp(data?.hp);
+    applyInventory(data?.inventory);
+    // Retomar não é progredir: o capítulo do save é adotado sem disparar a cura
+    // de troca de capítulo, que apagaria o HP recém-restaurado.
+    adoptChapter(currentScene);
 }
 
 // --- Espelho local ---

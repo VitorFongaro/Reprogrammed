@@ -6,10 +6,15 @@
 //  - o ÚNICO meio de cura são os ITENS (usáveis em qualquer contexto);
 //  - a exceção é a troca de CAPÍTULO, que restaura o HP ao máximo.
 //
-// Espelha no localStorage (como o inventário: desacoplado do save do servidor por
-// ora), então o HP SOBREVIVE ao recarregar a página — a Artemis volta com a mesma
-// vida com que estava. Novo jogo (resetVitals) e troca de capítulo (fullHeal)
-// restauram tudo.
+// O HP faz parte do SAVE (ver state/progress.js): carregar um save devolve a vida
+// que a Artemis tinha na hora de gravar. Antes ele vivia só no localStorage, e o
+// resultado era salvar com 20, apanhar até 4 e voltar o save ainda com 4 — o save
+// desfazia a sala e os puzzles, mas não o estrago.
+//
+// O localStorage continua aqui como ESPELHO DE SESSÃO: segura o HP num F5 no meio
+// da jogatina, sem obrigar a passar pelo ponto de salvamento. Quem manda, ao
+// carregar um save, é o save. Novo jogo (resetVitals) e troca de capítulo
+// (fullHeal) restauram tudo.
 
 export const MAX_HP = 20;
 
@@ -67,6 +72,31 @@ export function heal(amount) {
 
 export function isFull() {
     return hp >= MAX_HP;
+}
+
+// --- Ponte com o save (state/progress.js) ---
+
+// Aplica o HP vindo de um save. `null`/inválido vira vida cheia: é o caso do save
+// gravado ANTES de o HP entrar no save, e quem já tinha save não deve ser punido
+// por isso. Zero também vira cheia — save com a Artemis morta seria um beco sem
+// saída, já que a morte é reset de checkpoint e não fim de jogo.
+export function applySavedHp(value) {
+    const n = Math.round(Number(value));
+
+    if (!Number.isFinite(n) || n <= 0 || n > MAX_HP) {
+        return fullHeal();
+    }
+
+    return setHp(n);
+}
+
+// Adota o capítulo de uma cena SEM curar. É o que um load precisa: carregar um
+// save do capítulo 2 estando no 1 não é progressão, é retomada — sem isto, o
+// enterChapterScene logo em seguida veria "mudou de capítulo" e curaria por cima
+// do HP que o save acabou de restaurar.
+export function adoptChapter(sceneKey) {
+    const match = /^cap\d+/.exec(sceneKey ?? "");
+    lastChapter = match ? match[0] : null;
 }
 
 // Restaura tudo. Usado na troca de capítulo e como reset de "derrota" (respawn).

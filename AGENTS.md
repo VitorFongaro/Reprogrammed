@@ -54,18 +54,25 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   exploração e combate — a mesma vida dentro e fora de batalha. Persiste ao trocar de sala
   (passar de sala **não cura**); o **único** meio de cura são os **itens** (usáveis em qualquer
   contexto) e a exceção é a **troca de capítulo**, que restaura tudo (`fullHeal`, disparado por
-  `enterChapterScene` quando o prefixo `capN` da cena muda). Espelha no `localStorage`
-  (`reprogrammed.vitals`, desacoplado do save do servidor por ora, como o inventário), então o HP
-  **sobrevive ao recarregar a página**; novo jogo (`resetVitals`) e troca de capítulo restauram. O
+  `enterChapterScene` quando o prefixo `capN` da cena muda). **Entra no SAVE**
+  (`applySavedHp`, chamado pelo `applySnapshot` do `progress.js`): carregar um save devolve a
+  vida que a Artemis tinha ao gravar. O `localStorage` (`reprogrammed.vitals`) continua, mas
+  como ESPELHO DE SESSÃO — segura o HP num F5 no meio da jogatina; num load, quem manda é o
+  save. `adoptChapter` marca o capítulo do save SEM curar, senão o `enterChapterScene` logo em
+  seguida veria "mudou de capítulo" e apagaria o HP restaurado. Novo jogo (`resetVitals`) e
+  troca de capítulo restauram. O
   `BaseRoomScene` (dano/cura/`resyncHp` ao voltar de sub-cenas; `playHealFx` toca um coração verde
   do pack de efeitos sobre a Artemis ao usar item de cura na sala) e a `BattleScene` (`getHp`/`setHp`)
   leem daqui; a "derrota" (morte na sala / restart do embate / falha no `[R]`) faz `fullHeal` — é
   reset de checkpoint, não cura de jogo. A `ReprogramScene` (`[R]`) também usa o HP global: entra
   com o HP atual, **sem** escala por estágio (chegar ferida torna reprogramar mais arriscado).
 - `state/inventory.js` + `data/items.js` — **inventário** (itens coletados: `id -> qtd`).
-  Espelha só no `localStorage` (`reprogrammed.inventory`), **desacoplado do save do servidor por
-  ora** (dá pra integrar depois — lembrando: itens de save são reversíveis, mas upgrades
-  permanentes talvez pertençam ao perfil monotônico). `data/items.js` é o catálogo (categorias
+  **Entra no SAVE** (`snapshotInventory`/`applyInventory`, via `progress.js`): carregar devolve
+  os itens que o jogador tinha ao gravar. O `localStorage` (`reprogrammed.inventory`) continua
+  como espelho de sessão, para sobreviver a um F5 sem exigir uma ida ao ponto de salvamento.
+  Ressalva para o futuro: os itens de categoria `upgrade` (chips lógicos de fim de capítulo)
+  são melhorias PERMANENTES — quando forem distribuídos de verdade, provavelmente pertencem ao
+  perfil monotônico e não ao save, senão um load os desfaz. `data/items.js` é o catálogo (categorias
   `cura`/`reprogramacao`/`upgrade`/`chave`); o inventário começa VAZIO e a única fonte de item
   hoje é o **espólio de boss** (ver abaixo) — a coleta avulsa no mundo ainda será implementada. Abre pela `InventoryScene` (`"inventory"`):
   tecla `[I]` nas salas e ação **ITENS** na `BattleScene`, ambas via `launch` + `pause`. Layout em
@@ -85,10 +92,12 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   final de cada capítulo larga um. Todo embate que não seja boss de capítulo passa
   `reward: null` (é o caso da dupla de sentinelas, que é arena de treino).
 
-  > Ressalva conhecida: o drop acontece a cada vitória, e o modelo de save é o do Resident
-  > Evil — quem carregar um save anterior ao boss e vencer de novo ganha outro chip. Fechar
-  > isso exige marcar o boss como derrotado no perfil monotônico (o mesmo lugar das
-  > tentativas), não no save; enquanto o capítulo 1 tem um boss só, não vale a complexidade.
+  > O drop acontece a cada vitória, e por um tempo isso foi um buraco: dava para refazer o
+  > boss e acumular chips. Com o **inventário dentro do save**, o buraco fechou sozinho —
+  > carregar um save anterior ao boss também devolve o inventário de antes dele, então vencer
+  > de novo só recupera o chip que o load tirou. Continua possível farmar em teoria, salvando
+  > DEPOIS da vitória e recarregando um save mais antigo do servidor, mas isso já é um
+  > malabarismo deliberado, não um efeito colateral do fluxo normal.
 - `state/audio.js` + `ui/Sfx.js` — **efeitos sonoros** (packs Kenney Interface Sounds e SweetSounds,
   em `assets/audio/*.ogg`; ver docs/ASSETS.md). `Sfx.preload(scene)` no `preload` (já embutido em
   `BlockProgrammingConsole.preload` e `Enemy.preload`) e `Sfx.play(scene, nome, volumeScale?)` no
@@ -265,11 +274,17 @@ nesse caso o save guarda só a cena e deixa a fase nula.
 
 - `state/progress.js` — `markSolved`/`isSolved`, `snapshot`, `save()` e `load()`. Grava na API
   e espelha no `localStorage`, para o jogo continuar salvando se o backend cair; `save()`
-  devolve `{ ok, remote }` para a tela dizer se o "nó de arquivo" recebeu.
+  devolve `{ ok, remote }` para a tela dizer se o "nó de arquivo" recebeu. O snapshot leva
+  `scene`, `solvedPuzzles`, `hp` e `inventory` — os dois últimos moram em `state/vitals.js` e
+  `state/inventory.js`, e aqui só entram e saem do save, para não haver dois donos da mesma
+  verdade. `startNewGame()` zera os quatro.
 - `BaseRoomScene.create()` chama `enterScene(...)` sozinho — sala nova não precisa fazer nada
   para o save saber onde o jogador está.
 - `PuzzleDevice` com `id` nasce resolvido quando o save diz que foi, e aí chama `onRestore`.
-- `SaveComputer` com `onSave` é o ponto de salvamento. Hoje só o porão tem um.
+- `SaveComputer` com `onSave` é o ponto de salvamento. Hoje são dois: o **porão** (começo do
+  capítulo) e o **corredor do elevador** (depois do boss — o embate com o ENIAC é o trecho mais
+  longo do capítulo, e fica antes do elevador de propósito, porque passar de capítulo cura por
+  completo e gravar deste lado guarda o estado real em que o jogador terminou o andar).
 
 > **`onRestore` NÃO cai para `onSolved`, de propósito.** O `onSolved` das salas com mais de um
 > painel lê os outros painéis, que ainda não existem quando o primeiro é construído — cair no

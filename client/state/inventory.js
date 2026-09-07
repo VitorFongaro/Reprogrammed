@@ -1,9 +1,17 @@
-// Inventário do jogador — itens coletados (id -> quantidade). Simples e, por ora,
-// DESACOPLADO do save do servidor: espelha só no localStorage, para sobreviver ao
-// F5 sem exigir mudança de schema no backend. Dá para integrar ao save
-// (progress.js) depois — lembrando a regra do projeto: itens de save são
-// REVERSÍVEIS, mas upgrades permanentes de fim de capítulo talvez pertençam ao
-// perfil monotônico de aprendizagem (decisão futura).
+// Inventário do jogador — itens coletados (id -> quantidade).
+//
+// Faz parte do SAVE: `snapshot`/`apply` são lidos e escritos por state/progress.js,
+// então carregar um save devolve os itens que o jogador tinha no momento em que
+// gravou. Item é estado de JOGO (reversível), não registro de aprendizagem.
+//
+// O localStorage continua aqui, mas como ESPELHO DE SESSÃO: mantém o inventário
+// de pé num F5 no meio da jogatina, sem obrigar a passar pelo computador de
+// salvamento. Quem manda, ao carregar um save, é o save.
+//
+// Ressalva para o futuro: os itens de categoria `upgrade` (os chips lógicos de
+// fim de capítulo) são melhorias PERMANENTES. Quando eles passarem a ser
+// distribuídos de verdade, provavelmente pertencem ao perfil monotônico e não ao
+// save — senão um load os desfaz.
 
 import { ITEMS, itemDef } from "../data/items.js";
 
@@ -19,8 +27,8 @@ function persist() {
     }
 }
 
-// Carrega do localStorage. Começa VAZIO — os itens entram por coleta no mundo
-// (addItem), ainda a implementar.
+// Carrega o espelho de sessão do localStorage. Começa VAZIO; o save sobrescreve
+// isto quando o jogador dá CONTINUAR.
 export function loadInventory() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -48,6 +56,31 @@ export function removeItem(id, n = 1) {
     counts[id] = Math.max(0, counts[id] - n);
     if (counts[id] === 0) delete counts[id];
     persist();
+}
+
+// --- Ponte com o save (state/progress.js) ---
+
+// Cópia rasa do mapa { id: quantidade }, para entrar no snapshot do save.
+export function snapshotInventory() {
+    return { ...counts };
+}
+
+// Substitui o inventário pelo do save. Ids que não existem mais no catálogo são
+// descartados: renomear um item não deve quebrar o save de ninguém.
+export function applyInventory(data) {
+    counts = {};
+
+    if (data && typeof data === "object") {
+        Object.entries(data).forEach(([id, quantity]) => {
+            const n = Math.round(Number(quantity));
+            if (itemDef(id) && Number.isFinite(n) && n > 0) {
+                counts[id] = n;
+            }
+        });
+    }
+
+    persist();
+    return counts;
 }
 
 export function countOf(id) {

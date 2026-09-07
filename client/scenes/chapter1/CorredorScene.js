@@ -1,12 +1,21 @@
 import BaseRoomScene from "./BaseRoomScene";
+import SaveComputer from "../../objects/SaveComputer";
+import { save as saveProgress } from "../../state/progress";
 import corredorBg from "../../assets/images/corredor/corredor_bg.png";
 import corredorMap from "../../assets/maps/corredor.json";
 
 // Capítulo 1, sala 5 — Corredor/elevador: transição sem puzzle. No meio do
 // corredor o bloqueio de sinal cai um nível e a colônia lunar passa a primeira
 // mensagem ao Cosmo (fragmento de história). O elevador só libera depois.
+//
+// É também o SEGUNDO ponto de salvamento do jogo, e o primeiro depois do boss:
+// o embate com o ENIAC é o trecho mais longo do capítulo, e sem uma estação
+// aqui quem fechasse o jogo depois de vencer teria de lutar tudo de novo. Fica
+// antes do elevador de propósito — passar de capítulo cura por completo, então
+// gravar deste lado guarda o estado real em que o jogador terminou o andar.
 
 const TRANSMISSION_X = 620;
+const SAVE_STATION = { x: 1060, y: 380 };
 
 const LUA_COLOR = "#51e36b";
 
@@ -35,8 +44,34 @@ export default class CorredorScene extends BaseRoomScene {
         });
     }
 
+    preload() {
+        super.preload();
+        SaveComputer.preload(this);
+    }
+
     onRoomCreate() {
         this.transmissionDone = false;
+
+        this.saveStation = new SaveComputer(this, {
+            x: SAVE_STATION.x,
+            y: SAVE_STATION.y,
+            onSave: () => this.saveGame()
+        });
+    }
+
+    // Mesma resposta do porão: o save local sempre acontece; `remote` diz se o
+    // nó de arquivo (a API) também recebeu.
+    async saveGame() {
+        const result = await saveProgress();
+
+        if (result.remote) {
+            return { text: "> progresso gravado no nó de arquivo" };
+        }
+
+        return {
+            text: "> gravado só nesta máquina — nó de arquivo fora do ar",
+            color: "#ffb347"
+        };
     }
 
     onRoomUpdate() {

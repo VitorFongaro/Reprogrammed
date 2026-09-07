@@ -282,9 +282,15 @@ create table public.user_game_state (
 
   solved_puzzles jsonb not null default '[]'::jsonb,
 
+  -- HP e itens tambem sao estado de jogo, entao voltam junto com o save. `hp`
+  -- nulo = save antigo, anterior a esta coluna: o cliente trata como vida cheia.
+  hp int,
+  inventory jsonb not null default '{}'::jsonb,
+
   last_saved_at timestamp with time zone not null default now(),
 
-  constraint check_solved_puzzles check (jsonb_typeof(solved_puzzles) = 'array')
+  constraint check_solved_puzzles check (jsonb_typeof(solved_puzzles) = 'array'),
+  constraint check_inventory check (jsonb_typeof(inventory) = 'object')
 );
 
 -- =========================================================
