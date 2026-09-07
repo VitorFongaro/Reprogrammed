@@ -14,14 +14,17 @@
 import { getMusicVolume } from "../state/audio";
 import menuUrl from "../assets/audio/music/menu.mp3";
 import cap1Url from "../assets/audio/music/cap1_subsolo.mp3";
+import bossUrl from "../assets/audio/music/boss.mp3";
 
 const TRACKS = {
     menu: { key: "music-menu", url: menuUrl },   // menu principal
-    cap1: { key: "music-cap1", url: cap1Url }    // capítulo 1 (subsolo)
+    cap1: { key: "music-cap1", url: cap1Url },   // capítulo 1 (subsolo)
+    boss: { key: "music-boss", url: bossUrl }    // embate com o boss de capítulo
 };
 
 let current = null;       // Phaser.Sound em execução (ou pausada).
 let currentName = null;
+let previousName = null;  // faixa trocada por um tema temporário (ver playTheme).
 
 const Music = {
     // Carrega UMA faixa (as músicas têm alguns MB — o menu não deve baixar a do
@@ -69,17 +72,27 @@ const Music = {
         current.play();
     },
 
-    // Silencia guardando a posição — o combate do boss usa isto para dar lugar ao
-    // tema próprio dele e devolver a faixa do capítulo de onde parou.
-    pause() {
-        if (current?.isPlaying) {
-            current.pause();
+    // Tema TEMPORÁRIO (o do boss): toca por cima, lembrando qual faixa estava no
+    // ar para o `restore` devolver depois. Assim a BattleScene não precisa saber
+    // em que capítulo está — no capítulo 2 volta para a faixa do capítulo 2.
+    playTheme(scene, name) {
+        if (currentName !== name) {
+            previousName = currentName;
         }
+        Music.play(scene, name);
     },
 
-    resume() {
-        if (current?.isPaused) {
-            current.resume();
+    // Fim do tema temporário: devolve a faixa anterior (recomeçando do zero — o
+    // embate é longo demais para valer guardar a posição). Sem faixa anterior,
+    // apenas silencia, para o tema do boss não vazar para fora do combate.
+    restore(scene) {
+        const back = previousName;
+        previousName = null;
+
+        if (back) {
+            Music.play(scene, back);
+        } else {
+            Music.stop();
         }
     },
 

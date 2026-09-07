@@ -170,11 +170,12 @@ gerada por uma ferramenta de sprites por prompt; o prompt, o tamanho (60×60), a
 a data ficaram registrados em `client/assets/sprites/metadata.json`. As imagens soltas
 `ChatGPT Image *.png` na mesma pasta são referências, também geradas.
 
-As **músicas** (`client/assets/audio/music/`) também são geradas por IA, ambas da mesma origem:
-`cap1_subsolo.mp3` (entregue como `Sector_Siege.mp3`) toca em loop no capítulo 1, exceto no embate
-com o boss; `menu.mp3` (entregue como `The_Solitude_of_Iron.mp3`) é o tema do menu principal. Ver
-`ui/Music.js`. Se ainda der para recuperar a ferramenta e os prompts usados, vale anotar aqui: a
-declaração no TCC fica mais forte com a origem específica do que com um "gerado por IA" genérico.
+As **músicas** (`client/assets/audio/music/`) também são geradas por IA, as três da mesma origem:
+`menu.mp3` (entregue como `The_Solitude_of_Iron.mp3`) no menu principal, `cap1_subsolo.mp3`
+(`Sector_Siege.mp3`) em loop pelo capítulo 1, e `boss.mp3` (`Fango_d_Argento.mp3`) no embate com o
+boss de capítulo. Ver `ui/Music.js`. Se ainda der para recuperar a ferramenta e os prompts usados,
+vale anotar aqui: a declaração no TCC fica mais forte com a origem específica do que com um "gerado
+por IA" genérico.
 
 Duas consequências práticas:
 

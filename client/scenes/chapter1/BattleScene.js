@@ -182,10 +182,11 @@ const DEFAULT_CONFIG = {
     // escassez é o balanceamento — um por capítulo, e ponto. Arena de treino e
     // demais embates passam `reward: null`.
     reward: "cache",
-    // O boss de capítulo SILENCIA a música do capítulo enquanto dura o embate —
-    // ele terá tema próprio. Embate que não é boss (a arena de treino) passa
-    // `pauseChapterMusic: false` e deixa a faixa do capítulo seguir tocando.
-    pauseChapterMusic: true,
+    // Tema PRÓPRIO do embate (chave em ui/Music.js): entra no lugar da faixa do
+    // capítulo enquanto dura o combate e devolve a anterior ao sair. Embate que
+    // não é boss (a arena de treino) passa `theme: null` e deixa a faixa do
+    // capítulo seguir tocando.
+    theme: "boss",
     // Padrão do bullet hell: "rain" (chuva vertical, ENIAC) ou "sweep"
     // (varredura lateral em fileiras com brecha, sentinela).
     dodgePattern: "rain",
@@ -207,6 +208,7 @@ export default class BattleScene extends Phaser.Scene {
     preload() {
         EniacBoss.preload(this);
         BlockProgrammingConsole.preload(this);
+        Music.preload(this, this.config.theme);   // só carrega se o embate tiver tema
         if (!this.textures.exists("projetil")) {
             this.load.spritesheet("projetil", projetilUrl, { frameWidth: 32, frameHeight: 32 });
         }
@@ -287,12 +289,12 @@ export default class BattleScene extends Phaser.Scene {
         this.events.on("resume", this.onInventoryResume);
         this.events.once("shutdown", () => this.events.off("resume", this.onInventoryResume));
 
-        // Boss de capítulo tem tema próprio: cala a música do capítulo enquanto o
-        // embate dura e devolve de onde parou ao sair (a derrota reinicia AQUI
-        // dentro, sem shutdown, então a faixa só volta na vitória/saída de fato).
-        if (this.config.pauseChapterMusic) {
-            Music.pause();
-            this.events.once("shutdown", () => Music.resume());
+        // Tema próprio do embate no lugar da faixa do capítulo; ao sair, a anterior
+        // volta (a derrota reinicia AQUI dentro, sem shutdown, então o tema segue
+        // tocando pela nova tentativa — que é o que se quer).
+        if (this.config.theme) {
+            Music.playTheme(this, this.config.theme);
+            this.events.once("shutdown", () => Music.restore(this));
         }
 
         this.cameras.main.fadeIn(400, 0, 0, 0);
