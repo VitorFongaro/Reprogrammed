@@ -7,7 +7,8 @@ import Phaser from "phaser";
 //   fan           — leque de balas de uma borda (escopeta).
 //   fallExplode   — balas grandes que caem e explodem em menores.
 //   bigDropHoming — uma bala grande que atravessa deixando pequenas que PERSEGUEM.
-//   laserSweep    — um rastro laser varre a caixa deixando balas pequenas no caminho.
+//   laserSweep    — feixe de laser varre a caixa de um lado ao outro, com uma
+//                   ABERTURA por onde passar; o feixe em si dá dano fora dela.
 // Autossuficiente (gera texturas, escuta o update da cena). `start(opts)` inicia;
 // cada acerto chama `onHit`; ao fim da duração chama `onEnd`.
 
@@ -22,8 +23,11 @@ const HOMING_SPEED = 120;
 const HOMING_TURN = 2.6;           // rad/s de correção rumo à alma.
 const HOMING_LIFE = 2600;
 const HOMING_DELAY = 380;          // as pequenas caem antes de começar a perseguir.
-const LASER_DROP_LIFE = 2200;
 const FAN_SPEED = 250;             // balas do leque.
+const LASER_SWEEP_MS = 2600;       // tempo para o feixe atravessar a caixa (mais lento
+                                    // que o antigo 1500ms — dá tempo de reagir).
+const LASER_GAP_H = 100;           // altura da abertura segura no feixe.
+const LASER_HALF_W = 9;            // meia-largura de colisão do feixe (fora da abertura).
 
 export default class DodgeBox {
     constructor(scene, config = {}) {
@@ -244,41 +248,42 @@ export default class DodgeBox {
         });
     }
 
-    // Rastro laser varrendo a caixa, deixando balas pequenas no caminho (o laser
-    // é só visual — o perigo são as balas). Cada sweep é independente (lista),
-    // então varreduras seguidas não se atrapalham.
+    // Feixe de laser varrendo a caixa de um lado ao outro: o próprio feixe dá dano
+    // (checado a cada frame em onUpdate), exceto na ABERTURA — um trecho vertical
+    // seguro, em altura aleatória, por onde a alma pode passar. Cada sweep é
+    // independente (lista), então varreduras seguidas não se atrapalham.
     attackLaserSweep() {
         const { x, y, w, h } = this.box;
         const fromLeft = Math.random() < 0.5;
+        const gapMargin = LASER_GAP_H / 2 + 14;
+        const gapCenter = Phaser.Math.Between(y - h / 2 + gapMargin, y + h / 2 - gapMargin);
         const laser = {
             x: fromLeft ? x - w / 2 + 10 : x + w / 2 - 10,
             y0: y - h / 2 + 6,
             y1: y + h / 2 - 6,
+            gapTop: gapCenter - LASER_GAP_H / 2,
+            gapBottom: gapCenter + LASER_GAP_H / 2,
             active: true
         };
         this.lasers.push(laser);
 
-        const sweepMs = 1500;
         this.scene.tweens.add({
             targets: laser,
             x: fromLeft ? x + w / 2 - 10 : x - w / 2 + 10,
-            duration: sweepMs, ease: "Sine.easeInOut",
+            duration: LASER_SWEEP_MS, ease: "Sine.easeInOut",
             onComplete: () => { laser.active = false; }
-        });
-        this.scene.time.addEvent({
-            delay: 150, repeat: Math.floor(sweepMs / 150),
-            callback: () => {
-                if (!this.active || !laser.active) return;
-                const by = Phaser.Math.Between(y - h / 2 + 12, y + h / 2 - 12);
-                const mini = this.spawnBullet(laser.x, by, Phaser.Math.Between(-14, 14), Phaser.Math.Between(-14, 14), "dodge-mini");
-                this.scene.time.delayedCall(LASER_DROP_LIFE, () => { if (mini.active) mini.destroy(); });
-            }
         });
     }
 
     onProjectileHit(proj) {
         if (!this.active) return;
         proj.destroy();
+        this.hitPlayer();
+    }
+
+    // Aplica um acerto na alma (i-frames + flash + onHit). Compartilhado pelas
+    // balas (overlap físico) e pelo feixe de laser (checado por posição em onUpdate).
+    hitPlayer() {
         if (this.scene.time.now < this.invulnUntil) return;
         this.invulnUntil = this.scene.time.now + IFRAME_MS;
 
@@ -303,14 +308,26 @@ export default class DodgeBox {
             this.soul.body.setVelocity(0, 0);
         }
 
-        // Rastro laser (visual): o perigo são as balas que ele deixa no caminho.
+        // Feixes de laser: desenha em DOIS trechos, pulando a abertura (fica um vão
+        // visível no feixe), e dá dano contínuo (com i-frames) se a alma cruzar o
+        // feixe FORA da abertura.
         this.laserGraphics.clear();
         this.lasers = this.lasers.filter((laser) => laser.active);
         this.lasers.forEach((laser) => {
             this.laserGraphics.lineStyle(10, 0xff4545, 0.18);
-            this.laserGraphics.lineBetween(laser.x, laser.y0, laser.x, laser.y1);
+            this.laserGraphics.lineBetween(laser.x, laser.y0, laser.x, laser.gapTop);
+            this.laserGraphics.lineBetween(laser.x, laser.gapBottom, laser.x, laser.y1);
             this.laserGraphics.lineStyle(3, 0xff4545, 0.9);
-            this.laserGraphics.lineBetween(laser.x, laser.y0, laser.x, laser.y1);
+            this.laserGraphics.lineBetween(laser.x, laser.y0, laser.x, laser.gapTop);
+            this.laserGraphics.lineBetween(laser.x, laser.gapBottom, laser.x, laser.y1);
+
+            if (this.soul.visible) {
+                const withinBeam = Math.abs(this.soul.x - laser.x) <= LASER_HALF_W + this.soul.width / 2;
+                const insideGap = this.soul.y >= laser.gapTop && this.soul.y <= laser.gapBottom;
+                if (withinBeam && !insideGap) {
+                    this.hitPlayer();
+                }
+            }
         });
 
         // Balas que perseguem: viram gradualmente rumo à alma.

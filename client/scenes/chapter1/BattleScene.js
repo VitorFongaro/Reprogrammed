@@ -38,7 +38,12 @@ const STATUS_Y = 582;
 const HUD_DEPTH = 40;
 
 // --- Calibragem do combate ---
-const BOSS_MAX_HP = 60;
+// BOSS_MAX_HP calibrado para o embate durar uns 5-6 turnos MESMO na estratégia mais
+// rápida possível (reprogramar até o teto e só então atacar): com MAX_REPROGRAMS=2 a
+// força trava em 20 (10 -> 20), então são 2 turnos de REPROGRAMAR (sem dano) + 4
+// ataques de 20 = 80 para abater — 6 turnos no total. Jogo real (misturando ataque e
+// reprogramação, ou errando uma reprogramação) leva mais que isso.
+const BOSS_MAX_HP = 80;
 const PLAYER_MAX_HP = MAX_HP;       // HP global da Artemis (state/vitals).
 const BASE_DAMAGE = 5;              // ataque padrão, sem a variável forca.
 const FORCA_INICIAL = 10;           // criada no primeiro REPROGRAMAR.
