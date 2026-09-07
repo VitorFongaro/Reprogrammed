@@ -163,17 +163,23 @@ isometria, anti-aliasing e paleta solta. Por script, saem certas por construçã
 Não usa nenhum asset de terceiros como entrada: a paleta foi medida dos props já presentes na
 sala, o que é leitura de cor, não reuso de arte.
 
-## Arte gerada por IA
+## Arte e áudio gerados por IA
 
 A **Artemis** (`client/assets/sprites/A_cute_android_maid_with/`, 8 direções + animações) foi
 gerada por uma ferramenta de sprites por prompt; o prompt, o tamanho (60×60), as 8 direções e
 a data ficaram registrados em `client/assets/sprites/metadata.json`. As imagens soltas
 `ChatGPT Image *.png` na mesma pasta são referências, também geradas.
 
+A **música do capítulo 1** (`client/assets/audio/music/cap1_subsolo.mp3`, entregue como
+`Sector_Siege.mp3`) também é gerada por IA. Toca em loop durante todo o capítulo, exceto no embate
+com o boss — ver `ui/Music.js`. Se ainda der para recuperar a ferramenta e o prompt usados, vale
+anotar aqui: a declaração no TCC fica mais forte com a origem específica do que com um "gerado por
+IA" genérico.
+
 Duas consequências práticas:
 
-1. **Declare isso no TCC.** Arte gerada por IA no trabalho precisa estar dita no texto, não
-   descoberta pela banca no repositório.
+1. **Declare isso no TCC.** Arte e áudio gerados por IA no trabalho precisam estar ditos no
+   texto, não descobertos pela banca no repositório.
 2. Isso **não** conflita com a cláusula anti-IA dos packs Post Apoc: o que eles proíbem é usar
    a arte *deles* como entrada de treino ou de geração. A Artemis foi gerada antes e à parte.
    O que continua proibido é pedir a uma IA "faça um sprite no estilo destes aqui" passando os

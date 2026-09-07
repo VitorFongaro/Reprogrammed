@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import EniacBoss from "../../characters/EniacBoss";
 import BattleMenu from "../../ui/BattleMenu";
+import Music from "../../ui/Music";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import projetilUrl from "../../assets/sprites/projetil/projetil.png";
 import { MAX_HP, getHp, setHp, fullHeal } from "../../state/vitals";
@@ -181,6 +182,10 @@ const DEFAULT_CONFIG = {
     // escassez é o balanceamento — um por capítulo, e ponto. Arena de treino e
     // demais embates passam `reward: null`.
     reward: "cache",
+    // O boss de capítulo SILENCIA a música do capítulo enquanto dura o embate —
+    // ele terá tema próprio. Embate que não é boss (a arena de treino) passa
+    // `pauseChapterMusic: false` e deixa a faixa do capítulo seguir tocando.
+    pauseChapterMusic: true,
     // Padrão do bullet hell: "rain" (chuva vertical, ENIAC) ou "sweep"
     // (varredura lateral em fileiras com brecha, sentinela).
     dodgePattern: "rain",
@@ -281,6 +286,14 @@ export default class BattleScene extends Phaser.Scene {
         this.onInventoryResume = () => this.handleInventoryResume();
         this.events.on("resume", this.onInventoryResume);
         this.events.once("shutdown", () => this.events.off("resume", this.onInventoryResume));
+
+        // Boss de capítulo tem tema próprio: cala a música do capítulo enquanto o
+        // embate dura e devolve de onde parou ao sair (a derrota reinicia AQUI
+        // dentro, sem shutdown, então a faixa só volta na vitória/saída de fato).
+        if (this.config.pauseChapterMusic) {
+            Music.pause();
+            this.events.once("shutdown", () => Music.resume());
+        }
 
         this.cameras.main.fadeIn(400, 0, 0, 0);
         this.setBattleStatus(`${this.config.name} :: COMBATE INICIADO`, "#7a8099");

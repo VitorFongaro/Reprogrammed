@@ -109,7 +109,17 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   volume vem do slider de EFEITOS SONOROS da
   `OptionsScene`, espelhado em `state/audio.js` (`getSfxVolume`), então os sons tocam de qualquer cena
   sem consultar a API.
-- `assets/` — `fonts/` (VCR_OSD_MONO), `cursors/`, `sprites/`, `audio/`, `icons/`, `images/`, `ui/`.
+- `ui/Music.js` — **música de fundo** (faixa por capítulo, em `assets/audio/music/`). O
+  `SoundManager` do Phaser é GLOBAL (criado pelo Game, não pela cena), então a faixa **atravessa as
+  trocas de cena sozinha**: ela começa na `IntroScene`, no fim do diálogo de abertura, junto do card
+  "CAPÍTULO 1 :: SUBSOLO" (estilo Katana Zero), e segue tocando por todas as salas. `Music.play` é
+  IDEMPOTENTE — o `BaseRoomScene` chama a cada sala só para cobrir quem entrou direto pelo CONTINUAR,
+  sem passar pela intro, e isso NÃO reinicia a faixa. O boss de capítulo cala a música enquanto dura
+  o embate (`config.pauseChapterMusic`, default `true` na `BattleScene`) porque terá tema próprio, e
+  devolve de onde parou ao sair; a arena de treino das sentinelas passa `false` e mantém a faixa. Voltar
+  ao menu (`GameScene`) dá `Music.stop()`. Volume pelo slider de MÚSICA da `OptionsScene`
+  (`getMusicVolume` em `state/audio.js`; `Music.applyVolume()` aplica na faixa que já está tocando).
+- `assets/` — `fonts/` (VCR_OSD_MONO), `cursors/`, `sprites/`, `audio/` (SFX soltos + `music/`), `icons/`, `images/`, `ui/`.
 - `pages/`, `scripts/`, `styles/` — páginas HTML auxiliares e auth fora do canvas Phaser.
 
 ### Servidor (`server/`)
