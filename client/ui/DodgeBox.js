@@ -8,7 +8,8 @@ import Phaser from "phaser";
 //   fallExplode   — balas grandes que caem e explodem em menores.
 //   bigDropHoming — uma bala grande que atravessa deixando pequenas que PERSEGUEM.
 //   laserSweep    — feixe de laser varre a caixa de um lado ao outro, com uma
-//                   ABERTURA por onde passar; o feixe em si dá dano fora dela.
+//                   ABERTURA por onde passar; o feixe em si dá dano fora dela e
+//                   ainda deixa balas no rastro (que ficam sujando a caixa).
 // Autossuficiente (gera texturas, escuta o update da cena). `start(opts)` inicia;
 // cada acerto chama `onHit`; ao fim da duração chama `onEnd`.
 
@@ -28,6 +29,8 @@ const LASER_SWEEP_MS = 2600;       // tempo para o feixe atravessar a caixa (mai
                                     // que o antigo 1500ms — dá tempo de reagir).
 const LASER_GAP_H = 100;           // altura da abertura segura no feixe.
 const LASER_HALF_W = 9;            // meia-largura de colisão do feixe (fora da abertura).
+const LASER_DROP_MS = 220;         // intervalo entre as balas que o feixe deixa no rastro.
+const LASER_DROP_LIFE = 2200;      // quanto essas balas ficam na caixa (ms).
 
 export default class DodgeBox {
     constructor(scene, config = {}) {
@@ -272,6 +275,39 @@ export default class DodgeBox {
             x: fromLeft ? x + w / 2 - 10 : x - w / 2 + 10,
             duration: LASER_SWEEP_MS, ease: "Sine.easeInOut",
             onComplete: () => { laser.active = false; }
+        });
+
+        // O feixe ainda larga balas no rastro: elas mal se movem, então viram
+        // obstáculos que sujam a caixa depois que ele passa. Nascem só na parte
+        // SÓLIDA do feixe — deixar cair dentro da abertura tiraria do jogador a
+        // única rota segura, que é justamente o que torna o padrão desviável.
+        this.scene.time.addEvent({
+            delay: LASER_DROP_MS,
+            repeat: Math.floor(LASER_SWEEP_MS / LASER_DROP_MS),
+            callback: () => {
+                if (!this.active || !laser.active) return;
+
+                // A abertura pode encostar no topo/base e deixar um dos lados sem
+                // altura útil — só sorteia entre as faixas que realmente cabem.
+                const topoMin = y - h / 2 + 12;
+                const topoMax = laser.gapTop - 6;
+                const baseMin = laser.gapBottom + 6;
+                const baseMax = y + h / 2 - 12;
+                const cabeEmCima = topoMax > topoMin;
+                const cabeEmBaixo = baseMax > baseMin;
+                if (!cabeEmCima && !cabeEmBaixo) return;
+
+                const emCima = cabeEmCima && (!cabeEmBaixo || Math.random() < 0.5);
+                const by = emCima
+                    ? Phaser.Math.Between(topoMin, topoMax)
+                    : Phaser.Math.Between(baseMin, baseMax);
+                const mini = this.spawnBullet(
+                    laser.x, by,
+                    Phaser.Math.Between(-14, 14), Phaser.Math.Between(-14, 14),
+                    "dodge-mini"
+                );
+                this.scene.time.delayedCall(LASER_DROP_LIFE, () => { if (mini.active) mini.destroy(); });
+            }
         });
     }
 
