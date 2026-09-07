@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import wordmark from "../assets/images/reprogrammed-wordmark.png";
 import { hasLocalSave, loadLocal, startNewGame, FIRST_SCENE } from "../state/progress";
 import Sfx from "../ui/Sfx";
+import Music from "../ui/Music";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -64,6 +65,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
+        // Voltar ao menu (pelo "sair" da pausa) encerra a música do capítulo — ela
+        // recomeça na abertura, ou na primeira sala quando o jogador dá CONTINUAR.
+        Music.stop();
+
         this.cards = [];
         this.activeCard = null;
 

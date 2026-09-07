@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { API_BASE_URL } from "../config";
-import { setSfxVolume } from "../state/audio";
+import { setSfxVolume, setMusicVolume } from "../state/audio";
 import Sfx from "../ui/Sfx";
+import Music from "../ui/Music";
 import keyboardLetters from "../assets/icons/keys/keyboard-letters.png";
 import keyboardExtras from "../assets/icons/keys/keyboard-extras.png";
 
@@ -452,6 +453,13 @@ export default class OptionsScene extends Phaser.Scene {
             }
         }
 
+        // Música não precisa de amostra: se estiver tocando, o ajuste já é ouvido
+        // na hora na própria faixa.
+        if (field === "music_volume") {
+            setMusicVolume(this.settings.music_volume);
+            Music.applyVolume();
+        }
+
         if (shouldSave) {
             this.saveSettings({ [field]: this.settings[field] });
         }
@@ -555,7 +563,10 @@ export default class OptionsScene extends Phaser.Scene {
         try {
             this.settings = this.normalizeSettings(await this.requestSettings());
             this.settingsMessage = "";
-            setSfxVolume(this.settings.sfx_volume);   // aplica o volume salvo aos efeitos
+            // Aplica os volumes salvos ao áudio que já está no ar.
+            setSfxVolume(this.settings.sfx_volume);
+            setMusicVolume(this.settings.music_volume);
+            Music.applyVolume();
         } catch (error) {
             this.settingsMessage = "NÃO FOI POSSÍVEL CARREGAR";
         }

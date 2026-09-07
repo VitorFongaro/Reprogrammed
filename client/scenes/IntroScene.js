@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import PlayerCharacter from "../characters/PlayerCharacter";
 import CosmoCompanion from "../characters/CosmoCompanion";
 import DialogueBox from "../ui/DialogueBox";
+import Music from "../ui/Music";
 import poraoBg from "../assets/images/porao/porao_bg.png";
 import poraoMap from "../assets/maps/porao.json";
 import { placeTiledObjects, preloadProps } from "../utils/tiledMap";
@@ -16,6 +17,12 @@ const MAP_OFFSET = { x: 0, y: 8 };
 const ANDROID_POS = { x: 236, y: 426 };
 const POWERED_OFF_TINT = 0x36406a;
 
+// Card "CAPÍTULO 1 :: SUBSOLO" que fecha a abertura (acima de tudo — o diálogo
+// fica em 900 e os consoles em 1000).
+const TITLE_DEPTH = 1100;
+const TITLE_FADE_MS = 700;
+const TITLE_HOLD_MS = 1800;
+
 export default class IntroScene extends Phaser.Scene {
     constructor() {
         super("intro-scene");
@@ -26,6 +33,7 @@ export default class IntroScene extends Phaser.Scene {
         CosmoCompanion.preload(this);
         preloadProps(this);
         this.load.image("porao-bg", poraoBg);
+        Music.preload(this);
     }
 
     create() {
@@ -154,9 +162,57 @@ export default class IntroScene extends Phaser.Scene {
         }
         this.finished = true;
 
-        this.cameras.main.fadeOut(800, 0, 0, 0);
-        this.cameras.main.once("camerafadeoutcomplete", () => {
-            this.scene.start("cap1-porao");
+        // A música do capítulo entra AQUI, junto do card de título: até este ponto
+        // a cena é só o diálogo de despertar, no silêncio. Ela segue tocando pelas
+        // salas (o SoundManager do Phaser é global — ver ui/Music.js).
+        Music.play(this, "cap1");
+
+        this.showChapterTitle(() => {
+            this.cameras.main.fadeOut(800, 0, 0, 0);
+            this.cameras.main.once("camerafadeoutcomplete", () => {
+                this.scene.start("cap1-porao");
+            });
+        });
+    }
+
+    // Card de abertura do capítulo (estilo Katana Zero): escurece a cena, escreve
+    // o título e sai, deixando o jogador cair na sala já com a música tocando.
+    showChapterTitle(onComplete) {
+        const card = this.add.container(0, 0).setDepth(TITLE_DEPTH).setAlpha(0);
+
+        const shade = this.add.rectangle(WIDTH / 2, HEIGHT / 2, WIDTH, HEIGHT, 0x050505, 0.82);
+        const chapter = this.add.text(WIDTH / 2, HEIGHT / 2 - 46, "C A P Í T U L O   1", {
+            fontFamily: "VCR", fontSize: "20px", color: "#6a7186"
+        }).setOrigin(0.5);
+        const title = this.add.text(WIDTH / 2, HEIGHT / 2 + 6, "S U B S O L O", {
+            fontFamily: "VCR", fontSize: "54px", color: "#f7f7f7"
+        }).setOrigin(0.5);
+
+        const rule = this.add.graphics();
+        rule.lineStyle(2, 0x4ad6ff, 0.9);
+        rule.lineBetween(WIDTH / 2 - 150, HEIGHT / 2 + 46, WIDTH / 2 + 150, HEIGHT / 2 + 46);
+
+        card.add([shade, chapter, title, rule]);
+
+        this.tweens.add({
+            targets: card,
+            alpha: 1,
+            duration: TITLE_FADE_MS,
+            ease: "Sine.easeOut",
+            onComplete: () => {
+                this.time.delayedCall(TITLE_HOLD_MS, () => {
+                    this.tweens.add({
+                        targets: card,
+                        alpha: 0,
+                        duration: TITLE_FADE_MS,
+                        ease: "Sine.easeIn",
+                        onComplete: () => {
+                            card.destroy(true);
+                            onComplete?.();
+                        }
+                    });
+                });
+            }
         });
     }
 }

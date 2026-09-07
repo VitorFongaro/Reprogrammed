@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import PlayerCharacter from "../../characters/PlayerCharacter";
 import CosmoCompanion from "../../characters/CosmoCompanion";
 import DialogueBox from "../../ui/DialogueBox";
+import Music from "../../ui/Music";
 import { tiledColliders, placeTiledObjects, preloadProps } from "../../utils/tiledMap";
 import { enterScene } from "../../state/progress";
 import { getHp, getMaxHp, damage as damageVitals, heal as healVitals, fullHeal, enterChapterScene } from "../../state/vitals";
@@ -80,6 +81,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         if (!this.textures.exists("fx-heal")) {
             this.load.spritesheet("fx-heal", fxHealUrl, { frameWidth: 128, frameHeight: 128 });
         }
+        Music.preload(this);
     }
 
     create() {
@@ -89,6 +91,10 @@ export default class BaseRoomScene extends Phaser.Scene {
         // Troca de capítulo cura por completo (única cura automática); passar de
         // sala dentro do mesmo capítulo NÃO cura.
         enterChapterScene(this.scene.key);
+        // A música do capítulo normalmente já vem tocando desde a intro; esta
+        // chamada é IDEMPOTENTE (não reinicia) e existe para quem entrou direto
+        // numa sala pelo CONTINUAR, sem passar pela abertura.
+        Music.play(this, "cap1");
 
         this.interactables = [];
         this.reprogrammables = [];
