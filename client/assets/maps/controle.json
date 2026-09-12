@@ -11,7 +11,7 @@
   "version": "1.10",
   "type": "map",
   "nextlayerid": 4,
-  "nextobjectid": 40,
+  "nextobjectid": 60,
   "tilesets": [
     {
       "columns": 0,
@@ -20,16 +20,24 @@
       "margin": 0,
       "name": "props",
       "spacing": 0,
-      "tilecount": 6,
-      "tilewidth": 150,
-      "tileheight": 84,
+      "tilecount": 14,
+      "tilewidth": 92,
+      "tileheight": 136,
       "tiles": [
-        { "id": 0, "image": "../images/porao/props/mesa.png", "imagewidth": 150, "imageheight": 84 },
-        { "id": 1, "image": "../images/porao/props/banco.png", "imagewidth": 28, "imageheight": 28 },
-        { "id": 2, "image": "../images/porao/props/barril.png", "imagewidth": 40, "imageheight": 58 },
-        { "id": 3, "image": "../images/porao/props/caixote.png", "imagewidth": 56, "imageheight": 52 },
-        { "id": 4, "image": "../images/porao/props/palete.png", "imagewidth": 72, "imageheight": 48 },
-        { "id": 5, "image": "../images/porao/props/caixote_grande.png", "imagewidth": 88, "imageheight": 80 }
+        { "id": 0, "image": "../images/porao/props/prateleira_cheia.png", "imagewidth": 92, "imageheight": 136 },
+        { "id": 1, "image": "../images/porao/props/prateleira_vazia.png", "imagewidth": 92, "imageheight": 110 },
+        { "id": 2, "image": "../images/porao/props/armario_fechado.png", "imagewidth": 40, "imageheight": 116 },
+        { "id": 3, "image": "../images/porao/props/armario_aberto.png", "imagewidth": 40, "imageheight": 116 },
+        { "id": 4, "image": "../images/porao/props/placa_radiacao.png", "imagewidth": 50, "imageheight": 44 },
+        { "id": 5, "image": "../images/porao/props/cilindro_grande.png", "imagewidth": 32, "imageheight": 64 },
+        { "id": 6, "image": "../images/porao/props/cilindro_pequeno.png", "imagewidth": 32, "imageheight": 52 },
+        { "id": 7, "image": "../images/porao/props/bancada.png", "imagewidth": 64, "imageheight": 60 },
+        { "id": 8, "image": "../images/porao/props/cadeira.png", "imagewidth": 32, "imageheight": 72 },
+        { "id": 9, "image": "../images/porao/props/papeis.png", "imagewidth": 30, "imageheight": 38 },
+        { "id": 10, "image": "../images/porao/props/mesa_madeira.png", "imagewidth": 60, "imageheight": 74 },
+        { "id": 11, "image": "../images/porao/props/caixote_amarelo.png", "imagewidth": 48, "imageheight": 60 },
+        { "id": 12, "image": "../images/porao/props/caixote_aberto.png", "imagewidth": 48, "imageheight": 44 },
+        { "id": 13, "image": "../images/porao/props/barril_azul.png", "imagewidth": 36, "imageheight": 58 }
       ]
     }
   ],
@@ -54,13 +62,21 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 1, "gid": 1, "name": "mesa", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 574, "width": 150, "height": 84 },
-        { "id": 2, "gid": 2, "name": "banco", "rotation": 0, "type": "", "visible": true, "x": 250, "y": 556, "width": 28, "height": 28 },
-        { "id": 3, "gid": 3, "name": "barril-1", "rotation": 0, "type": "", "visible": true, "x": 1060, "y": 350, "width": 40, "height": 58 },
-        { "id": 4, "gid": 3, "name": "barril-2", "rotation": 0, "type": "", "visible": true, "x": 1104, "y": 364, "width": 40, "height": 58 },
-        { "id": 5, "gid": 5, "name": "palete", "rotation": 0, "type": "", "visible": true, "x": 450, "y": 640, "width": 72, "height": 48 },
-        { "id": 6, "gid": 4, "name": "caixote-no-palete", "rotation": 0, "type": "", "visible": true, "x": 458, "y": 622, "width": 56, "height": 52 },
-        { "id": 7, "gid": 6, "name": "caixote-grande", "rotation": 0, "type": "", "visible": true, "x": 1080, "y": 600, "width": 88, "height": 80 }
+        { "id": 1, "gid": 5, "name": "placa-radiacao", "rotation": 0, "type": "", "visible": true, "x": 490, "y": 78, "width": 50, "height": 44 },
+        { "id": 2, "gid": 1, "name": "prateleira-cheia", "rotation": 0, "type": "", "visible": true, "x": 56, "y": 264, "width": 92, "height": 136 },
+        { "id": 3, "gid": 3, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 158, "y": 244, "width": 40, "height": 116 },
+        { "id": 4, "gid": 4, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 200, "y": 244, "width": 40, "height": 116 },
+        { "id": 5, "gid": 6, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 930, "y": 192, "width": 32, "height": 64 },
+        { "id": 6, "gid": 7, "name": "cilindro-pequeno", "rotation": 0, "type": "", "visible": true, "x": 968, "y": 180, "width": 32, "height": 52 },
+        { "id": 7, "gid": 2, "name": "prateleira-vazia", "rotation": 0, "type": "", "visible": true, "x": 1140, "y": 238, "width": 92, "height": 110 },
+        { "id": 8, "gid": 8, "name": "bancada", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 600, "width": 64, "height": 60 },
+        { "id": 9, "gid": 9, "name": "cadeira", "rotation": 0, "type": "", "visible": true, "x": 166, "y": 596, "width": 32, "height": 72 },
+        { "id": 10, "gid": 10, "name": "papeis", "rotation": 0, "type": "", "visible": true, "x": 100, "y": 650, "width": 30, "height": 38 },
+        { "id": 11, "gid": 11, "name": "mesa-madeira", "rotation": 0, "type": "", "visible": true, "x": 424, "y": 648, "width": 60, "height": 74 },
+        { "id": 12, "gid": 13, "name": "caixote-empilhado", "rotation": 0, "type": "", "visible": true, "x": 506, "y": 600, "width": 48, "height": 44 },
+        { "id": 13, "gid": 12, "name": "caixote-base", "rotation": 0, "type": "", "visible": true, "x": 500, "y": 652, "width": 48, "height": 60 },
+        { "id": 14, "gid": 14, "name": "barril-1", "rotation": 0, "type": "", "visible": true, "x": 1150, "y": 652, "width": 36, "height": 58 },
+        { "id": 15, "gid": 14, "name": "barril-2", "rotation": 0, "type": "", "visible": true, "x": 1190, "y": 636, "width": 36, "height": 58 }
       ]
     },
     {
@@ -73,11 +89,18 @@
       "x": 0,
       "y": 0,
       "objects": [
-        { "id": 20, "name": "mesa", "rotation": 0, "type": "", "visible": true, "x": 88, "y": 490, "width": 150, "height": 84 },
-        { "id": 21, "name": "banco", "rotation": 0, "type": "", "visible": true, "x": 250, "y": 528, "width": 28, "height": 28 },
-        { "id": 22, "name": "barris", "rotation": 0, "type": "", "visible": true, "x": 1060, "y": 292, "width": 84, "height": 72 },
-        { "id": 23, "name": "palete-caixote", "rotation": 0, "type": "", "visible": true, "x": 450, "y": 570, "width": 72, "height": 70 },
-        { "id": 24, "name": "caixote-grande", "rotation": 0, "type": "", "visible": true, "x": 1080, "y": 520, "width": 88, "height": 80 }
+        { "id": 30, "name": "prateleira-cheia", "rotation": 0, "type": "", "visible": true, "x": 56, "y": 214, "width": 92, "height": 50 },
+        { "id": 31, "name": "armario-fechado", "rotation": 0, "type": "", "visible": true, "x": 158, "y": 204, "width": 40, "height": 40 },
+        { "id": 32, "name": "armario-aberto", "rotation": 0, "type": "", "visible": true, "x": 200, "y": 204, "width": 40, "height": 40 },
+        { "id": 33, "name": "cilindro-grande", "rotation": 0, "type": "", "visible": true, "x": 930, "y": 162, "width": 32, "height": 30 },
+        { "id": 34, "name": "cilindro-pequeno", "rotation": 0, "type": "", "visible": true, "x": 968, "y": 154, "width": 32, "height": 26 },
+        { "id": 35, "name": "prateleira-vazia", "rotation": 0, "type": "", "visible": true, "x": 1140, "y": 194, "width": 92, "height": 44 },
+        { "id": 36, "name": "bancada", "rotation": 0, "type": "", "visible": true, "x": 90, "y": 560, "width": 64, "height": 40 },
+        { "id": 37, "name": "cadeira", "rotation": 0, "type": "", "visible": true, "x": 166, "y": 566, "width": 32, "height": 30 },
+        { "id": 38, "name": "mesa-madeira", "rotation": 0, "type": "", "visible": true, "x": 424, "y": 603, "width": 60, "height": 45 },
+        { "id": 39, "name": "caixotes", "rotation": 0, "type": "", "visible": true, "x": 500, "y": 612, "width": 48, "height": 40 },
+        { "id": 40, "name": "barril-1", "rotation": 0, "type": "", "visible": true, "x": 1150, "y": 617, "width": 36, "height": 35 },
+        { "id": 41, "name": "barril-2", "rotation": 0, "type": "", "visible": true, "x": 1190, "y": 601, "width": 36, "height": 35 }
       ]
     }
   ]

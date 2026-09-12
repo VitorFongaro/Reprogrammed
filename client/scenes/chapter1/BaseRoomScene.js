@@ -4,7 +4,7 @@ import CosmoCompanion from "../../characters/CosmoCompanion";
 import DialogueBox from "../../ui/DialogueBox";
 import Music from "../../ui/Music";
 import { tiledColliders, placeTiledObjects, preloadProps } from "../../utils/tiledMap";
-import { enterScene } from "../../state/progress";
+import { enterScene, save as saveProgress } from "../../state/progress";
 import { getHp, getMaxHp, damage as damageVitals, heal as healVitals, fullHeal, enterChapterScene } from "../../state/vitals";
 import fxHealUrl from "../../assets/sprites/effects/fx_heal.png";
 
@@ -50,6 +50,8 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.nextSceneKey = config.nextScene ?? null;
         this.spawn = config.spawn ?? { x: 180, y: HEIGHT / 2 };
         this.doorLabel = config.doorLabel ?? "[E] SEGUIR";
+        // Checkpoint automático ao entrar na sala (ver saveCheckpoint).
+        this.autoSave = config.autoSave ?? true;
         this.bounds = config.bounds ?? DEFAULT_BOUNDS;
         // Porta customizada ({ x, y }) para salas cuja porta já está desenhada na
         // arte do mapa: o código só renderiza a luz da fechadura e o prompt.
@@ -156,6 +158,47 @@ export default class BaseRoomScene extends Phaser.Scene {
 
         this.cameras.main.fadeIn(500, 0, 0, 0);
         this.onRoomCreate();
+
+        // CHECKPOINT: entrar numa sala grava sozinho. Vem DEPOIS do
+        // onRoomCreate porque é lá que os puzzles restaurados do save
+        // reaplicam o estado da sala — gravar antes arriscaria salvar um
+        // retrato pela metade.
+        if (this.autoSave) {
+            this.saveCheckpoint();
+        }
+    }
+
+    // Save automático de entrada de sala. Não substitui o SaveComputer: o
+    // computador continua sendo onde o jogador grava de propósito, no meio de
+    // uma sala, antes de arriscar. Este aqui só garante que ninguém perca uma
+    // sala inteira por ter fechado o jogo na hora errada.
+    //
+    // Fogo e esquece, como a telemetria: o save local sempre acontece e a ida
+    // à API não pode segurar a sala nem estourar se o Render estiver dormindo.
+    saveCheckpoint() {
+        saveProgress()
+            .then(() => this.showCheckpointNotice())
+            .catch(() => {});
+    }
+
+    // Aviso discreto no canto: um checkpoint que o jogador não vê é um
+    // checkpoint em que ele não confia — mas também não pode competir com o
+    // diálogo de entrada da sala, então fica pequeno, fora do caminho e some.
+    showCheckpointNotice() {
+        const notice = this.add.text(WIDTH - 28, 44, "◆ PROGRESSO GRAVADO", {
+            fontFamily: "VCR",
+            fontSize: "15px",
+            color: "#4ad6ff"
+        }).setOrigin(1, 0.5).setDepth(900).setAlpha(0);
+
+        this.tweens.add({
+            targets: notice,
+            alpha: { from: 0, to: 0.85 },
+            duration: 300,
+            hold: 1600,
+            yoyo: true,
+            onComplete: () => notice.destroy()
+        });
     }
 
     update(time, delta) {

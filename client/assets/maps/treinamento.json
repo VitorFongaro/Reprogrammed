@@ -11,7 +11,7 @@
   "version": "1.10",
   "type": "map",
   "nextlayerid": 4,
-  "nextobjectid": 200,
+  "nextobjectid": 116,
   "tilesets": [
     {
       "columns": 0,
@@ -24,9 +24,9 @@
       "margin": 0,
       "name": "props",
       "spacing": 0,
-      "tilecount": 11,
+      "tilecount": 12,
       "tilewidth": 92,
-      "tileheight": 112,
+      "tileheight": 132,
       "tiles": [
         {
           "id": 0,
@@ -93,6 +93,12 @@
           "image": "../images/treinamento/props/cable_spool.png",
           "imagewidth": 44,
           "imageheight": 40
+        },
+        {
+          "id": 11,
+          "image": "../images/treinamento/props/painel_laser.png",
+          "imagewidth": 84,
+          "imageheight": 132
         }
       ]
     }
@@ -297,6 +303,18 @@
           "y": 620,
           "width": 48,
           "height": 44
+        },
+        {
+          "id": 114,
+          "gid": 12,
+          "name": "painel-laser",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 258,
+          "y": 388,
+          "width": 84,
+          "height": 132
         }
       ]
     },
@@ -463,6 +481,17 @@
           "y": 590,
           "width": 48,
           "height": 30
+        },
+        {
+          "id": 115,
+          "name": "painel-laser",
+          "rotation": 0,
+          "type": "",
+          "visible": true,
+          "x": 258,
+          "y": 348,
+          "width": 84,
+          "height": 40
         }
       ]
     }

@@ -22,6 +22,14 @@ const LASER_CYCLE = { warn: 500, on: 1100, off: 1400 };
 const LASER_HIT_W = 14;
 const LASER_DAMAGE = 5;
 
+// O feixe vai da BASE DA PAREDE ao FIM DO PISO, não dos bounds do jogador. São
+// os mesmos números da barreira da sala de arquivos (BARRIER_TOP/BOTTOM lá):
+// usar os bounds deixava sobra nas duas pontas e a barreira parecia flutuar no
+// meio da sala em vez de estar presa à estrutura.
+const LASER_TOP = 136;
+const LASER_BOTTOM = 680;
+const LASER_H = LASER_BOTTOM - LASER_TOP;
+
 const LASER_PUZZLE = {
     title: "BARREIRA // LASERS",
     briefing: [
@@ -62,7 +70,9 @@ const CLEARED_SCRIPT = [
 export default class TreinamentoScene extends BaseRoomScene {
     constructor() {
         super("cap1-treinamento", {
-            title: "TREINAMENTO // SEGURANÇA",
+            // Sem título de HUD: o nome da sala é PINTADO na parede do fundo
+            // (ver tools/treinamento_bg.py). Nenhuma outra sala do capítulo usa
+            // o título flutuante, e aqui ele ainda brigava com a barra de HP.
             nextScene: "cap1-sentinela",
             spawn: { x: 140, y: 400 },
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
@@ -113,8 +123,7 @@ export default class TreinamentoScene extends BaseRoomScene {
     createLaser() {
         this.laserGraphics = this.add.graphics().setDepth(700);
 
-        const { y, h } = this.bounds;
-        const zone = this.add.zone(LASER_X, y + h / 2, LASER_HIT_W, h);
+        const zone = this.add.zone(LASER_X, LASER_TOP + LASER_H / 2, LASER_HIT_W, LASER_H);
         this.physics.add.existing(zone, true);
         this.physics.add.overlap(this.player.sprite, zone, () => {
             if (this.laserActive) {
@@ -151,16 +160,18 @@ export default class TreinamentoScene extends BaseRoomScene {
     }
 
     drawLaser() {
-        const { y, h } = this.bounds;
-        const top = y + 4;
-        const bottom = y + h - 4;
+        const top = LASER_TOP;
+        const bottom = LASER_BOTTOM;
         const g = this.laserGraphics;
 
         g.clear();
+        // Emissores mordendo a ponta do feixe: o de cima cavalga a base da
+        // parede, o de baixo o fim do piso — assim a barreira nasce presa à
+        // estrutura, como a da sala de arquivos.
         const emitterColor = this.lasersOn ? 0xff4545 : 0x3a3f55;
         g.fillStyle(emitterColor, 1);
-        g.fillRect(LASER_X - 8, top - 4, 16, 10);
-        g.fillRect(LASER_X - 8, bottom - 6, 16, 10);
+        g.fillRect(LASER_X - 10, top - 8, 20, 14);
+        g.fillRect(LASER_X - 10, bottom - 6, 20, 14);
 
         if (!this.lasersOn || this.laserState === "off") {
             return;
@@ -192,6 +203,11 @@ export default class TreinamentoScene extends BaseRoomScene {
             id: "treinamento-lasers",
             x: 300,
             y: 330,
+            // O corpo vem do prop `painel-laser` do Tiled (tools/painel_laser.py),
+            // desenhado no tamanho padrão do PuzzleDevice para a caixa do alvo
+            // de [R] continuar batendo com o sprite. A luz indicadora fica: ela
+            // acende dentro do sinalizador que o prop tem no topo.
+            drawBody: false,
             blocks: true,
             puzzle: LASER_PUZZLE,
             onSolved: () => this.disableLasers()

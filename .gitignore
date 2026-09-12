@@ -6,3 +6,6 @@ node_modules/
 
 # Build do cliente (gerado por `npm run build`)
 dist/
+
+# Cache do Python (tools/ importa entre scripts)
+__pycache__/

@@ -7,6 +7,10 @@ piso de tile do pack e as marcações de campo de tiro.
 A parede usa a mesma fórmula das outras salas (ver tools/porao_parede.lua) e o
 piso o mesmo tile e tom (ver tools/piso_tile.py), para a sala não destoar.
 
+O NOME DA SALA é pintado na parede, em estêncil desgastado, no lugar do título
+flutuante de HUD que a cena usava — nenhuma outra sala do capítulo tem título
+flutuante, e aqui ele ainda brigava com a barra de HP no canto.
+
 A PORTA não é desenhada aqui: ela é CARIMBADA a partir de controle_bg.png. A
 porta padrão do capítulo (batente recuado, duas folhas, placa acesa e o tapete
 listrado no piso) foi desenhada no Aseprite e não tem gerador versionado, então
@@ -61,6 +65,93 @@ DOOR_MAT = (593, 128, 687, 137)        # tapete listrado, já no piso
 # (LASER_X = 600 na cena) e a zona de tiro.
 LASER_X = 600
 
+# Nome da sala pintado na parede. O x é o CENTRO do trecho de parede que fica
+# livre entre a prateleira (acaba em 332) e a torre (começa em 880); o y de topo
+# deixa a letra acima da placa de perigo, que é um prop e ocupa a parede a
+# partir de y=78. Escala 7 = letra de 35x49px.
+SIGN_TEXT = "TREINAMENTO"
+SIGN_CX = 606
+SIGN_TOP = 26
+SIGN_SCALE = 7
+SIGN_PAINT = (104, 110, 128)
+SIGN_FADED = (74, 79, 95)
+SIGN_WEAR = 0.07        # fração de lascas que descascaram (mostram a parede)
+SIGN_DIM = 0.26         # fração que só desbotou
+SIGN_FLAKE = 4          # lado da lasca, em px — ver paint_sign
+
+# Tipo de estêncil 5x7. Só as letras que o jogo usa em placa de parede; letra
+# que faltar vira espaço em vez de quebrar o build.
+GLYPHS = {
+    "A": (".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"),
+    "B": ("####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."),
+    "C": (".####", "#....", "#....", "#....", "#....", "#....", ".####"),
+    "D": ("####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."),
+    "E": ("#####", "#....", "#....", "####.", "#....", "#....", "#####"),
+    "G": (".####", "#....", "#....", "#..##", "#...#", "#...#", ".####"),
+    "I": ("#####", "..#..", "..#..", "..#..", "..#..", "..#..", "#####"),
+    "L": ("#....", "#....", "#....", "#....", "#....", "#....", "#####"),
+    "M": ("#...#", "##.##", "#.#.#", "#.#.#", "#...#", "#...#", "#...#"),
+    "N": ("#...#", "##..#", "#.#.#", "#.#.#", "#..##", "#...#", "#...#"),
+    "O": (".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."),
+    "R": ("####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"),
+    "S": (".####", "#....", "#....", ".###.", "....#", "....#", "####."),
+    "T": ("#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."),
+    "U": ("#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."),
+    "0": (".###.", "#...#", "#..##", "#.#.#", "##..#", "#...#", ".###."),
+    "1": ("..#..", ".##..", "..#..", "..#..", "..#..", "..#..", ".###."),
+    "2": (".###.", "#...#", "....#", "...#.", "..#..", ".#...", "#####"),
+    "3": ("####.", "....#", "....#", ".###.", "....#", "....#", "####."),
+    "4": ("#..#.", "#..#.", "#..#.", "#####", "...#.", "...#.", "...#."),
+    " ": (".....", ".....", ".....", ".....", ".....", ".....", "....."),
+}
+GLYPH_W, GLYPH_H, GLYPH_GAP = 5, 7, 1
+
+
+def paint_sign(px, rng, texto, cx, top, escala):
+    """Pinta `texto` na parede em estêncil desgastado, centralizado em `cx`.
+
+    Duas decisões que mudam muito o resultado:
+
+    O desgaste NÃO pinta o pixel em vez de pintá-lo de outra cor. Assim, onde a
+    tinta descascou aparece o que já estava na parede — inclusive as linhas de
+    painel, que é o que faz a pintura parecer aplicada por cima da estrutura em
+    vez de fazer parte dela.
+
+    E o sorteio é por LASCA (bloco de SIGN_FLAKE px), não por pixel. Sorteando
+    pixel a pixel a letra vira chuvisco: parece textura ruim, não tinta velha.
+    Tinta descasca em pedaço, então o pedaço é a unidade.
+    """
+    passo = (GLYPH_W + GLYPH_GAP) * escala
+    largura = len(texto) * passo - GLYPH_GAP * escala
+    x0 = cx - largura // 2
+
+    # Sorteio por lasca, memorizado por célula: dois pixels da mesma lasca
+    # precisam cair no mesmo lado.
+    lascas = {}
+
+    def lasca(x, y):
+        chave = (x // SIGN_FLAKE, y // SIGN_FLAKE)
+        if chave not in lascas:
+            lascas[chave] = rng.random()
+        return lascas[chave]
+
+    for k, ch in enumerate(texto):
+        linhas = GLYPHS.get(ch.upper(), GLYPHS[" "])
+        for j, linha in enumerate(linhas):
+            for i, marca in enumerate(linha):
+                if marca != "#":
+                    continue
+                bx = x0 + k * passo + i * escala
+                by = top + j * escala
+                for dy in range(escala):
+                    for dx in range(escala):
+                        x, y = bx + dx, by + dy
+                        r = lasca(x, y)
+                        if r < SIGN_WEAR:
+                            continue
+                        cor = SIGN_FADED if r < SIGN_WEAR + SIGN_DIM else SIGN_PAINT
+                        px[x, y] = cor + (255,)
+
 
 def clamp(v, lo=0, hi=255):
     return int(max(lo, min(hi, v)))
@@ -97,7 +188,11 @@ def main():
     for x in range(W):
         px[x, WALL_H - 1] = (9, 10, 13, 255)
 
-    # 2) Piso de tile.
+    # 2) Nome da sala pintado na parede, por cima das linhas de painel — tinta
+    # vai por cima da estrutura, não por baixo.
+    paint_sign(px, rng, SIGN_TEXT, SIGN_CX, SIGN_TOP, SIGN_SCALE)
+
+    # 3) Piso de tile.
     fx, fy, fw, fh = FLOOR
     for ty in range(fy, fy + fh, TILE):
         for tx in range(fx, fx + fw, TILE):
@@ -110,7 +205,7 @@ def main():
                         px[x, y] = (clamp(c[0] * DARKEN), clamp(c[1] * DARKEN),
                                     clamp(c[2] * DARKEN), 255)
 
-    # 3) Faixa de perigo sob a linha da barreira: avisa onde o laser corta.
+    # 4) Faixa de perigo sob a linha da barreira: avisa onde o laser corta.
     for y in range(fy, fy + fh):
         for dx in (-1, 0, 1):
             px[LASER_X + dx, y] = (46, 36, 20, 255)
@@ -120,7 +215,7 @@ def main():
                 if 0 <= y + j < fy + fh:
                     px[LASER_X + dx, y + j] = (120, 96, 30, 255)
 
-    # 4) Luz: sombra da parede, poças das luminárias e vinheta.
+    # 5) Luz: sombra da parede, poças das luminárias e vinheta.
     def light(x, y, f):
         if not (fx <= x < fx + fw and fy <= y < fy + fh):
             return
@@ -146,7 +241,7 @@ def main():
             d = math.hypot(x - vcx, y - vcy) / maxd
             light(x, y, 1 - 0.35 * max(0.0, min(1.0, (d - 0.55) / 0.45)))
 
-    # 5) Porta padrão, carimbada de controle_bg.png. Vai por ÚLTIMO porque o
+    # 6) Porta padrão, carimbada de controle_bg.png. Vai por ÚLTIMO porque o
     # recorte já traz a própria iluminação: passar a vinheta por cima
     # escureceria o tapete e denunciaria o remendo.
     porta = Image.open(args.porta).convert("RGB")

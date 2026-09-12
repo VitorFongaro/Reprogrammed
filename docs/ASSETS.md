@@ -134,12 +134,16 @@ Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte version
 - `client/assets/sprites/` — Cosmo, boss do ENIAC, blocos do puzzle, arma e projétil.
 - `client/assets/images/porao/porao_bg.png` — parede, porta, luminárias e emblema Elysium são
   procedurais (só o piso vem de pack).
-- Props procedurais anteriores à troca pelos packs. Sobraram numa sala só: `caixote`, `banco`,
-  `barril`, `mesa`, `palete` e `caixote_grande` são usados **apenas pela sala de controle**
-  (as últimas duas salas — segurança e corredor — já passaram para os props de pack). Se um
-  dia a sala de controle também trocar, todos viram órfãos de uma vez. Hoje já estão sem
-  referência em mapa nenhum: `armario`, `caixote_lona`, `dreno`, `prateleira`, `ventilador` e
-  `arquivo` (este último saiu quando a sala de arquivos virou sala de servidores).
+- Props procedurais anteriores à troca pelos packs. **Nenhum está mais em uso**: a sala de
+  controle era a última que os referenciava e passou para os props de pack junto com as outras.
+  Hoje estão sem referência em mapa nenhum `armario`, `banco`, `barril`, `caixote`,
+  `caixote_grande`, `caixote_lona`, `dreno`, `mesa`, `palete`, `prateleira`, `ventilador` e
+  `arquivo` (este saiu quando a sala de arquivos virou sala de servidores).
+
+  Ficam no repositório de propósito, com o `.aseprite` fonte ao lado: são arte NOSSA, sem
+  licença de terceiros, e servem de base rápida se aparecer uma sala nova antes de haver arte
+  de pack para ela. Se a decisão for limpar, some a pasta inteira de uma vez — não há mapa
+  para quebrar.
 - `client/assets/images/arquivos/props/server_*.png` e companhia são gerados por
   `tools/servidores.py`, no mesmo estilo dos packs mas desenhados por script — ver a seção
   seguinte.
@@ -147,10 +151,19 @@ Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte version
 ## Arte gerada por script
 
 `tools/treinamento_bg.py` monta o fundo da sala de treinamento (parede, piso do pack e as
-marcações do campo de tiro) e **carimba a porta a partir de `controle_bg.png`**. A porta padrão
+marcações do campo de tiro), **pinta o nome da sala na parede** em estêncil desgastado (tipo 5x7
+no próprio arquivo; o desgaste é sorteado por LASCA e não por pixel, senão a letra vira chuvisco
+em vez de tinta velha) e **carimba a porta a partir de `controle_bg.png`**. A porta padrão
 do capítulo foi desenhada no Aseprite e não tem gerador versionado, então copiar a arte é o
 único jeito de a sala não ficar com uma porta diferente das outras — foi exatamente o que
 aconteceu na primeira versão, que desenhava um portão de ripas por conta própria.
+
+`tools/painel_laser.py` desenha o painel do puzzle da sala de treinamento — o último
+`PuzzleDevice` do capítulo que ainda usava o corpo procedural da classe (um retângulo preto com
+ranhuras). Reaproveita o `Sprite` do `servidores.py`. O tamanho nativo não é livre: 42x66 (84x132
+em 2x) é o tamanho padrão do `PuzzleDevice`, que define a caixa do alvo de `[R]` e onde a luz
+indicadora é desenhada — por isso o sinalizador do prop está centrado no pixel nativo (21, 7),
+que é exatamente onde a luz do código acende.
 
 `tools/servidores.py` desenha os props de sala de servidor (racks, torre, no-break, bobina,
 painel de rede, ventilador...) por código, em tamanho nativo, e exporta em 2x.
