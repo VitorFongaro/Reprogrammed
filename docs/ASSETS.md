@@ -131,7 +131,14 @@ menor para não dominarem). Licença: uso livre inclusive comercial; **atribuiç
 Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte versionado ao lado do
 `.png`:
 
-- `client/assets/sprites/` — Cosmo, boss do ENIAC, blocos do puzzle, arma e projétil.
+- `client/assets/sprites/` — boss do ENIAC, blocos do puzzle, arma e projétil.
+- `client/assets/sprites/cosmo/` — o **Cosmo** foi redesenhado com o `aseprite-mcp` (servidor MCP
+  que dirige o Aseprite em modo batch), a pedido do dev, por comandos de desenho geométrico:
+  círculos concêntricos para a rampa da esfera, `copy_region` para clonar a carcaça nas quatro
+  direções, elipses para as lentes e o contorno nativo do Aseprite. Não é modelo de imagem
+  generativo e não usa asset de terceiros como entrada — mas foi feito por um agente de IA
+  operando a ferramenta, então **vale declarar no TCC** junto com a Artemis. O `.aseprite` ao
+  lado é a fonte editável.
 - `client/assets/images/porao/porao_bg.png` — parede, porta, luminárias e emblema Elysium são
   procedurais (só o piso vem de pack).
 - Props procedurais anteriores à troca pelos packs. **Nenhum está mais em uso**: a sala de

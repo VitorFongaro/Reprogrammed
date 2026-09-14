@@ -1,5 +1,25 @@
 import { API_BASE_URL } from '../config.js';
 
+// Ícones que TROCAM no hover (a versão invertida). Os caminhos ficam no HTML em
+// data-default-icon/data-hover-icon, mas o Vite só processa o `src` inicial —
+// atributo data-* ele não enxerga. Resultado no site publicado: o arquivo da
+// versão invertida nem ia para o build, o hover apontava para um 404 e a imagem
+// sumia; e como o `src` original tinha virado data URI, voltar para o caminho do
+// data-default-icon também dava 404. Em dev funcionava, porque o servidor serve
+// a pasta crua. O glob faz o Vite empacotar a pasta inteira e devolve a URL
+// final de cada ícone, válida nos dois ambientes.
+const PAGE_ICON_URLS = Object.fromEntries(
+    Object.entries(import.meta.glob('../assets/icons/page/*.png', {
+        eager: true,
+        query: '?url',
+        import: 'default'
+    })).map(([path, url]) => [path.split('/').pop(), url])
+);
+
+function resolvePageIcon(path) {
+    return PAGE_ICON_URLS[(path ?? '').split('/').pop()] ?? path;
+}
+
 const modal = document.getElementById('modal');
 const teamContent = document.getElementById('team-content');
 const contactContent = document.getElementById('contact-content');
@@ -520,44 +540,26 @@ registerForm.addEventListener('submit', async (event) => {
     }
 });
 
-accountActions.forEach((action) => {
-    const icon = action.querySelector('.account-icon');
+// Troca o ícone pela versão invertida enquanto o botão está em hover/foco.
+// As duas URLs são resolvidas UMA vez aqui (ver PAGE_ICON_URLS), então o hover
+// nunca aponta para um caminho que não foi empacotado.
+function bindHoverIcon(button, icon) {
+    if (!icon) {
+        return;
+    }
+    const defaultIcon = resolvePageIcon(icon.dataset.defaultIcon);
+    const hoverIcon = resolvePageIcon(icon.dataset.hoverIcon);
 
-    action.addEventListener('mouseenter', () => {
-        icon.src = icon.dataset.hoverIcon;
-    });
+    const showHover = () => { icon.src = hoverIcon; };
+    const showDefault = () => { icon.src = defaultIcon; };
 
-    action.addEventListener('mouseleave', () => {
-        icon.src = icon.dataset.defaultIcon;
-    });
+    button.addEventListener('mouseenter', showHover);
+    button.addEventListener('mouseleave', showDefault);
+    button.addEventListener('focusin', showHover);
+    button.addEventListener('focusout', showDefault);
+}
 
-    action.addEventListener('focusin', () => {
-        icon.src = icon.dataset.hoverIcon;
-    });
-
-    action.addEventListener('focusout', () => {
-        icon.src = icon.dataset.defaultIcon;
-    });
-});
-
-executeButtons.forEach((button) => {
-    const icon = button.querySelector('img');
-
-    button.addEventListener('mouseenter', () => {
-        icon.src = icon.dataset.hoverIcon;
-    });
-
-    button.addEventListener('mouseleave', () => {
-        icon.src = icon.dataset.defaultIcon;
-    });
-
-    button.addEventListener('focusin', () => {
-        icon.src = icon.dataset.hoverIcon;
-    });
-
-    button.addEventListener('focusout', () => {
-        icon.src = icon.dataset.defaultIcon;
-    });
-});
+accountActions.forEach((action) => bindHoverIcon(action, action.querySelector('.account-icon')));
+executeButtons.forEach((button) => bindHoverIcon(button, button.querySelector('img')));
 
 setActiveSection(currentSection);
