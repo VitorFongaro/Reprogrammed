@@ -7,6 +7,7 @@ import { tiledColliders, placeTiledObjects, preloadProps } from "../../utils/til
 import { enterScene, save as saveProgress } from "../../state/progress";
 import { getHp, getMaxHp, damage as damageVitals, heal as healVitals, fullHeal, enterChapterScene } from "../../state/vitals";
 import fxHealUrl from "../../assets/sprites/effects/fx_heal.png";
+import { PROP_EXAMINE, ENEMY_EXAMINE } from "../../data/examine";
 
 // Cena-base das salas do capítulo 1: desenha a sala (mapa em imagem ou grade),
 // cria jogador/Cosmo/diálogo, gerencia interagíveis ([E] no mais próximo), a
@@ -43,6 +44,10 @@ const ENERGY_BALL_LIFESPAN = 4500;  // até sumirem (ms).
 const MELEE_RANGE = 110;
 const HP_BAR = { x: 70, y: 46, w: 200, h: 10 };
 
+// EXAMINAR (estilo Undertale): [E] perto de um prop com descrição em
+// data/examine.js faz o Cosmo comentar. Alcance = metade do maior lado + folga.
+const EXAMINE_REACH = 40;
+
 export default class BaseRoomScene extends Phaser.Scene {
     constructor(key, config = {}) {
         super(key);
@@ -68,6 +73,9 @@ export default class BaseRoomScene extends Phaser.Scene {
         // é GLOBAL (state/vitals) — a MESMA vida dentro e fora de batalha; aqui só
         // decidimos se esta sala causa dano. (Aceita o antigo `hp` como fallback.)
         this.combatEnabled = config.combat ?? (config.hp ?? 0) > 0;
+        // Faixa da sala (chave em ui/Music.js). O capítulo 1 inteiro usa "cap1";
+        // `null` = silêncio (a sala de teste do cap. 2, até ele ter trilha).
+        this.musicKey = config.music === undefined ? "cap1" : config.music;
     }
 
     preload() {
@@ -83,7 +91,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         if (!this.textures.exists("fx-heal")) {
             this.load.spritesheet("fx-heal", fxHealUrl, { frameWidth: 128, frameHeight: 128 });
         }
-        Music.preload(this, "cap1");
+        Music.preload(this, this.musicKey);
     }
 
     create() {
@@ -96,7 +104,11 @@ export default class BaseRoomScene extends Phaser.Scene {
         // A música do capítulo normalmente já vem tocando desde a intro; esta
         // chamada é IDEMPOTENTE (não reinicia) e existe para quem entrou direto
         // numa sala pelo CONTINUAR, sem passar pela abertura.
-        Music.play(this, "cap1");
+        if (this.musicKey) {
+            Music.play(this, this.musicKey);
+        } else {
+            Music.stop();
+        }
 
         this.interactables = [];
         this.reprogrammables = [];
@@ -257,7 +269,52 @@ export default class BaseRoomScene extends Phaser.Scene {
     // com profundidade por y (y-sort). Os PNGs precisam estar carregados em
     // preload como `prop-<nome>`.
     addObjectsFromTiled(mapData, layerName = "objetos", offset = { x: 0, y: 0 }) {
-        placeTiledObjects(this, mapData, layerName, offset);
+        const images = placeTiledObjects(this, mapData, layerName, offset);
+        images.forEach((image) => {
+            const lines = PROP_EXAMINE[image.propName];
+            if (!lines) {
+                return;
+            }
+            // Origem do prop é o canto inferior esquerdo (padrão do Tiled).
+            const cx = image.x + image.displayWidth / 2;
+            this.registerExaminable({
+                x: cx,
+                y: image.y - image.displayHeight / 2,
+                radius: Math.max(image.displayWidth, image.displayHeight) / 2 + EXAMINE_REACH,
+                lines
+            });
+        });
+    }
+
+    // --- Examinar (descrições do Cosmo, estilo Undertale) ---
+    // `lines` é uma lista: cada interação diz a próxima fala e depois volta ao
+    // começo. Só vale com a sala CALMA (nenhum inimigo ativo): ninguém para para
+    // comentar a decoração com bala voando. E perde para qualquer interagível de
+    // verdade no mesmo alcance (ver nearestAvailable). SEM prompt na tela, de
+    // propósito: o Cosmo avisa uma vez no porão que dá para examinar as coisas, e
+    // fica por conta do jogador sair fuçando ou não.
+    // `x`/`y` do spec podem ser getters (robô desligado que foi empurrado): são
+    // lidos a cada frame, não copiados aqui.
+    registerExaminable(spec) {
+        const { radius, lines, isAvailable } = spec;
+        let turn = 0;
+        const item = {
+            examine: true,
+            get x() { return spec.x; },
+            get y() { return spec.y; },
+            radius,
+            isAvailable: () => !this.hasActiveEnemies() && (isAvailable?.() ?? true),
+            onInteract: () => {
+                const text = lines[turn % lines.length];
+                turn += 1;
+                this.playDialogue([{ speaker: "COSMO", text }]);
+            }
+        };
+        return this.registerInteractable(item);
+    }
+
+    hasActiveEnemies() {
+        return this.enemies.some((enemy) => !enemy.disabled);
     }
 
     tryInteract() {
@@ -271,12 +328,19 @@ export default class BaseRoomScene extends Phaser.Scene {
         target?.onInteract();
     }
 
+    // Interagível de verdade (porta, puzzle, save...) sempre ganha de um
+    // examinável: o "examinar" só entra quando não há nada mais em alcance, para
+    // nunca roubar o [E] de uma máquina que fica em cima de um prop.
     nearestAvailable() {
+        return this.nearestOf((item) => !item.examine) ?? this.nearestOf((item) => item.examine);
+    }
+
+    nearestOf(filter) {
         let best = null;
         let bestDistance = Infinity;
 
         this.interactables.forEach((item) => {
-            if (!item.isAvailable()) {
+            if (!filter(item) || !item.isAvailable()) {
                 return;
             }
 
@@ -640,6 +704,17 @@ export default class BaseRoomScene extends Phaser.Scene {
     // Inimigo se registra aqui (cria a colisão de contato com a Artemis).
     registerEnemy(enemy) {
         this.enemies.push(enemy);
+        // Robô desligado vira examinável (o comentário do Cosmo sobre a carcaça).
+        const lines = ENEMY_EXAMINE[enemy.type];
+        if (lines) {
+            this.registerExaminable({
+                get x() { return enemy.x; },
+                get y() { return enemy.y; },
+                radius: 70,
+                lines,
+                isAvailable: () => enemy.disabled && enemy.sprite?.active
+            });
+        }
         // Colisão SÓLIDA com a Artemis (ela não atravessa mais o inimigo); o toque
         // ainda tira HP. Colisor, não overlap — assim os dois se bloqueiam de fato.
         this.physics.add.collider(this.player.sprite, enemy.sprite, () => {

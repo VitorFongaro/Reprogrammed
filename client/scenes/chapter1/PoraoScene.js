@@ -56,7 +56,8 @@ const PUZZLE_INTRO_SCRIPT = [
 
 const ENTRY_SCRIPT = [
     { speaker: "COSMO", text: "Sistemas online. Mova-se com WASD — e segure Shift para correr." },
-    { speaker: "COSMO", text: "Sem energia, nenhuma porta abre. Aperte [E] no gerador — ou [R] para reprogramá-lo à distância, em câmara lenta." }
+    { speaker: "COSMO", text: "Sem energia, nenhuma porta abre. Aperte [E] no gerador — ou [R] para reprogramá-lo à distância, em câmara lenta." },
+    { speaker: "COSMO", text: "Ah, e se algo no caminho chamar sua atenção, chegue perto e aperte [E]. Eu sempre tenho um comentário." }
 ];
 
 const SOLVED_SCRIPT = [

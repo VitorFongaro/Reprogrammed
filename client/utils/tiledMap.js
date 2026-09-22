@@ -67,7 +67,8 @@ export function tiledColliders(mapData, layerName, offset = { x: 0, y: 0 }) {
 }
 
 // Instancia os tile objects como sprites (origem no canto inferior esquerdo,
-// padrão do Tiled) com profundidade por y (y-sort). Retorna as imagens criadas.
+// padrão do Tiled) com profundidade por y (y-sort). Retorna as imagens criadas,
+// cada uma com `propName` (o nome do prop).
 export function placeTiledObjects(scene, mapData, layerName, offset = { x: 0, y: 0 }) {
     const layer = findObjectLayer(mapData, layerName);
     if (!layer) {
@@ -88,7 +89,9 @@ export function placeTiledObjects(scene, mapData, layerName, offset = { x: 0, y:
 
         const x = object.x + offset.x;
         const y = object.y + offset.y;
-        images.push(scene.add.image(x, y, textureKey).setOrigin(0, 1).setDepth(y));
+        const image = scene.add.image(x, y, textureKey).setOrigin(0, 1).setDepth(y);
+        image.propName = name;   // o BaseRoomScene usa para achar a descrição do "examinar".
+        images.push(image);
     });
 
     return images;
