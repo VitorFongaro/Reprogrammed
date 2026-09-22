@@ -1,6 +1,7 @@
 # Recolore o sprite do biped (MECH VERMELHO — pack biped_robot, CC BY-SA 4.0,
 # Silver Ink) por ROTAÇÃO DE MATIZ (HSV), gerando variantes NÃO-VERMELHAS para os
-# dois sentinelas da arena pré-boss (SentinelaScene / BattleScene em modo dupla).
+# dois sentinelas da arena pré-boss (SentinelaScene / BattleScene em modo dupla)
+# e para a arte PROVISÓRIA da LEO (boss do cap. 2, `biped_maid`, rosa).
 #
 # Só recolore pixels com saturação relevante: o metal/sombra (baixa saturação)
 # fica intacto, então só a "cor" do mech muda. É transformação determinística
@@ -17,7 +18,7 @@ SRC = os.path.join(ROOT, "client", "assets", "sprites", "enemies", "biped")
 DST = os.path.join(ROOT, "client", "assets", "sprites", "enemies")
 
 # nome da variante -> deslocamento de matiz em graus (ver tools: prévia +200/+300).
-VARIANTS = {"biped_teal": 200, "biped_violet": 300}
+VARIANTS = {"biped_teal": 200, "biped_violet": 300, "biped_maid": 330}
 SHEETS = ["walk.png", "disabled.png"]
 SAT_MIN = 0.12  # abaixo disso é cinza/metal: não recolore.
 

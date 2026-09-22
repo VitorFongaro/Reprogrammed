@@ -10,6 +10,11 @@ import Phaser from "phaser";
 //   laserSweep    — feixe de laser varre a caixa de um lado ao outro, com uma
 //                   ABERTURA por onde passar; o feixe em si dá dano fora dela e
 //                   ainda deixa balas no rastro (que ficam sujando a caixa).
+//   watchLight    — (VIGIA, cap. 2) a luz no topo fica VERMELHA de tempos em
+//                   tempos: se a alma se MEXER enquanto está vermelha, leva tiro
+//                   mirado. Uma garoa de balas no verde obriga a se mexer entre
+//                   uma luz e outra. É uma condicional jogável: se mover e luz
+//                   vermelha, fogo.
 // Autossuficiente (gera texturas, escuta o update da cena). `start(opts)` inicia;
 // cada acerto chama `onHit`; ao fim da duração chama `onEnd`.
 
@@ -31,6 +36,10 @@ const LASER_GAP_H = 100;           // altura da abertura segura no feixe.
 const LASER_HALF_W = 9;            // meia-largura de colisão do feixe (fora da abertura).
 const LASER_DROP_MS = 220;         // intervalo entre as balas que o feixe deixa no rastro.
 const LASER_DROP_LIFE = 2200;      // quanto essas balas ficam na caixa (ms).
+const WATCH_WARN_MS = 380;         // luz amarela (aviso) antes do vermelho.
+const WATCH_RED_MS = 900;          // quanto tempo a luz fica vermelha.
+const WATCH_SHOT_MS = 170;         // cadência dos tiros em quem se mexe no vermelho.
+const WATCH_SHOT_SPEED = 300;
 
 export default class DodgeBox {
     constructor(scene, config = {}) {
@@ -45,6 +54,7 @@ export default class DodgeBox {
         const { x, y, w, h } = this.box;
         this.boxGraphics = scene.add.graphics().setDepth(20).setVisible(false);
         this.laserGraphics = scene.add.graphics().setDepth(29);
+        this.watchGraphics = scene.add.graphics().setDepth(29);
 
         this.soul = scene.physics.add.image(x, y, "dodge-soul").setDepth(30).setVisible(false);
         this.soul.body.setCollideWorldBounds(true);
@@ -151,6 +161,8 @@ export default class DodgeBox {
         this.projectiles?.clear(true, true);
         this.lasers = [];
         this.laserGraphics?.clear();
+        this.watch = null;
+        this.watchGraphics?.clear();
         if (this.soul?.body) this.soul.body.setVelocity(0, 0);
         this.soul?.setVisible(false);
         this.boxGraphics?.setVisible(false);
@@ -164,7 +176,8 @@ export default class DodgeBox {
             fan: () => this.attackFan(),
             fallExplode: () => this.attackFallExplode(),
             bigDropHoming: () => this.attackBigDropHoming(),
-            laserSweep: () => this.attackLaserSweep()
+            laserSweep: () => this.attackLaserSweep(),
+            watchLight: () => this.attackWatchLight()
         }[pattern] ?? (() => this.attackRain()))();
     }
 
@@ -311,6 +324,49 @@ export default class DodgeBox {
         });
     }
 
+    // Luz da vigia: aviso amarelo -> vermelho (mexeu, levou) -> verde. No verde
+    // cai uma garoa leve, para parar não ser sempre a resposta certa.
+    attackWatchLight() {
+        const { x, y, w, h } = this.box;
+        const now = this.scene.time.now;
+        this.watch = { phase: "warn", until: now + WATCH_WARN_MS, nextShot: 0, x, y: y - h / 2 + 20 };
+        for (let i = 0; i < 2; i += 1) {
+            const px = Phaser.Math.Between(x - w / 2 + 24, x + w / 2 - 24);
+            this.spawnBullet(px, y - h / 2 + 30, 0, Phaser.Math.Between(90, 130), "dodge-mini");
+        }
+    }
+
+    updateWatchLight() {
+        this.watchGraphics.clear();
+        if (!this.active || !this.opts.patterns.includes("watchLight")) return;
+        const now = this.scene.time.now;
+        const w = this.watch;
+        if (w && now >= w.until) {
+            if (w.phase === "warn") {
+                w.phase = "red";
+                w.until = now + WATCH_RED_MS;
+            } else {
+                this.watch = null;
+            }
+        }
+        const phase = this.watch?.phase ?? "green";
+        const color = phase === "red" ? 0xff4545 : phase === "warn" ? 0xffb347 : 0x51e36b;
+        const lx = this.box.x;
+        const ly = this.box.y - this.box.h / 2 + 20;
+        this.watchGraphics.fillStyle(color, 0.25);
+        this.watchGraphics.fillCircle(lx, ly, 14);
+        this.watchGraphics.fillStyle(color, 1);
+        this.watchGraphics.fillCircle(lx, ly, 7);
+
+        if (phase !== "red" || !this.soul.visible) return;
+        const moving = this.soul.body.velocity.length() > 1;   // velocidade pedida neste frame (WASD).
+        if (moving && now >= this.watch.nextShot) {
+            this.watch.nextShot = now + WATCH_SHOT_MS;
+            const a = Phaser.Math.Angle.Between(lx, ly, this.soul.x, this.soul.y);
+            this.spawnBullet(lx, ly + 12, Math.cos(a) * WATCH_SHOT_SPEED, Math.sin(a) * WATCH_SHOT_SPEED);
+        }
+    }
+
     onProjectileHit(proj) {
         if (!this.active) return;
         proj.destroy();
@@ -365,6 +421,8 @@ export default class DodgeBox {
                 }
             }
         });
+
+        this.updateWatchLight();
 
         // Balas que perseguem: viram gradualmente rumo à alma.
         const dt = (delta ?? 16) / 1000;

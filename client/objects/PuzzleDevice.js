@@ -1,12 +1,13 @@
 import ProgrammingConsole from "../ui/ProgrammingConsole";
-import BlockProgrammingConsole from "../ui/BlockProgrammingConsole";
+import { createConsole } from "../ui/ConditionalConsole";
 import { isSolved, markSolved } from "../state/progress";
 
 // Máquina interagível que abre o console de puzzle de variável. Desenha o corpo,
 // a luz indicadora (vermelha = desligada, verde = ativa) e o prompt "[E] PROGRAMAR",
 // e se registra como interagível na cena (BaseRoomScene).
 // `config.blocks: true` usa o console de PROGRAMAÇÃO EM BLOCOS (arrastar e encaixar);
-// caso contrário, usa o console de texto (digitar `nome = valor`).
+// caso contrário, usa o console de texto (digitar `nome = valor`). Puzzle com
+// `lines` (condicional multilinha do cap. 2) abre o ConditionalConsole.
 // `config.introScript` (roteiro de DialogueBox) toca UMA vez antes da primeira
 // abertura do console — o Cosmo explicando a mecânica em vez do texto do painel.
 // `config.id` é o slug do puzzle (o mesmo de `puzzles.slug` no banco): com ele a
@@ -44,14 +45,18 @@ export default class PuzzleDevice {
 
         this.draw();
 
-        const ConsoleClass = config.blocks ? BlockProgrammingConsole : ProgrammingConsole;
-        this.console = new ConsoleClass(scene, config.puzzle, {
+        const options = {
             // O mesmo slug que identifica o puzzle no save identifica a
             // tentativa na telemetria.
             puzzleId: this.id,
             onSolved: () => this.handleSolved(),
             onClose: () => scene.player.setEnabled(true)
-        });
+        };
+        // Puzzle com `lines` (condicional, cap. 2) sempre é em blocos; o
+        // createConsole escolhe entre o console de variável e o de condicional.
+        this.console = config.blocks || config.puzzle?.lines
+            ? createConsole(scene, config.puzzle, options)
+            : new ProgrammingConsole(scene, config.puzzle, options);
 
         scene.registerInteractable({
             x: this.x,

@@ -19,7 +19,7 @@ import carBroken from "../assets/sprites/enemies/car/broken.png";
 import carProjectile from "../assets/sprites/enemies/car/projectile.png";
 import Sfx from "../ui/Sfx";
 
-// Inimigos do capítulo 1 (packs SteamRobotsPack + biped_robot, quadros 32×32).
+// Inimigos dos capítulos 1 e 2 (packs SteamRobotsPack + biped_robot, quadros 32×32).
 // Cada inimigo anda/persegue a Artemis e ataca (contato ou tiro), tirando HP da
 // sala. Os robôs à distância EMPUNHAM uma arma (pistola/escopeta, folha própria
 // sobreposta 1:1 no robô, mira e dispara). Neutraliza-se de dois modos:
@@ -113,6 +113,81 @@ const TYPES = {
         disablePuzzle: { variable: "arma", expected: false,
             hint: "monte:  arma = false", wrongValueMessage: "a arma ainda dispara",
             blockDistractors: { nome: ["torreta", "canhao"], op: ["=="], valor: ["true", '"false"'] } }
+    },
+
+    // === Capítulo 2 (condicionais) ============================================
+    // Arte provisória: os sprites do cap. 1 com TINT (o SteamRobotsPack é cinza,
+    // então girar a matiz não muda nada; o tint multiplica e colore). Trocar por
+    // arte própria é só apontar walkKey/disabledKey para as folhas novas.
+    // O COMPORTAMENTO de cada um é uma condicional que o jogador consegue ler
+    // olhando para ele, e o puzzle de desligar é uma condicional de verdade
+    // (ConditionalConsole: o jogo executa o que o jogador montou em testes).
+
+    // VIGIA: não sai do lugar e só atira ENQUANTO a Artemis se mexe
+    // ("se ela se move: fogo"). Parada, ela está segura, então dá para chegar
+    // perto em pare-e-anda ou reprogramar de longe. Fica vermelha quando alerta.
+    vigia: {
+        name: "VIGIA",
+        walkKey: "enemy-pistol-walk",
+        disabledKey: "enemy-pistol-disabled",
+        weaponKey: "enemy-pistol-weapon",
+        tint: 0xffc04d, alertTint: 0xff5a5a,
+        scale: 3.3, speed: 0, meleeHp: 2, ranged: true, fireMs: 650, contactDamage: 3,
+        sentry: true,
+        dodge: ["watchLight"],         // bullet hell: luz vermelha = não se mexa.
+        disablePuzzle: {
+            briefing: [
+                "A vigia atira em tudo que se mexe.",
+                "Faça ela ignorar a Artemis, mas continuar de guarda contra o resto."
+            ],
+            hint: 'monte:  se alvo == "artemis" :   atirar = false',
+            lines: [
+                "se [nome] [op] [valor] :",
+                "    atirar = [valor]"
+            ],
+            blocks: { nome: ["alvo"], op: ["==", "!="], valor: ['"artemis"', "false", "true"] },
+            defaults: { atirar: true },
+            tests: [
+                { given: { alvo: "artemis" }, expect: { atirar: false } },
+                { given: { alvo: "intruso" }, expect: { atirar: true } }
+            ],
+            timeLimitMs: 24000
+        }
+    },
+
+    // FAXINEIRO: robô de limpeza (a LEO, boss do capítulo, é a governanta deles).
+    // Anda limpando à toa; se a Artemis chegar perto, trava, TELEGRAFA e dá uma
+    // investida em linha reta. Depois fica tonto um instante: é a janela para
+    // golpear ou reprogramar.
+    faxineiro: {
+        name: "FAXINEIRO",
+        walkKey: "enemy-exploding-walk",
+        disabledKey: "enemy-exploding-disabled",
+        tint: 0x7dffb0,
+        scale: 3.3, speed: 80, meleeHp: 3, ranged: false, contactDamage: 4,
+        wander: true,
+        dash: { range: 230, windupMs: 450, speed: 430, durationMs: 420, dizzyMs: 1000, cooldownMs: 2200 },
+        dodge: ["fan", "bigDropHoming"],
+        disablePuzzle: {
+            briefing: [
+                "Ele está quase sem bateria e não para de limpar.",
+                "Mande-o recarregar quando a bateria estiver ABAIXO de 20."
+            ],
+            hint: 'monte:  se bateria < 20 :  modo = "recarga"  /  senão :  modo = "limpeza"',
+            lines: [
+                "se [nome] [op] [valor] :",
+                "    modo = [valor]",
+                "senão :",
+                "    modo = [valor]"
+            ],
+            blocks: { nome: ["bateria"], op: ["<", ">", "=="], valor: ["20", "50", '"recarga"', '"limpeza"'] },
+            tests: [
+                { given: { bateria: 12 }, expect: { modo: "recarga" } },
+                { given: { bateria: 20 }, expect: { modo: "limpeza" } },
+                { given: { bateria: 85 }, expect: { modo: "limpeza" } }
+            ],
+            timeLimitMs: 30000
+        }
     }
 };
 
@@ -179,6 +254,8 @@ export default class Enemy {
         this.sprite = scene.physics.add.sprite(x, y, this.def.walkKey, 0)
             .setScale(this.def.scale);
         this.sprite.play(this.def.walkKey);
+        this.dashState = null;       // faxineiro: null | "windup" | "dash" | "dizzy".
+        this.nextDash = 1500;
         if (this.def.car) {
             // O carro fica na parte BAIXA do quadro 32x32 (bbox ~x8-23, y23-31):
             // corpo sobre ele, centralizado no eixo x (o flip não desalinha).
@@ -194,6 +271,7 @@ export default class Enemy {
         if (this.def.weaponKey) {
             this.weapon = scene.add.sprite(x, y, this.def.weaponKey, 0).setScale(this.def.scale);
         }
+        this.applyBaseTint();
 
         scene.registerEnemy?.(this);
         scene.registerReprogrammable?.({
@@ -226,6 +304,13 @@ export default class Enemy {
 
         if (this.def.car) {
             this.updateCar(time, player);
+            return;
+        }
+        if (this.def.sentry) {
+            this.updateSentry(time, player);
+            return;
+        }
+        if (this.def.dash && this.updateDash(time, player)) {
             return;
         }
 
@@ -276,6 +361,79 @@ export default class Enemy {
         this.sprite.body.setVelocity(Math.cos(this.wanderAngle) * s, Math.sin(this.wanderAngle) * s);
         if (this.sprite.body.velocity.x !== 0) {
             this.sprite.setFlipX(this.sprite.body.velocity.x < 0);
+        }
+    }
+
+    // Vigia: parada, encara a Artemis e só atira ENQUANTO ela se move (o
+    // corpo dela tem velocidade). O tint vermelho mostra quando está alerta.
+    updateSentry(time, player) {
+        this.sprite.body.setVelocity(0, 0);
+        this.sprite.setFlipX(player.x < this.x);
+        const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+        const moving = (player.body?.speed ?? 0) > 5;
+        const alert = moving && dist <= FIRE_RANGE;
+        if (alert !== this.alert) {
+            this.alert = alert;
+            this.applyBaseTint();
+        }
+        if (alert && time >= this.nextFire) {
+            this.nextFire = time + this.def.fireMs;
+            this.shoot(player);
+        }
+    }
+
+    // Faxineiro: investida telegrafada. Devolve true enquanto a investida
+    // controla o movimento (o update normal fica de fora).
+    updateDash(time, player) {
+        const cfg = this.def.dash;
+        if (this.dashState === null) {
+            const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+            if (dist > cfg.range || time < this.nextDash) {
+                return false;
+            }
+            // Trava e pisca branco: é o aviso. A mira fica presa na posição de AGORA.
+            this.dashState = "windup";
+            this.dashUntil = time + cfg.windupMs;
+            this.dashAngle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
+            this.sprite.body.setVelocity(0, 0);
+            this.sprite.setFlipX(player.x < this.x);
+            this.sprite.setTint(0xffffff);
+            return true;
+        }
+        if (time < this.dashUntil) {
+            return true;
+        }
+        if (this.dashState === "windup") {
+            this.dashState = "dash";
+            this.dashUntil = time + cfg.durationMs;
+            this.applyBaseTint();
+            this.sprite.body.setVelocity(Math.cos(this.dashAngle) * cfg.speed, Math.sin(this.dashAngle) * cfg.speed);
+        } else if (this.dashState === "dash") {
+            this.dashState = "dizzy";
+            this.dashUntil = time + cfg.dizzyMs;
+            this.sprite.body.setVelocity(0, 0);
+            this.sprite.anims.pause();
+            this.scene.tweens.add({
+                targets: this.sprite, angle: { from: -8, to: 8 }, duration: 120, yoyo: true, repeat: 3,
+                onComplete: () => this.sprite.setAngle(0)
+            });
+        } else {
+            this.dashState = null;
+            this.nextDash = time + cfg.cooldownMs;
+            this.sprite.anims.resume();
+        }
+        return true;
+    }
+
+    // Cor base do tipo (arte provisória do cap. 2) ou o vermelho de alerta da
+    // vigia. Tipo sem tint: limpa.
+    applyBaseTint() {
+        const tint = this.alert && this.def.alertTint ? this.def.alertTint : this.def.tint;
+        if (tint) {
+            this.sprite.setTint(tint);
+            this.weapon?.setTint(tint);
+        } else {
+            this.sprite.clearTint();
         }
     }
 
@@ -412,7 +570,7 @@ export default class Enemy {
         this.meleeHp -= 1;
         this.sprite.setTintFill(0xffffff);
         this.scene.time.delayedCall(80, () => {
-            if (!this.disabled) this.sprite.clearTint();
+            if (!this.disabled) this.applyBaseTint();
         });
         if (this.meleeHp <= 0) {
             this.disable();
@@ -425,7 +583,10 @@ export default class Enemy {
             return;
         }
         this.disabled = true;
-        this.sprite.clearTint();
+        this.alert = false;
+        this.sprite.anims.resume();
+        this.sprite.setAngle(0);
+        this.applyBaseTint();
         this.sprite.body.setVelocity(0, 0);
         this.sprite.body.enable = false;
         this.sprite.play(this.def.disabledKey);
@@ -443,6 +604,7 @@ export default class Enemy {
                 "que ele revide."
             ],
             successMessage: "ROBÔ DESATIVADO",
+            // Puzzle de condicional (cap. 2) traz briefing/lines/tests próprios.
             ...p
         };
     }

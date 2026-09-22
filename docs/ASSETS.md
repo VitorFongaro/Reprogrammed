@@ -64,6 +64,9 @@ Origem dos **inimigos** `exploding` (kamikaze), `pistol` e `shotgun`
 mais o `.ase` fonte de cada um. O pack não trouxe arquivo de licença próprio — **confirmar
 autor, licença e forma de crédito com quem baixou** antes da entrega do TCC.
 
+Os inimigos provisórios do cap. 2 (`vigia` e `faxineiro`) reusam estas folhas com **tint** em
+runtime (nenhum arquivo novo), então caem na mesma pendência de licença.
+
 ### biped_robot — Silver Ink ([itch.io](https://silverink.itch.io/))
 
 Origem do **inimigo `biped`** (mech vermelho, `client/assets/sprites/enemies/biped/`).
@@ -73,6 +76,8 @@ Licença **CC BY-SA 4.0**: uso livre (comercial e não-comercial), mas **exige a
 Os sentinelas da arena pré-boss (`biped_teal/`, `biped_violet/`) são **derivados** deste
 sprite, recoloridos por rotação de matiz (HSV) via `tools/biped_recolor.py` — transformação
 determinística (NÃO é IA generativa). Herdam a CC BY-SA 4.0 (mesma atribuição + share-alike).
+A arte PROVISÓRIA da LEO (boss do cap. 2, `biped_maid/`, rosa) sai do mesmo script e tem a
+mesma licença.
 
 ### RC Car — inimigo `car`
 

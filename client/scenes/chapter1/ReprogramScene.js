@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import Enemy from "../../characters/Enemy";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
+import { createConsole } from "../../ui/ConditionalConsole";
 import DodgeBox from "../../ui/DodgeBox";
 import { getHp, getMaxHp, damage as damageVitals, fullHeal } from "../../state/vitals";
 import Sfx from "../../ui/Sfx";
@@ -42,6 +43,9 @@ export default class ReprogramScene extends Phaser.Scene {
     }
 
     create() {
+        // Por cima da sala (ver o mesmo comentário na BattleScene): sem isso,
+        // uma sala registrada depois desta no main.js a cobre por inteiro.
+        this.scene.bringToTop();
         Enemy.createAnimations(this);
         // O robô resiste a N estágios (cada um = uma esquiva + um puzzle).
         this.enemyStages = this.config.stages ?? 1;
@@ -236,9 +240,10 @@ export default class ReprogramScene extends Phaser.Scene {
             puzzle.title = `${this.config.puzzle.title}  [${this.enemyStage + 1}/${this.enemyStages}]`;
         }
 
-        this.console = new BlockProgrammingConsole(this, puzzle, {
+        this.console = createConsole(this, puzzle, {
             singleAttempt: true,
-            timeLimitMs: PUZZLE_TIME,
+            // Condicional de várias linhas pede mais tempo que `nome = valor`.
+            timeLimitMs: puzzle.timeLimitMs ?? PUZZLE_TIME,
             onSolved: () => {
                 this.solvedThisRun = true;
             },

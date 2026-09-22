@@ -3,6 +3,7 @@ import EniacBoss from "../../characters/EniacBoss";
 import BattleMenu from "../../ui/BattleMenu";
 import Music from "../../ui/Music";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
+import { createConsole } from "../../ui/ConditionalConsole";
 import projetilUrl from "../../assets/sprites/projetil/projetil.png";
 import { MAX_HP, getHp, setHp, fullHeal } from "../../state/vitals";
 import { addItem } from "../../state/inventory";
@@ -74,13 +75,17 @@ const BOSS_FX = [
     ["fx-spark", fxSparkUrl, 128, 12, 26]
 ];
 const IFRAME_MS = 700;
+// Padrão "ifElse" (LEO): tempo para ler a lâmpada e ir para a metade segura, e
+// o ciclo lâmpada -> golpe.
+const IFELSE_READ_MS = 900;
+const IFELSE_CYCLE_MS = 1350;
 const SOUL_SPEED = 240;
 
 // --- Puzzles de REPROGRAMAR (tentativa única; errar consome o turno) ---
 const CREATE_FORCA_PUZZLE = {
     title: "REPROGRAMAR // CRIAR VARIÁVEL",
     briefing: [
-        "Seu ataque padrão mal arranha o ENIAC.",
+        "Seu ataque padrão mal arranha a blindagem.",
         "Crie a sua variável de ataque:",
         "forca recebe 10 (inteiro)."
     ],
@@ -175,7 +180,15 @@ const DEFAULT_CONFIG = {
     projectileInterval: PROJECTILE_INTERVAL,
     projectileSpeed: PROJECTILE_SPEED,
     bossTint: null,
-    analysisLine: "ENIAC — UNIDADE DE CUSTÓDIA, 1946.",
+    analysisLine: "ENIAC :: UNIDADE DE CUSTÓDIA, 1946.",
+    // Comentários do Cosmo no ANALISAR (um por uso, em ciclo), no espírito das
+    // descrições do Undertale. Cada embate passa os SEUS: sem isso, a arena de
+    // treino herdaria as falas do boss.
+    analysisQuips: [
+        "Quase 18 mil válvulas e nenhuma de bom humor.",
+        "Pesa 27 toneladas. Não deixe ele sentar em você.",
+        "É de 1946. Respeite os mais velhos... depois de desligar ele."
+    ],
     // Espólio da vitória (id do catálogo de itens) ou null. Só o BOSS FINAL de
     // cada capítulo larga alguma coisa: o chip de CACHE, que libera uma
     // reprogramação extra por embate. É a peça mais forte do jogo, então a
@@ -229,12 +242,17 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     create() {
+        // Por cima da sala que abriu o combate. O Phaser desenha as cenas na
+        // ordem do array do main.js, e sala registrada DEPOIS desta (o cap. 2)
+        // cobria a batalha: ela rodava invisível e o jogo parecia travado.
+        this.scene.bringToTop();
         this.bossHp = this.config.maxHp;
         this.hp = getHp();              // entra com o HP que trouxe das salas.
         this.forca = null;
         this.reprogramCount = 0;
         this.maxReprograms = this.config.maxReprograms ?? MAX_REPROGRAMS;
         this.bossAttackIndex = 0;
+        this.analyzeCount = 0;
         this.lastWasDefense = false;
         this.dodgeActive = false;
         this.invulnUntil = 0;
@@ -366,7 +384,8 @@ export default class BattleScene extends Phaser.Scene {
             fontSize: "18px",
             color: "#e7e9f2",
             align: "center",
-            lineSpacing: 12
+            lineSpacing: 8,
+            wordWrap: { width: BOX.w - 40 }
         }).setOrigin(0.5).setDepth(25).setVisible(false);
     }
 
@@ -755,13 +774,18 @@ export default class BattleScene extends Phaser.Scene {
                 ? "Dica: REPROGRAMAR cria a variável forca."
                 : "Dica: REPROGRAMAR dobra a força (forca = forca * 2).";
 
+        const quips = this.config.analysisQuips ?? [];
+        const quip = quips.length ? `COSMO: "${quips[this.analyzeCount % quips.length]}"` : null;
+        this.analyzeCount += 1;
+
         this.analysisText.setText([
             this.config.analysisLine,
             `INTEGRIDADE: ${this.bossHp}/${this.config.maxHp}`,
             forcaLine,
             `REPROGRAMAÇÕES: ${this.reprogramCount}/${this.maxReprograms}`,
-            hintLine
-        ].join("\n")).setVisible(true);
+            hintLine,
+            quip
+        ].filter(Boolean).join("\n")).setVisible(true);
 
         this.time.delayedCall(3800, () => {
             this.analysisText.setVisible(false);
@@ -863,6 +887,10 @@ export default class BattleScene extends Phaser.Scene {
         }
         if (name === "nova") {
             this.startNova();
+            return;
+        }
+        if (name === "ifElse") {
+            this.startIfElse();
             return;
         }
         const spawn = name === "sweep" ? () => this.spawnSweepWave() : () => this.spawnProjectile();
@@ -1111,6 +1139,9 @@ export default class BattleScene extends Phaser.Scene {
             if (now < h.from) {
                 return false;
             }
+            if (h.shape === "rect") {
+                return sx >= h.x0 && sx <= h.x1 && sy >= h.y0 && sy <= h.y1;
+            }
             return h.shape === "column"
                 ? Math.abs(sx - h.x) <= h.halfW
                 : (sx - h.x) ** 2 + (sy - h.y) ** 2 <= h.r * h.r;
@@ -1236,16 +1267,61 @@ export default class BattleScene extends Phaser.Scene {
         }
     }
 
+    // PADRÃO 7 — SE/SENÃO (LEO, cap. 2): a REGRA do turno fica escrita acima da
+    // caixa ("se luz == VERMELHA : ataca a ESQUERDA / senão : a DIREITA", e a
+    // cada turno ela pode vir invertida). Uma lâmpada acende numa cor e, logo
+    // depois, a metade indicada pela regra é varrida. Não há aviso da metade:
+    // o jogador precisa LER a condição e avaliá-la, que é o conteúdo do capítulo.
+    startIfElse() {
+        this.ifElseRedLeft = Math.random() < 0.5;
+        const [ladoV, ladoS] = this.ifElseRedLeft ? ["ESQUERDA", "DIREITA"] : ["DIREITA", "ESQUERDA"];
+        const rule = this.add.text(BOX.x, BOX.y - BOX.h / 2 - 34,
+            `se luz == VERMELHA : ataca a ${ladoV}\nsenão : ataca a ${ladoS}`, {
+                fontFamily: "VCR", fontSize: "17px", color: "#ff7ad9", align: "center", lineSpacing: 4
+            }).setOrigin(0.5).setDepth(31);
+        this.patternFx.push(rule);
+        this.ifElseTick();
+        this.spawnTimer = this.time.addEvent({ delay: IFELSE_CYCLE_MS, loop: true, callback: () => this.ifElseTick() });
+    }
+
+    ifElseTick() {
+        if (!this.dodgeActive) {
+            return;
+        }
+        const red = Math.random() < 0.5;
+        const lamp = this.add.circle(BOX.x, BOX.y - BOX.h / 2 + 22, 11, red ? 0xff4545 : 0x4a8cff)
+            .setStrokeStyle(3, 0xf7f7f7, 0.9).setDepth(30);
+        this.patternFx.push(lamp);
+
+        this.time.delayedCall(IFELSE_READ_MS, () => {
+            this.destroyFx(lamp);
+            if (!this.dodgeActive) {
+                return;
+            }
+            const left = red === this.ifElseRedLeft;
+            const x0 = left ? BOX.x - BOX.w / 2 : BOX.x;
+            const slash = this.add.rectangle(x0 + BOX.w / 4, BOX.y, BOX.w / 2 - 6, BOX.h - 6, 0xff4545, 0.38)
+                .setDepth(26);
+            this.patternFx.push(slash);
+            this.tweens.add({ targets: slash, alpha: 0, duration: 320, onComplete: () => this.destroyFx(slash) });
+            this.cameras.main.shake(90, 0.004);
+            this.hazards.push({
+                shape: "rect", x0, x1: x0 + BOX.w / 2, y0: BOX.y - BOX.h / 2, y1: BOX.y + BOX.h / 2,
+                from: this.time.now, until: this.time.now + 220
+            });
+        });
+    }
+
     defenseTurn() {
         this.setBattleStatus("> SEQUÊNCIA HOSTIL A CAMINHO — DEFENDA-SE!", "#ff4545");
-        const puzzle = Phaser.Utils.Array.GetRandom(DEFENSE_PUZZLES);
+        const puzzle = Phaser.Utils.Array.GetRandom(this.config.defensePuzzles ?? DEFENSE_PUZZLES);
 
         this.foeAttackAnim(() => {
             let solvedThisRun = false;
 
-            this.console = new BlockProgrammingConsole(this, puzzle, {
+            this.console = createConsole(this, puzzle, {
                 singleAttempt: true,
-                timeLimitMs: DEFENSE_TIME_LIMIT,
+                timeLimitMs: puzzle.timeLimitMs ?? DEFENSE_TIME_LIMIT,
                 onSolved: () => {
                     solvedThisRun = true;
                 },
