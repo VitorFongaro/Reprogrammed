@@ -10,7 +10,8 @@ import { addServicePanel } from "../../objects/ServicePanel";
 //     montado contra casos de teste, então qualquer resposta que funcione vale;
 //   - os 3 inimigos novos (VIGIA, FAXINEIRO e MENSAGEIRO, ver Enemy.js), cada um
 //     com uma condicional como puzzle de desligar.
-// A boss do capítulo (LEO) tem sala própria: `cap2-sala-leo` (painel [E] aqui).
+// A boss do capítulo (LEO) tem sala própria: `cap2-sala-leo` (painel [E] aqui),
+// e os PUZZLES DE MUNDO (o programa mexe no mapa) também: `cap2-deposito`.
 // Quando o mapa sair, cada peça muda para a sala definitiva e esta sala some.
 //
 // Fora do fluxo do jogo de propósito: sem porta, sem checkpoint (não pode virar
@@ -150,6 +151,10 @@ export default class LaboratorioScene extends BaseRoomScene {
         addServicePanel(this, {
             x: 640, y: 600, prompt: "[E] IR PARA O SALÃO DA LEO", label: "LEO", color: 0xff7ad9,
             onInteract: () => this.scene.start("cap2-sala-leo")
+        });
+        addServicePanel(this, {
+            x: 870, y: 600, prompt: "[E] IR PARA O DEPÓSITO", label: "DEPÓSITO", color: 0x51e36b,
+            onInteract: () => this.scene.start("cap2-deposito")
         });
 
         this.playDialogue(ENTRY_SCRIPT);

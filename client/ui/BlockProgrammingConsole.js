@@ -626,7 +626,14 @@ export default class BlockProgrammingConsole {
     }
 
     createPiece(piece) {
-        const container = this.scene.add.container(piece.homeX, piece.homeY);
+        // O console vive a sala inteira e as peças lembram o encaixe entre uma
+        // abertura e outra: peça que já estava num encaixe NASCE nele. Antes ela
+        // voltava para a prateleira mas continuava ocupando o encaixe por dentro,
+        // e o jogador via um programa vazio que o jogo considerava montado.
+        const container = this.scene.add.container(
+            piece.slot ? piece.slot.x : piece.homeX,
+            piece.slot ? piece.slot.y : piece.homeY
+        );
         container.setSize(BLOCK_W, BLOCK_H);
 
         const image = this.scene.add.image(0, 0, "blocks", FRAME[piece.category]).setOrigin(0.5);
@@ -654,7 +661,9 @@ export default class BlockProgrammingConsole {
         piece.container = container;
         piece.dragArea = dragArea;
         this.container.add(container);
-        this.startFloat(piece);
+        if (!piece.slot) {
+            this.startFloat(piece);
+        }
     }
 
     // --- Flutuação ociosa (igual aos cards do menu) ---

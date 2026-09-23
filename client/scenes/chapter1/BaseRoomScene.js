@@ -242,8 +242,10 @@ export default class BaseRoomScene extends Phaser.Scene {
 
     // Colisores estáticos invisíveis para objetos desenhados na arte do mapa.
     // Recebe retângulos { x, y, w, h } (canto superior esquerdo, em px de tela).
+    // Devolve as zonas criadas: colisor que precisa sumir e voltar (a caixa que
+    // sai do corredor, o vão que vira ponte) liga/desliga por `zone.body.enable`.
     addColliders(rects) {
-        rects.forEach(({ x, y, w, h }) => {
+        return rects.map(({ x, y, w, h }) => {
             const zone = this.add.zone(x + w / 2, y + h / 2, w, h);
             this.physics.add.existing(zone, true);
             this.physics.add.collider(this.player.sprite, zone);
@@ -256,6 +258,7 @@ export default class BaseRoomScene extends Phaser.Scene {
                     this.physics.add.collider(enemy.sprite, zone);
                 }
             });
+            return zone;
         });
     }
 

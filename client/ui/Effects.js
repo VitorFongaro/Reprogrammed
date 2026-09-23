@@ -6,8 +6,9 @@ import fxSparkUrl from "../assets/sprites/effects/fx_spark.png";
 
 // Efeitos do Super Pixel Effects Gigapack (Will Tice / unTied Games; ver
 // docs/ASSETS.md). Moram aqui porque mais de uma tela os usa — a BattleScene
-// (padrões do ENIAC e da LEO) e o DodgeBox (laser do mensageiro) — e ter duas
-// listas de quadros/fps do mesmo sheet é receita de uma delas ficar para trás.
+// (padrões do ENIAC e da LEO), o DodgeBox (laser do mensageiro) e os puzzles de
+// mundo do depósito (faísca das caixas) — e ter duas listas de quadros/fps do
+// mesmo sheet é receita de uma delas ficar para trás.
 //
 // Todas as animações tocam UMA VEZ (`repeat: 0`) e a chave é `<chave>-anim`.
 // `preload` no `preload` da cena, `createAnimations` no `create`; as duas são

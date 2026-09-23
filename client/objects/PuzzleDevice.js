@@ -14,6 +14,10 @@ import { isSolved, markSolved } from "../state/progress";
 // máquina nasce já resolvida quando o save carregado diz que ela foi resolvida.
 // Nesse caso ela chama `config.onRestore` (e NÃO `onSolved`), para a sala
 // reaplicar o efeito — porta destravada — sem repetir o diálogo.
+// `config.onRun(results, done)` faz dela um puzzle de MUNDO (cap. 2): o console
+// entrega o resultado de cada caso e a SALA anima isso no mapa; no fim ela
+// chama `done(resolvido)`. Só então a máquina acende (ou não) — quem julga é o
+// mapa. A Artemis fica parada assistindo do começo ao fim.
 
 const DEFAULT_W = 84;
 const DEFAULT_H = 132;
@@ -42,6 +46,8 @@ export default class PuzzleDevice {
         this.introScript = config.introScript ?? null;
         this.introPlayed = false;
         this.solved = false;
+        this.onRun = config.onRun ?? null;
+        this.running = false;       // puzzle de mundo com a animação em curso
 
         this.draw();
 
@@ -50,8 +56,16 @@ export default class PuzzleDevice {
             // tentativa na telemetria.
             puzzleId: this.id,
             onSolved: () => this.handleSolved(),
-            onClose: () => scene.player.setEnabled(true)
+            // Rodando no mapa, quem devolve a Artemis é o fim da animação.
+            onClose: () => {
+                if (!this.running) {
+                    scene.player.setEnabled(true);
+                }
+            }
         };
+        if (this.onRun) {
+            options.onRun = (results) => this.runInWorld(results);
+        }
         // Puzzle com `lines` (condicional, cap. 2) sempre é em blocos; o
         // createConsole escolhe entre o console de variável e o de condicional.
         this.console = config.blocks || config.puzzle?.lines
@@ -63,7 +77,7 @@ export default class PuzzleDevice {
             y: this.y,
             radius: config.radius ?? DEFAULT_RADIUS,
             promptObj: this.prompt,
-            isAvailable: () => !this.solved,
+            isAvailable: () => !this.solved && !this.running,
             onInteract: () => this.openConsole()
         });
 
@@ -75,7 +89,7 @@ export default class PuzzleDevice {
             w: this.w,
             h: this.h,
             label: config.label || config.puzzle?.title || "SISTEMA",
-            isAvailable: () => !this.solved,
+            isAvailable: () => !this.solved && !this.running,
             onReprogram: () => this.openConsole()
         });
 
@@ -169,6 +183,22 @@ export default class PuzzleDevice {
         this.indicator.fillCircle(cx, cy, 11);
         this.indicator.fillStyle(color, 1);
         this.indicator.fillCircle(cx, cy, 6);
+    }
+
+    // Puzzle de mundo: o console fechou e entregou um resultado por caso. A sala
+    // anima cada um no mapa e responde se o caminho abriu.
+    runInWorld(results) {
+        this.running = true;
+        this.scene.player.setEnabled(false);
+        this.onRun(results, (solved) => {
+            this.running = false;
+            // Libera ANTES do onSolved: se a sala abrir um diálogo ali, é ele
+            // quem segura a Artemis até terminar de falar.
+            this.scene.player.setEnabled(true);
+            if (solved) {
+                this.handleSolved();
+            }
+        });
     }
 
     handleSolved() {

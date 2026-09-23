@@ -22,6 +22,15 @@ import { parseTemplateLine, runTests, formatValue } from "../utils/condicional";
 //     tests: [{ given: { cracha: 1 }, expect: { porta: false } }, ...]
 //   }
 //
+// MODO MUNDO (`options.onRun`): os casos de teste são OBJETOS NO MAPA (caixas,
+// vãos de ponte...) e quem julga é o mapa, não o console. A coluna da direita
+// mostra só o que cada objeto é (`given`, com `test.label` como nome), sem o
+// "espera"; ao completar o programa o console fecha e entrega os resultados em
+// `onRun(results)` para a sala animar caso a caso. Não há mensagem de erro de
+// LÓGICA: o jogador vê qual caixa travou. Erro de SINTAXE/tipo continua aqui no
+// console, como um compilador avisaria — um programa que nem roda não tem o que
+// mostrar no mapa.
+//
 // Use `createConsole` (abaixo) para abrir o console certo a partir do puzzle.
 
 const WIDTH = 1280;
@@ -55,6 +64,8 @@ const TRAY_SPACING_Y = 48;
 const TRAY_PER_ROW = 8;
 
 const REVEAL_MS = 170;                    // ritmo da execução linha a linha dos testes.
+const WORLD_HANDOVER_MS = 450;            // modo mundo: "executando..." antes de fechar.
+const WORLD_ROW_H = 30;
 
 const COLOR = {
     panel: 0x05060a,
@@ -79,6 +90,12 @@ export function createConsole(scene, puzzle, options) {
 }
 
 export default class ConditionalConsole extends BlockProgrammingConsole {
+    constructor(scene, puzzle, options = {}) {
+        super(scene, puzzle, options);
+        // Com onRun, o puzzle é de MUNDO (ver o topo do arquivo).
+        this.onRun = options.onRun ?? null;
+    }
+
     buildModel() {
         this.template = this.puzzle.lines.map(parseTemplateLine);
         this.slots = [];
@@ -179,7 +196,11 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
             }).setOrigin(0, 0.5));
         });
 
-        this.buildTestsPanel();
+        if (this.onRun) {
+            this.buildWorldPanel();
+        } else {
+            this.buildTestsPanel();
+        }
 
         this.outputText = s.add.text(PANEL_X + PAD, TRAY_Y - 58, "", {
             fontFamily: "VCR", fontSize: "17px", color: COLOR.dim,
@@ -189,7 +210,9 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         const footer = s.add.text(PANEL_X + PANEL_W / 2, PANEL_Y + PANEL_H - 12,
             this.singleAttempt
                 ? "monte com cuidado: uma única tentativa"
-                : "encaixe todos os blocos: o programa roda nos testes sozinho",
+                : this.onRun
+                    ? "encaixe todos os blocos: o programa roda direto no mapa"
+                    : "encaixe todos os blocos: o programa roda nos testes sozinho",
             { fontFamily: "VCR", fontSize: "15px", color: COLOR.dim }
         ).setOrigin(0.5, 1);
         this.container.add([this.outputText, footer]);
@@ -256,6 +279,33 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         });
     }
 
+    // Modo mundo: a coluna vira uma leitura do que está no mapa — o nome de
+    // cada objeto e as variáveis dele. SEM o "espera": o gabarito é o mapa.
+    buildWorldPanel() {
+        const s = this.scene;
+        this.container.add(s.add.text(TESTS_X, TESTS_Y, "NO MAPA", {
+            fontFamily: "VCR", fontSize: "18px", color: COLOR.accent
+        }));
+
+        let y = TESTS_Y + 32;
+        this.puzzle.tests.forEach((test, i) => {
+            this.container.add(s.add.text(TESTS_X, y, test.label ?? String(i + 1), {
+                fontFamily: "VCR", fontSize: "16px", color: COLOR.accent
+            }));
+            this.container.add(s.add.text(TESTS_X + 30, y, describe(test.given), {
+                fontFamily: "VCR", fontSize: "16px", color: COLOR.text,
+                wordWrap: { width: TESTS_W - 30 }
+            }));
+            y += WORLD_ROW_H;
+        });
+
+        this.container.add(s.add.text(TESTS_X, y + 12,
+            "rode e olhe o mapa: cada objeto\nfaz o que o programa mandar.", {
+                fontFamily: "VCR", fontSize: "15px", color: COLOR.dim, lineSpacing: 4
+            }));
+        this.testCards = [];   // nada para pintar: resetCards vira no-op.
+    }
+
     paintCard(card, result) {
         const color = result === null ? COLOR.slot : result.pass ? 0x51e36b : 0xff4545;
         card.box.clear();
@@ -302,7 +352,13 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
 
     createPiece(piece) {
         const s = this.scene;
-        const container = s.add.container(piece.homeX, piece.homeY);
+        // Peça que ficou num encaixe da última vez nasce nele (ver o mesmo
+        // comentário no BlockProgrammingConsole): é o que deixa o jogador errar,
+        // olhar o resultado e voltar para trocar UMA peça.
+        const container = s.add.container(
+            piece.slot ? piece.slot.x : piece.homeX,
+            piece.slot ? piece.slot.y : piece.homeY
+        );
         container.setSize(BLOCK_W, BLOCK_H);
         const image = s.add.image(0, 0, "blocks", FRAME[piece.category]).setScale(BLOCK_SCALE);
         const label = s.add.text(0, -1, piece.label, {
@@ -321,7 +377,9 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         piece.container = container;
         piece.dragArea = dragArea;
         this.container.add(container);
-        this.startFloat(piece);
+        if (!piece.slot) {
+            this.startFloat(piece);
+        }
     }
 
     // Tirou uma peça do programa: os resultados antigos deixam de valer.
@@ -362,6 +420,10 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         this.attempted = true;
 
         const results = runTests(this.programLines(), this.puzzle.tests, this.puzzle.defaults);
+        if (this.onRun) {
+            this.runInWorld(results);
+            return;
+        }
         const allPass = results.every((r) => r.pass);
 
         // Executa caso a caso (o jogador VÊ o programa rodando em cada entrada).
@@ -383,6 +445,43 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
                     this.handleTestFailure(results);
                 }
             }
+        });
+    }
+
+    // Modo mundo. Programa que nem roda (erro de sintaxe/tipo em QUALQUER caso)
+    // fica aqui, com a explicação, como num compilador. Programa que roda sai
+    // do console e vai para o mapa, CERTO OU ERRADO — quem mostra o erro de
+    // lógica é o objeto que travou, não um texto.
+    runInWorld(results) {
+        const error = results.find((r) => r.error)?.error;
+        if (error) {
+            this.countError();
+            Sfx.play(this.scene, "error");
+            this.setOutput(`o programa não roda: ${error}`, COLOR.error);
+            return;
+        }
+
+        const allPass = results.every((r) => r.pass);
+        if (!allPass) {
+            this.countError();
+        }
+        this.running = true;
+        this.setOutput("> executando no mapa...", COLOR.dim);
+        this.pieces.forEach((piece) => {
+            this.stopFloat(piece);
+            piece.dragArea.disableInteractive();
+        });
+
+        this.scene.time.delayedCall(WORLD_HANDOVER_MS, () => {
+            this.running = false;
+            if (!this.isOpen) {
+                return;
+            }
+            // `solved` aqui é só para a telemetria e para travar a edição: quem
+            // resolve o puzzle de verdade é o mapa, no fim da animação.
+            this.solved = allPass;
+            this.onRun(results);   // quem chama segura a Artemis parada até o mapa terminar
+            this.close();
         });
     }
 
@@ -409,6 +508,10 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
     }
 
     close(viaEsc = false) {
+        // Modo mundo, programa a caminho do mapa: o ESC espera ele sair daqui.
+        if (viaEsc && this.running && this.onRun) {
+            return;
+        }
         this.revealTimer?.remove();
         this.revealTimer = null;
         this.running = false;
