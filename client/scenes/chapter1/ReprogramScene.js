@@ -40,6 +40,7 @@ export default class ReprogramScene extends Phaser.Scene {
     preload() {
         Enemy.preload(this);
         BlockProgrammingConsole.preload(this);
+        DodgeBox.preload(this);   // efeitos do pack usados pelos padrões da caixa.
     }
 
     create() {

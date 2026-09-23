@@ -15,6 +15,7 @@ import ReprogramScene from './scenes/chapter1/ReprogramScene';
 import CorredorScene from './scenes/chapter1/CorredorScene';
 import SaguaoScene from './scenes/chapter1/SaguaoScene';
 import LaboratorioScene from './scenes/chapter2/LaboratorioScene';
+import SalaLeoScene from './scenes/chapter2/SalaLeoScene';
 import InventoryScene from './scenes/InventoryScene';
 import { loadInventory } from './state/inventory.js';
 
@@ -52,8 +53,9 @@ const config = {
         ReprogramScene,
         CorredorScene,
         SaguaoScene,
-        // Capítulo 2 (sala de teste provisória, até o mapa existir).
+        // Capítulo 2 (salas de teste provisórias, até o mapa existir).
         LaboratorioScene,
+        SalaLeoScene,
         // Overlays por último: renderizam por cima das salas (ver bringToTop).
         PauseMenuScene,
         InventoryScene

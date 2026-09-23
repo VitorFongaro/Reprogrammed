@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import Effects from "./Effects";
 
 // Mini-jogo de ESQUIVA estilo Undertale, reutilizável: uma caixa com uma alma
 // (losango ciano) que o jogador move com WASD desviando de projéteis. A rodada
@@ -15,8 +16,16 @@ import Phaser from "phaser";
 //                   mirado. Uma garoa de balas no verde obriga a se mexer entre
 //                   uma luz e outra. É uma condicional jogável: se mover e luz
 //                   vermelha, fogo.
-// Autossuficiente (gera texturas, escuta o update da cena). `start(opts)` inicia;
-// cada acerto chama `onHit`; ao fim da duração chama `onEnd`.
+//   laserLane     — (MENSAGEIRO, cap. 2) UMA OU DUAS faixas horizontais acendem
+//                   em âmbar, com o canhão carregando na ponta de cada uma
+//                   (telegrafo); então o LASER dispara e preenche a faixa
+//                   inteira por um instante. Nada atravessa o quadro: o aviso
+//                   diz onde vai queimar e o jogador só precisa não estar ali.
+//                   Duas faixas nunca nascem coladas — sempre sobra saída.
+// Gera as próprias texturas de bala e escuta o update da cena. Os efeitos do
+// `laserLane` vêm do pack (ui/Effects), então quem usa a caixa precisa chamar
+// `DodgeBox.preload(scene)` no `preload`. `start(opts)` inicia; cada acerto
+// chama `onHit`; ao fim da duração chama `onEnd`.
 
 const SOUL_SPEED = 240;
 const IFRAME_MS = 700;
@@ -40,21 +49,41 @@ const WATCH_WARN_MS = 380;         // luz amarela (aviso) antes do vermelho.
 const WATCH_RED_MS = 900;          // quanto tempo a luz fica vermelha.
 const WATCH_SHOT_MS = 170;         // cadência dos tiros em quem se mexe no vermelho.
 const WATCH_SHOT_SPEED = 300;
+const LANE_WARN_MS = 750;          // telegrafo: a faixa acende antes do disparo.
+const LANE_FIRE_MS = 300;          // quanto tempo o feixe fica vivo (e queimando).
+const LANE_H = 36;                 // altura da faixa - e da área que dá dano.
+// Distância mínima entre os CENTROS de duas faixas simultâneas: com 74 sobram
+// 38px livres entre as bordas delas, folgados para a alma (14px) passar. Subir
+// muito este número faz a segunda faixa quase nunca caber na caixa (260 de
+// altura) e o padrão vira sempre-uma-só.
+const LANE_MIN_GAP = 74;
+const LANE_FX_INSET = 30;          // os efeitos do pack são grandes: mantém-nos
+                                    // DENTRO da caixa (o feixe continua indo de
+                                    // borda a borda, só a arte é que encolhe).
 
 export default class DodgeBox {
+    // Os efeitos do `laserLane` vêm do pack: a cena que usa a caixa carrega aqui.
+    static preload(scene) {
+        Effects.preload(scene);
+    }
+
     constructor(scene, config = {}) {
         this.scene = scene;
         this.box = config.box ?? DEFAULT_BOX;
         this.active = false;
         this.invulnUntil = 0;
         this.lasers = [];
+        this.lanes = [];
+        this.laneFx = [];      // efeitos do pack em voo (ver trackFx/stop).
 
         this.createTextures();
+        Effects.createAnimations(scene);
 
         const { x, y, w, h } = this.box;
         this.boxGraphics = scene.add.graphics().setDepth(20).setVisible(false);
         this.laserGraphics = scene.add.graphics().setDepth(29);
         this.watchGraphics = scene.add.graphics().setDepth(29);
+        this.laneGraphics = scene.add.graphics().setDepth(27);   // abaixo das balas.
 
         this.soul = scene.physics.add.image(x, y, "dodge-soul").setDepth(30).setVisible(false);
         this.soul.body.setCollideWorldBounds(true);
@@ -163,6 +192,14 @@ export default class DodgeBox {
         this.laserGraphics?.clear();
         this.watch = null;
         this.watchGraphics?.clear();
+        // Efeito do pack dura mais que a rodada: sem isto, uma carga ou explosão
+        // continuaria tocando por cima do console do puzzle.
+        this.laneFx.forEach((spr) => {
+            if (spr.active) spr.destroy();
+        });
+        this.laneFx = [];
+        this.lanes = [];
+        this.laneGraphics?.clear();
         if (this.soul?.body) this.soul.body.setVelocity(0, 0);
         this.soul?.setVisible(false);
         this.boxGraphics?.setVisible(false);
@@ -177,7 +214,8 @@ export default class DodgeBox {
             fallExplode: () => this.attackFallExplode(),
             bigDropHoming: () => this.attackBigDropHoming(),
             laserSweep: () => this.attackLaserSweep(),
-            watchLight: () => this.attackWatchLight()
+            watchLight: () => this.attackWatchLight(),
+            laserLane: () => this.attackLaserLane()
         }[pattern] ?? (() => this.attackRain()))();
     }
 
@@ -367,6 +405,112 @@ export default class DodgeBox {
         }
     }
 
+    // Laser do mensageiro: sorteia UMA OU DUAS faixas e acende o aviso (faixa em
+    // âmbar + o canhão carregando na ponta). Quem dispara é a updateLaserLanes.
+    attackLaserLane() {
+        const { x, y, w, h } = this.box;
+        const margin = LANE_H / 2 + 12;
+        const alto = y - h / 2 + margin;
+        const baixo = y + h / 2 - margin;
+        const usados = [];
+
+        for (let i = 0; i < Phaser.Math.Between(1, 2); i += 1) {
+            // Duas faixas coladas não deixariam para onde correr: sorteia até
+            // achar uma folgada e desiste da segunda se não achar.
+            let ly = 0;
+            let cabe = false;
+            for (let t = 0; t < 8 && !cabe; t += 1) {
+                ly = Phaser.Math.Between(alto, baixo);
+                cabe = usados.every((u) => Math.abs(u - ly) >= LANE_MIN_GAP);
+            }
+            if (!cabe) {
+                break;
+            }
+            usados.push(ly);
+
+            const daEsquerda = Math.random() < 0.5;
+            const lane = {
+                y: ly,
+                boca: daEsquerda ? x - w / 2 : x + w / 2,
+                alvo: daEsquerda ? x + w / 2 : x - w / 2,
+                start: this.scene.time.now,
+                fired: false
+            };
+            lane.dir = Math.sign(lane.alvo - lane.boca);
+            this.lanes.push(lane);
+            this.trackFx(Effects.play(this.scene, "fx-charge", lane.boca + lane.dir * LANE_FX_INSET, ly, {
+                scale: 0.5, depth: 26
+            }));
+        }
+    }
+
+    // Efeito do pack em voo: rastreado para a rodada poder matá-lo ao acabar.
+    trackFx(spr) {
+        this.laneFx.push(spr);
+        return spr;
+    }
+
+    // Duas fases por faixa: aviso em âmbar (sem dano) e o DISPARO, em que o
+    // feixe ocupa a faixa inteira. A área que queima é exatamente a que foi
+    // avisada — o feixe afina no fim só como brilho, o dano não encolhe junto.
+    updateLaserLanes() {
+        this.laneGraphics.clear();
+        if (!this.active) {
+            this.lanes = [];
+            return;
+        }
+        const now = this.scene.time.now;
+        const { x, w } = this.box;
+        const left = x - w / 2;
+        const right = x + w / 2;
+
+        this.laneFx = this.laneFx.filter((spr) => spr.active);
+        this.lanes = this.lanes.filter((l) => now - l.start < LANE_WARN_MS + LANE_FIRE_MS);
+
+        this.lanes.forEach((lane) => {
+            const elapsed = now - lane.start;
+            const top = lane.y - LANE_H / 2;
+
+            if (elapsed < LANE_WARN_MS) {
+                const pulse = 0.12 + 0.1 * Math.sin(elapsed / 55);
+                this.laneGraphics.fillStyle(0xffb347, pulse);
+                this.laneGraphics.fillRect(left, top, w, LANE_H);
+                this.laneGraphics.lineStyle(2, 0xffb347, 0.75);
+                this.laneGraphics.lineBetween(left, top, right, top);
+                this.laneGraphics.lineBetween(left, top + LANE_H, right, top + LANE_H);
+                return;
+            }
+
+            // Momento do tiro: clarão na boca do canhão e estouro na parede
+            // oposta, os dois recuados para a arte não vazar do quadro.
+            if (!lane.fired) {
+                lane.fired = true;
+                this.trackFx(Effects.play(this.scene, "fx-spark", lane.boca + lane.dir * LANE_FX_INSET, lane.y, {
+                    scale: 0.5, depth: 28
+                }));
+                this.trackFx(Effects.play(this.scene, "fx-explosion", lane.alvo - lane.dir * LANE_FX_INSET, lane.y, {
+                    scale: 0.8, depth: 28
+                }));
+            }
+
+            // Feixe: brilho da faixa toda + miolo branco que afina enquanto
+            // esfria. Preenche de borda a borda, não atravessa o quadro.
+            const vida = 1 - (elapsed - LANE_WARN_MS) / LANE_FIRE_MS;
+            const meio = (LANE_H / 2) * Math.max(0.3, vida);
+            this.laneGraphics.fillStyle(0xff4545, 0.18 + 0.3 * vida);
+            this.laneGraphics.fillRect(left, top, w, LANE_H);
+            this.laneGraphics.fillStyle(0xff8a8a, 0.75);
+            this.laneGraphics.fillRect(left, lane.y - meio, w, meio * 2);
+            this.laneGraphics.fillStyle(0xffe8e8, 0.95);
+            this.laneGraphics.fillRect(left, lane.y - meio * 0.35, w, meio * 0.7);
+
+            if (this.soul.visible
+                && Math.abs(this.soul.y - lane.y) <= LANE_H / 2 + this.soul.height / 2) {
+                this.hitPlayer();
+            }
+        });
+    }
+
     onProjectileHit(proj) {
         if (!this.active) return;
         proj.destroy();
@@ -423,6 +567,7 @@ export default class DodgeBox {
         });
 
         this.updateWatchLight();
+        this.updateLaserLanes();
 
         // Balas que perseguem: viram gradualmente rumo à alma.
         const dt = (delta ?? 16) / 1000;

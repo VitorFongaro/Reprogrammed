@@ -138,5 +138,9 @@ export const ENEMY_EXAMINE = {
     ],
     faxineiro: [
         "Um faxineiro fora do ar. O chão em volta dele está impecável, isso eu tenho que admitir."
+    ],
+    mensageiro: [
+        "Um mensageiro capotado. Uma roda só: rápido, mas nunca soube frear.",
+        "A caixa de entregas está vazia. Ele corria para o lado errado há anos."
     ]
 };

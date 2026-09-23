@@ -67,6 +67,41 @@ autor, licença e forma de crédito com quem baixou** antes da entrega do TCC.
 Os inimigos provisórios do cap. 2 (`vigia` e `faxineiro`) reusam estas folhas com **tint** em
 runtime (nenhum arquivo novo), então caem na mesma pendência de licença.
 
+### Bot Wheel — inimigo `mensageiro`
+
+Origem do **inimigo `mensageiro`** (cap. 2, `client/assets/sprites/enemies/mensageiro/`): um
+robô de uma roda só, com animações de dormente, acordar, rolar, carregar, atirar e morrer.
+É o primeiro inimigo do cap. 2 com arte PRÓPRIA (os outros dois são tint sobre o
+SteamRobotsPack), por isso ele não leva `tint` nenhum.
+
+O pack vem ao contrário do nosso formato: cada animação é uma tira **vertical** de quadros
+117×26, e o desenho ocupa só a faixa `x 5..37` (o resto é sobra para o rastro da investida, que
+chega a `x=117`). `tools/mensageiro_sheets.py` recorta essa faixa, centraliza e empilha na
+horizontal, em quadros de **36×32** — daí o `fw` no `SHEETS` do `Enemy.js`, porque o desenho
+não cabe nos 32 de largura dos outros.
+
+O **"GAS dash"** é caso à parte. Ele vem em duas camadas ("with FX" e o rastro sozinho), e o
+robô desenhado ali não está onde está nas outras animações: fica lá na direita, em `x 87..113`
+(centro ~100), com o gás saindo para a esquerda. Em vez de recortar, o script exporta o
+**rastro sozinho** em largura cheia (`dash.png`, quadros de 117×32) e o jogo desenha isso como
+um sprite separado com `setOrigin(100/117, 0.5)` — casar esse ponto com o robô recompõe
+exatamente o quadro do pack, em qualquer lugar do mapa e a qualquer velocidade.
+
+Decisões que valem saber, porque cada uma delas foi um erro antes de virar regra:
+
+- O rastro fica **parado no mundo**. Gás não acompanha quem o soltou; grudá-lo no sprite faz a
+  nuvem inteira deslizar junto com o robô.
+- É ancorado no ponto de **chegada** da investida, não no de partida — o robô está desenhado na
+  ponta do risco, então ancorar no fim é o que faz o gás cair em cima do trajeto.
+- Como a âncora é a chegada, o desenho todo existe desde a largada: por isso o sprite nasce com
+  `setCrop` e vai sendo **revelado** conforme a investida avança, com o corte acompanhando a
+  posição do robô. Sem isso o risco inteiro aparece antes de ele sair do lugar.
+- Ele **gira** com o ângulo da investida, com `setFlipY` quando `cos(ângulo) < 0`, senão a
+  rotação jogaria o gás para cima nos ângulos voltados à esquerda.
+
+Como o SteamRobotsPack e o RC Car, o pack não trouxe arquivo de licença — **confirmar autor,
+licença e forma de crédito com quem baixou** antes da entrega do TCC.
+
 ### biped_robot — Silver Ink ([itch.io](https://silverink.itch.io/))
 
 Origem do **inimigo `biped`** (mech vermelho, `client/assets/sprites/enemies/biped/`).
@@ -99,12 +134,14 @@ Agus Hennihuno" + link da licença). Creditar no TCC.
 
 ### Super Pixel Effects Gigapack (Free) — Will Tice / unTied Games ([itch.io](https://untiedgames.itch.io/super-pixel-effects-gigapack))
 
-Efeitos dos **padrões novos do boss ENIAC** (`client/assets/sprites/effects/`), spritesheets
+Efeitos dos **padrões de bullet hell** (`client/assets/sprites/effects/`), spritesheets
 horizontais recortados do pack: `fx_lightning.png` (lightning_strike, 7×128, violeta — padrão
 `lightning`), `fx_warp.png` (scifi_warp, 10×128, verde) e `fx_explosion.png` (symmetrical_explosion,
 8×64, laranja — padrão `warpMines`), `fx_charge.png` (scifi_charge_up, 12×96) e `fx_spark.png`
-(scifi_spark_burst, 12×128 — padrão `nova`). Carregados/animados na `BattleScene` (tabela
-`BOSS_FX`). O mesmo diretório traz `fx_heal.png` (spell_heal, 16×128, um coração que estoura) —
+(scifi_spark_burst, 12×128 — padrão `nova`). Carregados/animados por `client/ui/Effects.js`, que é
+o dono da tabela de quadros/fps: usam-no a `BattleScene` (ENIAC, LEO) e o `DodgeBox` (padrão
+`laserLane` do mensageiro, que reusa carga + faísca + explosão como o canhão carregando, o clarão
+do tiro e o estouro do feixe na parede oposta). O mesmo diretório traz `fx_heal.png` (spell_heal, 16×128, um coração que estoura) —
 tocado pelo `BaseRoomScene` (`playHealFx`) **tingido de verde** (`setTint` na cor de cura do jogo)
 sobre a Artemis quando ela usa um item de cura FORA da batalha. Licença unTied Games: uso comercial e não-comercial OK e **empacotar com o jogo é
 permitido**, mas **não se pode redistribuir o pack solto** (nem subir para asset store) e **exige

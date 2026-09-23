@@ -8,11 +8,7 @@ import projetilUrl from "../../assets/sprites/projetil/projetil.png";
 import { MAX_HP, getHp, setHp, fullHeal } from "../../state/vitals";
 import { addItem } from "../../state/inventory";
 import { itemDef } from "../../data/items";
-import fxLightningUrl from "../../assets/sprites/effects/fx_lightning.png";
-import fxWarpUrl from "../../assets/sprites/effects/fx_warp.png";
-import fxExplosionUrl from "../../assets/sprites/effects/fx_explosion.png";
-import fxChargeUrl from "../../assets/sprites/effects/fx_charge.png";
-import fxSparkUrl from "../../assets/sprites/effects/fx_spark.png";
+import Effects from "../../ui/Effects";
 
 // Tela de COMBATE POR TURNOS contra o ENIAC (estilo Undertale), aberta pela
 // SalaSegurancaScene via scene.launch + pause. Layout: boss no topo (com barra
@@ -65,15 +61,6 @@ const PROJECTILE_SPEED = { min: 170, max: 260 };
 const PROJECTILE_DRIFT = 50;
 const AIMED_CHANCE = 0.4;           // chance do projétil nascer sobre a alma.
 
-// Efeitos do Super Pixel Effects Gigapack (Will Tice / unTied Games) usados pelos
-// padrões novos do ENIAC: [chave, url, tamanho do quadro, nº de quadros, fps].
-const BOSS_FX = [
-    ["fx-lightning", fxLightningUrl, 128, 7, 20],
-    ["fx-warp", fxWarpUrl, 128, 10, 16],
-    ["fx-explosion", fxExplosionUrl, 64, 8, 18],
-    ["fx-charge", fxChargeUrl, 96, 12, 15],
-    ["fx-spark", fxSparkUrl, 128, 12, 26]
-];
 const IFRAME_MS = 700;
 // Padrão "ifElse" (LEO): tempo para ler a lâmpada e ir para a metade segura, e
 // o ciclo lâmpada -> golpe.
@@ -225,11 +212,7 @@ export default class BattleScene extends Phaser.Scene {
         if (!this.textures.exists("projetil")) {
             this.load.spritesheet("projetil", projetilUrl, { frameWidth: 32, frameHeight: 32 });
         }
-        BOSS_FX.forEach(([key, url, size]) => {
-            if (!this.textures.exists(key)) {
-                this.load.spritesheet(key, url, { frameWidth: size, frameHeight: size });
-            }
-        });
+        Effects.preload(this);   // raio, portal, explosão, carga, faísca (ver ui/Effects).
         // Combatentes customizados (ex.: dupla de sentinelas): sheets via config.
         (this.config.combatants ?? []).forEach((c) => {
             if (!this.textures.exists(`${c.key}-walk`)) {
@@ -506,16 +489,7 @@ export default class BattleScene extends Phaser.Scene {
         }
 
         // Efeitos do pack (tocam uma vez): raio, portal, explosão, carga, faísca.
-        BOSS_FX.forEach(([key, , , frames, rate]) => {
-            if (!this.anims.exists(`${key}-anim`)) {
-                this.anims.create({
-                    key: `${key}-anim`,
-                    frames: this.anims.generateFrameNumbers(key, { start: 0, end: frames - 1 }),
-                    frameRate: rate,
-                    repeat: 0
-                });
-            }
-        });
+        Effects.createAnimations(this);
     }
 
     createSoul() {

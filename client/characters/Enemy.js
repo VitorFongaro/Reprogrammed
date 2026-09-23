@@ -17,6 +17,13 @@ import carActivate from "../assets/sprites/enemies/car/activate.png";
 import carShoot from "../assets/sprites/enemies/car/shoot.png";
 import carBroken from "../assets/sprites/enemies/car/broken.png";
 import carProjectile from "../assets/sprites/enemies/car/projectile.png";
+import msgIdle from "../assets/sprites/enemies/mensageiro/idle.png";
+import msgWake from "../assets/sprites/enemies/mensageiro/wake.png";
+import msgWalk from "../assets/sprites/enemies/mensageiro/walk.png";
+import msgCharge from "../assets/sprites/enemies/mensageiro/charge.png";
+import msgShoot from "../assets/sprites/enemies/mensageiro/shoot.png";
+import msgDisabled from "../assets/sprites/enemies/mensageiro/disabled.png";
+import msgDash from "../assets/sprites/enemies/mensageiro/dash.png";
 import Sfx from "../ui/Sfx";
 
 // Inimigos dos capítulos 1 e 2 (packs SteamRobotsPack + biped_robot, quadros 32×32).
@@ -30,7 +37,8 @@ import Sfx from "../ui/Sfx";
 
 const FRAME = 32;
 
-// [chave] -> { url, quadros, fh? (altura, default 32), repeat? (default -1) }.
+// [chave] -> { url, quadros, fw?/fh? (tamanho do quadro, default 32),
+//              repeat? (default -1), fps? }.
 const SHEETS = {
     "enemy-exploding-idle": { url: expIdle, frames: 5 },
     "enemy-exploding-walk": { url: expWalk, frames: 6 },
@@ -48,8 +56,25 @@ const SHEETS = {
     "enemy-car-move": { url: carMove, frames: 4 },
     "enemy-car-activate": { url: carActivate, frames: 6, repeat: 0 },
     "enemy-car-shoot": { url: carShoot, frames: 5, repeat: 0 },
-    "enemy-car-broken": { url: carBroken, frames: 4, repeat: 0 }
+    "enemy-car-broken": { url: carBroken, frames: 4, repeat: 0 },
+    // MENSAGEIRO (cap. 2): pack "Bot Wheel", quadros de 36x32 (ver
+    // tools/mensageiro_sheets.py — o pack vem em tira vertical de 117x26).
+    "enemy-mensageiro-idle": { url: msgIdle, frames: 1, fw: 36 },
+    "enemy-mensageiro-wake": { url: msgWake, frames: 5, fw: 36, repeat: 0, fps: 10 },
+    "enemy-mensageiro-walk": { url: msgWalk, frames: 8, fw: 36, fps: 12 },
+    "enemy-mensageiro-charge": { url: msgCharge, frames: 4, fw: 36, repeat: 0, fps: 8 },
+    "enemy-mensageiro-shoot": { url: msgShoot, frames: 4, fw: 36, repeat: 0 },
+    "enemy-mensageiro-disabled": { url: msgDisabled, frames: 6, fw: 36, repeat: 0, fps: 10 },
+    // Rastro da investida a gás: quadro LARGO (117), desenhado como sprite
+    // separado atrás do robô — ver DASH_ANCHOR_X e showDashTrail.
+    "enemy-mensageiro-dash": { url: msgDash, frames: 6, fw: 117, repeat: 0, fps: 12 }
 };
+
+// No desenho do rastro, o robô está em x=100 de 117 (o resto é o gás saindo
+// para trás). Usar isso como origem do sprite recompõe o quadro do pack em
+// cima do robô, onde quer que ele esteja.
+const DASH_FRAME = { w: 117, h: 32, anchor: 100 };
+const DASH_ANCHOR_X = DASH_FRAME.anchor / DASH_FRAME.w;
 
 const TYPES = {
     exploding: {
@@ -188,6 +213,64 @@ const TYPES = {
             ],
             timeLimitMs: 30000
         }
+    },
+
+    // MENSAGEIRO: robô de entregas de uma roda só. Único do cap. 2 com ARTE
+    // PRÓPRIA (pack "Bot Wheel"), então não leva tint.
+    // Fica DORMENTE num canto (sprite fechado, sem a roda e sem o braço): não
+    // anda, não atira e dá para reprogramar à vontade. Se a Artemis passar
+    // dentro de `wakeRange`, ele desdobra e acorda — a condicional mais literal
+    // do capítulo: enquanto a condição é falsa, nada acontece.
+    // Acordado, ele MANTÉM DISTÂNCIA e ataca com um tiro CARREGADO: para,
+    // acende o braço (telegrafo) e só então dispara, na mira travada em onde ela
+    // estava. Ficar parada é o que mata aqui - o oposto exato da vigia.
+    // E de vez em quando ele vem por cima: a INVESTIDA A GÁS (`startDash` ->
+    // `launchDash`) trava, pisca branco e sai em disparada EM CIMA DELA, no
+    // ângulo travado no aviso - dá para sair da frente. O rastro do pack fica
+    // no chão cobrindo o trajeto, e ele chega OFEGANTE do outro lado (parado,
+    // sem atirar): é a janela para golpear ou reprogramar.
+    mensageiro: {
+        name: "MENSAGEIRO",
+        walkKey: "enemy-mensageiro-walk",
+        disabledKey: "enemy-mensageiro-disabled",
+        idleKey: "enemy-mensageiro-idle",
+        wakeKey: "enemy-mensageiro-wake",
+        chargeKey: "enemy-mensageiro-charge",
+        shootKey: "enemy-mensageiro-shoot",
+        dashKey: "enemy-mensageiro-dash",
+        scale: 3, speed: 150, meleeHp: 3, ranged: true, contactDamage: 3,
+        courier: true,
+        wakeRange: 250, fireMs: 2000, fireRange: 430, muzzle: 34,
+        kiteMin: 200, kiteMax: 340,
+        // Investida: alcance útil ~224px (speed * durationMs), então a faixa de
+        // disparo é calibrada para ela às vezes passar por dentro da Artemis.
+        gasDash: {
+            rangeMin: 150, rangeMax: 340, windupMs: 380,
+            speed: 560, durationMs: 400, windedMs: 750, cooldownMs: 3400
+        },
+        dodge: ["laserLane", "fan"],    // bullet hell: laser na faixa avisada + leque.
+        disablePuzzle: {
+            briefing: [
+                "Ele roda por qualquer motivo - e entrega nenhuma tem agora.",
+                "Só deixe ele rodar se tiver entrega E rota."
+            ],
+            hint: "monte:  se entrega e rota :  rodar = true  /  senão :  rodar = false",
+            lines: [
+                "se [nome] [op] [nome] :",
+                "    rodar = [valor]",
+                "senão :",
+                "    rodar = [valor]"
+            ],
+            blocks: { nome: ["entrega", "rota"], op: ["e", "ou"], valor: ["true", "false"] },
+            // Os quatro casos: é a tabela-verdade do `e` (só o `ou` erra dois).
+            tests: [
+                { given: { entrega: true, rota: true }, expect: { rodar: true } },
+                { given: { entrega: true, rota: false }, expect: { rodar: false } },
+                { given: { entrega: false, rota: true }, expect: { rodar: false } },
+                { given: { entrega: false, rota: false }, expect: { rodar: false } }
+            ],
+            timeLimitMs: 30000
+        }
     }
 };
 
@@ -200,7 +283,10 @@ export default class Enemy {
     static preload(scene) {
         Object.entries(SHEETS).forEach(([key, def]) => {
             if (!scene.textures.exists(key)) {
-                scene.load.spritesheet(key, def.url, { frameWidth: FRAME, frameHeight: def.fh ?? FRAME });
+                scene.load.spritesheet(key, def.url, {
+                    frameWidth: def.fw ?? FRAME,
+                    frameHeight: def.fh ?? FRAME
+                });
             }
         });
         // Projétil do carro: sheet 16x8 = 2 quadros de 8x8 (animado).
@@ -218,7 +304,7 @@ export default class Enemy {
             scene.anims.create({
                 key,
                 frames: scene.anims.generateFrameNumbers(key, { start: 0, end: def.frames - 1 }),
-                frameRate: def.frames > 1 ? (def.repeat === 0 ? 16 : 8) : 1,
+                frameRate: def.fps ?? (def.frames > 1 ? (def.repeat === 0 ? 16 : 8) : 1),
                 repeat: def.repeat ?? -1
             });
         });
@@ -256,6 +342,18 @@ export default class Enemy {
         this.sprite.play(this.def.walkKey);
         this.dashState = null;       // faxineiro: null | "windup" | "dash" | "dizzy".
         this.nextDash = 1500;
+        this.nextGasDash = 0;        // mensageiro: recarga da investida a gás.
+        // mensageiro: "asleep" | "waking" | "active" | "charging" | "revving" |
+        // "dashing" | "winded" (ver updateCourier). Dormente ele
+        // fica no sprite fechado, com um respiro de alpha para não virar só mais
+        // um vulto no chão escuro (e para dar a entender que ainda está ligado).
+        this.courierState = this.def.courier ? "asleep" : null;
+        if (this.courierState) {
+            this.sprite.play(this.def.idleKey);
+            this.standbyTween = scene.tweens.add({
+                targets: this.sprite, alpha: 0.7, duration: 1100, yoyo: true, repeat: -1
+            });
+        }
         if (this.def.car) {
             // O carro fica na parte BAIXA do quadro 32x32 (bbox ~x8-23, y23-31):
             // corpo sobre ele, centralizado no eixo x (o flip não desalinha).
@@ -276,8 +374,10 @@ export default class Enemy {
         scene.registerEnemy?.(this);
         scene.registerReprogrammable?.({
             sprite: this.sprite,                 // posição viva (o inimigo se move).
-            w: FRAME * this.def.scale * 0.7,
-            h: FRAME * this.def.scale * 0.7,
+            // Pelo tamanho REAL do sprite: nem toda folha é 32x32 (o mensageiro
+            // é 36 de largura).
+            w: this.sprite.displayWidth * 0.7,
+            h: this.sprite.displayHeight * 0.7,
             label: this.def.name,
             isAvailable: () => !this.disabled,
             onReprogram: () => scene.startEnemyReprogram?.(this)
@@ -308,6 +408,10 @@ export default class Enemy {
         }
         if (this.def.sentry) {
             this.updateSentry(time, player);
+            return;
+        }
+        if (this.def.courier) {
+            this.updateCourier(time, player);
             return;
         }
         if (this.def.dash && this.updateDash(time, player)) {
@@ -423,6 +527,197 @@ export default class Enemy {
             this.sprite.anims.resume();
         }
         return true;
+    }
+
+    // Mensageiro: dorme até alguém passar perto; acordado, mantém distância e
+    // ataca com tiro carregado. Cada estado trava o movimento por conta própria,
+    // então o update normal não roda para ele.
+    updateCourier(time, player) {
+        const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+
+        if (this.courierState === "asleep") {
+            this.sprite.body.setVelocity(0, 0);
+            if (dist <= this.def.wakeRange) {
+                this.sprite.setFlipX(player.x < this.x);   // acorda encarando quem chegou.
+                this.wakeCourier(time);
+            }
+            return;
+        }
+
+        // Engasgando antes de sair: parado, mira travada (ver startDash).
+        if (this.courierState === "revving") {
+            if (time < this.courierUntil) {
+                return;
+            }
+            this.launchDash(time);
+            return;
+        }
+        // Em disparada: a velocidade já está posta, só o relógio manda. No fim
+        // ele chega ofegante (parado, sem atirar) - a janela do jogador.
+        if (this.courierState === "dashing") {
+            if (time < this.courierUntil) {
+                this.revealTrail((this.courierUntil - time) / this.def.gasDash.durationMs);
+                return;
+            }
+            this.trail?.setCrop();      // chegou: o rastro inteiro fica à mostra.
+            this.courierState = "winded";
+            this.courierUntil = time + this.def.gasDash.windedMs;
+            this.sprite.body.setVelocity(0, 0);
+            this.sprite.anims.pause();
+            return;
+        }
+        if (this.courierState === "winded") {
+            if (time < this.courierUntil) {
+                return;
+            }
+            this.courierState = "active";
+            this.nextGasDash = time + this.def.gasDash.cooldownMs;
+            this.sprite.anims.resume();
+            return;
+        }
+        // Acordando ou carregando: parado, esperando a animação terminar.
+        if (this.courierState !== "active") {
+            this.sprite.body.setVelocity(0, 0);
+            return;
+        }
+
+        this.sprite.setFlipX(player.x < this.x);
+
+        // INVESTIDA: vem em cima dela. Só a certa distância (perto demais não dá
+        // tempo de ler o aviso, longe demais ele nem alcança) e com recarga,
+        // senão o kite nunca acontece e vira atropelamento em looping.
+        const gd = this.def.gasDash;
+        if (time >= this.nextGasDash && dist >= gd.rangeMin && dist <= gd.rangeMax) {
+            this.startDash(time, player);
+            return;
+        }
+
+        // Recua se ela chega perto, aproxima se ela foge, para no meio-termo.
+        const angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
+        const s = this.def.speed;
+        if (dist < this.def.kiteMin) {
+            this.sprite.body.setVelocity(-Math.cos(angle) * s, -Math.sin(angle) * s);
+        } else if (dist > this.def.kiteMax) {
+            this.sprite.body.setVelocity(Math.cos(angle) * s * 0.8, Math.sin(angle) * s * 0.8);
+        } else {
+            this.sprite.body.setVelocity(0, 0);
+        }
+
+        if (time >= this.nextFire && dist <= this.def.fireRange) {
+            this.chargedShot(angle);
+        }
+    }
+
+    wakeCourier(time) {
+        this.courierState = "waking";
+        this.standbyTween?.remove();
+        this.standbyTween = null;
+        this.sprite.setAlpha(1);
+        this.nextFire = time + 900;      // um respiro antes do primeiro tiro.
+        this.playOnce(this.def.wakeKey, () => {
+            if (this.disabled) {
+                return;
+            }
+            this.courierState = "active";
+            this.sprite.play(this.def.walkKey, true);
+        });
+    }
+
+    // Investida a gás, parte 1: ele TRAVA, encara a Artemis e pisca branco. A
+    // mira fica presa na posição de agora — sem este aviso, um atropelamento a
+    // 560px/s seria só dano sem resposta.
+    startDash(time, player) {
+        this.courierState = "revving";
+        this.courierUntil = time + this.def.gasDash.windupMs;
+        this.dashAngle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
+        this.sprite.body.setVelocity(0, 0);
+        this.sprite.setFlipX(Math.cos(this.dashAngle) < 0);
+        this.sprite.setTint(0xffffff);
+    }
+
+    // Parte 2: sai em cima dela, no ângulo travado. Bater numa parede no meio do
+    // caminho não atrapalha — quem encerra a investida é o relógio, não a
+    // distância percorrida.
+    launchDash(time) {
+        const cfg = this.def.gasDash;
+        const a = this.dashAngle;
+        this.courierState = "dashing";
+        this.courierUntil = time + cfg.durationMs;
+        this.applyBaseTint();
+        this.sprite.body.setVelocity(Math.cos(a) * cfg.speed, Math.sin(a) * cfg.speed);
+        this.sprite.play(this.def.walkKey, true);
+        Sfx.play(this.scene, "bump", 0.5);
+
+        // O rastro fica no MUNDO, cobrindo o caminho que ele vai percorrer, e
+        // dissipa ali sozinho — gás não anda junto com quem o soltou. Por isso a
+        // âncora é o ponto de CHEGADA: o desenho do pack tem o robô na ponta do
+        // risco, então ancorar no fim faz o rastro cair exatamente sobre o
+        // trajeto (e o quadro original se recompor quando ele chega).
+        const b = this.scene.bounds;
+        const reach = (cfg.speed * cfg.durationMs) / 1000;
+        this.showDashTrail(
+            Phaser.Math.Clamp(this.x + Math.cos(a) * reach, b.x, b.x + b.w),
+            Phaser.Math.Clamp(this.y + Math.sin(a) * reach, b.y, b.y + b.h),
+            a
+        );
+    }
+
+    // O rastro é um sprite à parte, com a origem no ponto em que o artista
+    // desenhou o robô. Gira com a investida; nos ângulos para a esquerda a
+    // rotação jogaria o gás para cima, e o flipY devolve ele para baixo.
+    showDashTrail(x, y, angle) {
+        if (!this.trail) {
+            this.trail = this.scene.add.sprite(x, y, this.def.dashKey, 0)
+                .setOrigin(DASH_ANCHOR_X, 0.5)
+                .setScale(this.def.scale);
+            this.trail.on("animationcomplete", () => this.trail?.setVisible(false));
+        }
+        this.trail.setPosition(x, y)
+            .setRotation(angle)
+            .setFlipY(Math.cos(angle) < 0)
+            .setDepth(y + 39)
+            .setVisible(true);
+        this.revealTrail(1);          // nasce recortado: nada de gás antes da largada.
+        this.trail.play(this.def.dashKey);
+    }
+
+    // O gás só existe onde ele JÁ passou. Como a âncora do rastro é o ponto de
+    // CHEGADA, o risco inteiro apareceria de saída, antes de o robô sair do
+    // lugar — então ele nasce recortado e vai sendo revelado conforme a
+    // investida avança. `remaining` é a fração que ainda falta percorrer.
+    revealTrail(remaining) {
+        if (!this.trail?.visible) {
+            return;
+        }
+        const cfg = this.def.gasDash;
+        const reachTex = (cfg.speed * cfg.durationMs) / 1000 / this.def.scale;
+        const w = Phaser.Math.Clamp(DASH_FRAME.anchor - reachTex * remaining, 0, DASH_FRAME.w);
+        this.trail.setCrop(0, 0, w, DASH_FRAME.h);
+    }
+
+    // Tiro CARREGADO: para, acende o braço e só então dispara. A mira fica
+    // TRAVADA no ângulo do começo da carga — quem continuar andando escapa.
+    chargedShot(angle) {
+        this.courierState = "charging";
+        this.sprite.body.setVelocity(0, 0);
+        this.playOnce(this.def.chargeKey, () => {
+            if (this.disabled) {
+                return;
+            }
+            Sfx.play(this.scene, "laser", 0.7);
+            const d = this.def.muzzle ?? MUZZLE_OFFSET;
+            this.scene.spawnEnemyBullet?.(
+                this.x + Math.cos(angle) * d, this.y + Math.sin(angle) * d, angle
+            );
+            this.playOnce(this.def.shootKey, () => {
+                if (this.disabled) {
+                    return;
+                }
+                this.courierState = "active";
+                this.nextFire = this.scene.time.now + this.def.fireMs;
+                this.sprite.play(this.def.walkKey, true);
+            });
+        });
     }
 
     // Cor base do tipo (arte provisória do cap. 2) ou o vermelho de alerta da
@@ -568,6 +863,11 @@ export default class Enemy {
             return;
         }
         this.meleeHp -= 1;
+        // Bater num mensageiro dormindo ACORDA ele: senão dava para desmontá-lo
+        // de graça, e o gatilho dele deixaria de ser um gatilho.
+        if (this.courierState === "asleep") {
+            this.wakeCourier(this.scene.time.now);
+        }
         this.sprite.setTintFill(0xffffff);
         this.scene.time.delayedCall(80, () => {
             if (!this.disabled) this.applyBaseTint();
@@ -584,6 +884,11 @@ export default class Enemy {
         }
         this.disabled = true;
         this.alert = false;
+        this.courierState = null;
+        this.standbyTween?.remove();
+        this.standbyTween = null;
+        this.trail?.setVisible(false);
+        this.sprite.setAlpha(1);
         this.sprite.anims.resume();
         this.sprite.setAngle(0);
         this.applyBaseTint();
@@ -610,6 +915,8 @@ export default class Enemy {
     }
 
     destroy() {
+        this.standbyTween?.remove();
+        this.trail?.destroy();
         this.weapon?.destroy();
         this.sprite?.destroy();
     }
