@@ -148,6 +148,39 @@ permitido**, mas **não se pode redistribuir o pack solto** (nem subir para asse
 atribuição** — creditar "Super Pixel Effects Gigapack — Will Tice / unTied Games". Creditar no TCC.
 (Só a versão FREE está no repo; a paga tem mais efeitos/cores.)
 
+### Super Pixel Fantasy FX Pack 3 (Free) — Will Tice / unTied Games
+
+Mesmo autor e **mesma licença** do Gigapack acima (empacotar no jogo pode, redistribuir o pack
+solto não, crédito obrigatório — "Super Pixel Fantasy FX Pack 3 — Will Tice / unTied Games" — e
+proibido usar como material de treino de IA).
+
+### Efeitos da WITCH (boss do cap. 2) — dos dois packs acima
+
+Os packs entregam um PNG por quadro, em "large" e "small"; `tools/fx_sheets.py` empilha o
+**large** de cada um numa tira em `client/assets/sprites/effects/` (cada tamanho é desenhado à
+mão, então escalar um no lugar do outro borra). Carregados por `client/ui/Effects.js`.
+
+| arquivo | origem | uso |
+|---|---|---|
+| `fx_haste.png` | Fantasy FX 3 — haste (verde) | o relógio da batalha por turnos, grande e lento (12 fps); de trás para frente quando rebobina. **Só na fase 2** |
+| `fx_death.png` | Fantasy FX 3 — death (vermelho) | a SENTENÇA: o 死 pincelado é o aviso, a caveira em chamas (quadros 32–44) é o dano |
+| `fx_rage.png` | Fantasy FX 3 — attack up | a fúria, na metade do fôlego |
+| `fx_skull.png` | Gigapack — stylized skull smoke burst | ela some no passo no tempo |
+| `fx_portal.png` | Gigapack — scifi warp 002 (vermelho) | onde ela vai reaparecer |
+| `fx_arrive.png` | Gigapack — scifi warp 003 (azul) | a chegada pelo portal |
+| `fx_impact.png` | Gigapack — directional impact 003 (violeta) | o golpe da foice |
+| `fx_ring.png` | Gigapack — symmetrical impact 002 (azul) | cada anel da badalada |
+| `fx_burst.png` | Gigapack — stylized explosion 002 (violeta) | o golpe do eco |
+| `fx_alert.png` | Gigapack — symbol alert 001 (vermelho) | o "!" antes dos golpes de perto/área |
+| `fx_dizzy.png` | Gigapack — status sparkling 001 | ela tonta, sem fôlego (a janela do `[R]`) |
+
+### WITCH — boss final do cap. 2
+
+`client/assets/sprites/boss/witch/walk.png` (5×4) e `attack.png` (10×4), quadros de **144×144**,
+uma linha por direção (norte, sul, leste, oeste). Entraram no repo como vieram, sem conversão: a
+grade já é o formato de spritesheet do Phaser. **Origem e licença ainda não registradas** — anotar
+aqui de onde a arte veio (e a forma de crédito) antes da entrega do TCC.
+
 ### Interface Sounds — Kenney ([kenney.nl](https://kenney.nl/assets/interface-sounds))
 
 Efeitos sonoros da UI (`client/assets/audio/`, `.ogg`): `select.ogg` (bloco encaixado),

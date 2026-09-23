@@ -720,9 +720,12 @@ export default class BaseRoomScene extends Phaser.Scene {
         }
         // Colisão SÓLIDA com a Artemis (ela não atravessa mais o inimigo); o toque
         // ainda tira HP. Colisor, não overlap — assim os dois se bloqueiam de fato.
+        // `contactDamage: 0` = bloqueia sem machucar (a WITCH só fere pelos golpes;
+        // um damagePlayer(0) ainda tremeria a tela e daria i-frames à toa).
+        const contactDamage = enemy.def.contactDamage ?? ENEMY_BULLET_DAMAGE;
         this.physics.add.collider(this.player.sprite, enemy.sprite, () => {
-            if (!enemy.disabled) {
-                this.damagePlayer(enemy.def.contactDamage ?? ENEMY_BULLET_DAMAGE);
+            if (!enemy.disabled && contactDamage > 0) {
+                this.damagePlayer(contactDamage);
             }
         });
         // Colide com os obstáculos do mapa já registrados (props/paredes).
@@ -741,6 +744,7 @@ export default class BaseRoomScene extends Phaser.Scene {
             bullet.play(animKey);
         }
         bullet.body.setVelocity(Math.cos(angle) * ENEMY_BULLET_SPEED, Math.sin(angle) * ENEMY_BULLET_SPEED);
+        return bullet;   // quem atira pode girar/ajustar (a lâmina da WITCH aponta para onde voa)
     }
 
     // Bola de energia do slam do biped: quica nas paredes (bounce + world bounds)

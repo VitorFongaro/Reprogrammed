@@ -180,7 +180,7 @@ const TYPES = {
         }
     },
 
-    // FAXINEIRO: robô de limpeza (a LEO, boss do capítulo, é a governanta deles).
+    // FAXINEIRO: robô de limpeza (a LEO, pré-boss do capítulo, é a governanta deles).
     // Anda limpando à toa; se a Artemis chegar perto, trava, TELEGRAFA e dá uma
     // investida em linha reta. Depois fica tonto um instante: é a janela para
     // golpear ou reprogramar.

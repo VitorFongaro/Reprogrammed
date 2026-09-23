@@ -3,7 +3,8 @@ import { addServicePanel } from "../../objects/ServicePanel";
 import maidWalk from "../../assets/sprites/enemies/biped_maid/walk.png";
 import maidDisabled from "../../assets/sprites/enemies/biped_maid/disabled.png";
 
-// Capítulo 2: sala da LEO, boss do capítulo. Provisória como o laboratório — o
+// Capítulo 2: sala da LEO, PRÉ-BOSS do capítulo (a boss final é a WITCH, na
+// SalaWitchScene; por isso `reward: null` aqui). Provisória como o laboratório — o
 // mapa do cap. 2 ainda não existe —, mas SEPARADA dele de propósito: o embate
 // com ela é longo e não tem por que ficar disputando espaço com a bancada de
 // testes dos inimigos comuns.
