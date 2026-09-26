@@ -1,0 +1,109 @@
+{
+  "compressionlevel": -1,
+  "width": 40,
+  "height": 22,
+  "infinite": false,
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "tilewidth": 32,
+  "tileheight": 32,
+  "tiledversion": "1.10.2",
+  "version": "1.10",
+  "type": "map",
+  "nextlayerid": 4,
+  "nextobjectid": 100,
+  "tilesets": [
+    {
+      "columns": 0,
+      "firstgid": 1,
+      "grid": {"height":  1, "orientation":  "orthogonal", "width":  1},
+      "margin": 0,
+      "name": "props",
+      "spacing": 0,
+      "tilecount": 10,
+      "tilewidth": 200,
+      "tileheight": 148,
+      "tiles": [
+        {"id":  0, "image":  "../images/recepcao/props/balcao_recepcao.png", "imagewidth":  200, "imageheight":  96},
+        {"id":  1, "image":  "../images/recepcao/props/totem_info.png", "imagewidth":  44, "imageheight":  88},
+        {"id":  2, "image":  "../images/recepcao/props/bebedouro.png", "imagewidth":  32, "imageheight":  72},
+        {"id":  3, "image":  "../images/recepcao/props/lixeira.png", "imagewidth":  24, "imageheight":  32},
+        {"id":  4, "image":  "../images/recepcao/props/floreira.png", "imagewidth":  44, "imageheight":  148},
+        {"id":  5, "image":  "../images/recepcao/props/sofa_espera.png", "imagewidth":  128, "imageheight":  60},
+        {"id":  6, "image":  "../images/recepcao/props/mesa_centro.png", "imagewidth":  72, "imageheight":  40},
+        {"id":  7, "image":  "../images/recepcao/props/poltrona_espera.png", "imagewidth":  56, "imageheight":  60},
+        {"id":  8, "image":  "../images/recepcao/props/vaso_ficus.png", "imagewidth":  44, "imageheight":  84},
+        {"id":  9, "image":  "../images/recepcao/props/mesa_seguranca.png", "imagewidth":  96, "imageheight":  68}
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "id": 1,
+      "name": "fundo",
+      "type": "imagelayer",
+      "image": "../images/recepcao/recepcao_bg.png",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": 3,
+      "name": "objetos",
+      "type": "objectgroup",
+      "draworder": "topdown",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {"id":  1, "gid":  1, "name":  "balcao", "rotation":  0, "type":  "", "visible":  true, "x":  380, "y":  236, "width":  200, "height":  96},
+        {"id":  2, "gid":  2, "name":  "totem", "rotation":  0, "type":  "", "visible":  true, "x":  616, "y":  252, "width":  44, "height":  88},
+        {"id":  3, "gid":  3, "name":  "bebedouro", "rotation":  0, "type":  "", "visible":  true, "x":  700, "y":  210, "width":  32, "height":  72},
+        {"id":  4, "gid":  4, "name":  "lixeira-1", "rotation":  0, "type":  "", "visible":  true, "x":  738, "y":  214, "width":  24, "height":  32},
+        {"id":  5, "gid":  5, "name":  "floreira-norte", "rotation":  0, "type":  "", "visible":  true, "x":  778, "y":  276, "width":  44, "height":  148},
+        {"id":  6, "gid":  5, "name":  "floreira-sul", "rotation":  0, "type":  "", "visible":  true, "x":  778, "y":  672, "width":  44, "height":  148},
+        {"id":  7, "gid":  6, "name":  "sofa", "rotation":  0, "type":  "", "visible":  true, "x":  104, "y":  492, "width":  128, "height":  60},
+        {"id":  8, "gid":  7, "name":  "mesa-centro", "rotation":  0, "type":  "", "visible":  true, "x":  132, "y":  556, "width":  72, "height":  40},
+        {"id":  9, "gid":  8, "name":  "poltrona", "rotation":  0, "type":  "", "visible":  true, "x":  250, "y":  566, "width":  56, "height":  60},
+        {"id":  10, "gid":  9, "name":  "vaso-1", "rotation":  0, "type":  "", "visible":  true, "x":  36, "y":  470, "width":  44, "height":  84},
+        {"id":  11, "gid":  9, "name":  "vaso-2", "rotation":  0, "type":  "", "visible":  true, "x":  342, "y":  480, "width":  44, "height":  84},
+        {"id":  12, "gid":  10, "name":  "posto-seguranca", "rotation":  0, "type":  "", "visible":  true, "x":  880, "y":  212, "width":  96, "height":  68},
+        {"id":  13, "gid":  4, "name":  "lixeira-2", "rotation":  0, "type":  "", "visible":  true, "x":  986, "y":  214, "width":  24, "height":  32},
+        {"id":  14, "gid":  9, "name":  "vaso-3", "rotation":  0, "type":  "", "visible":  true, "x":  840, "y":  640, "width":  44, "height":  84},
+        {"id":  15, "gid":  9, "name":  "vaso-4", "rotation":  0, "type":  "", "visible":  true, "x":  1200, "y":  640, "width":  44, "height":  84}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "colisao",
+      "type": "objectgroup",
+      "draworder": "topdown",
+      "opacity": 1,
+      "visible": true,
+      "x": 0,
+      "y": 0,
+      "objects": [
+        {"id":  50, "name":  "balcao", "rotation":  0, "type":  "", "visible":  true, "x":  380, "y":  176, "width":  200, "height":  60},
+        {"id":  51, "name":  "totem", "rotation":  0, "type":  "", "visible":  true, "x":  624, "y":  226, "width":  28, "height":  26},
+        {"id":  52, "name":  "bebedouro", "rotation":  0, "type":  "", "visible":  true, "x":  702, "y":  186, "width":  28, "height":  24},
+        {"id":  53, "name":  "lixeira-1", "rotation":  0, "type":  "", "visible":  true, "x":  740, "y":  198, "width":  20, "height":  16},
+        {"id":  54, "name":  "floreira-norte", "rotation":  0, "type":  "", "visible":  true, "x":  778, "y":  128, "width":  44, "height":  148},
+        {"id":  55, "name":  "catraca-1", "rotation":  0, "type":  "", "visible":  true, "x":  772, "y":  280, "width":  56, "height":  42},
+        {"id":  56, "name":  "catraca-2", "rotation":  0, "type":  "", "visible":  true, "x":  772, "y":  380, "width":  56, "height":  42},
+        {"id":  57, "name":  "catraca-3", "rotation":  0, "type":  "", "visible":  true, "x":  772, "y":  480, "width":  56, "height":  42},
+        {"id":  58, "name":  "floreira-sul", "rotation":  0, "type":  "", "visible":  true, "x":  778, "y":  522, "width":  44, "height":  150},
+        {"id":  59, "name":  "sofa", "rotation":  0, "type":  "", "visible":  true, "x":  104, "y":  440, "width":  128, "height":  52},
+        {"id":  60, "name":  "mesa-centro", "rotation":  0, "type":  "", "visible":  true, "x":  134, "y":  530, "width":  68, "height":  26},
+        {"id":  61, "name":  "poltrona", "rotation":  0, "type":  "", "visible":  true, "x":  252, "y":  520, "width":  52, "height":  46},
+        {"id":  62, "name":  "vaso-1", "rotation":  0, "type":  "", "visible":  true, "x":  42, "y":  446, "width":  32, "height":  24},
+        {"id":  63, "name":  "vaso-2", "rotation":  0, "type":  "", "visible":  true, "x":  348, "y":  456, "width":  32, "height":  24},
+        {"id":  64, "name":  "posto-seguranca", "rotation":  0, "type":  "", "visible":  true, "x":  882, "y":  170, "width":  92, "height":  42},
+        {"id":  65, "name":  "lixeira-2", "rotation":  0, "type":  "", "visible":  true, "x":  988, "y":  198, "width":  20, "height":  16},
+        {"id":  66, "name":  "vaso-3", "rotation":  0, "type":  "", "visible":  true, "x":  846, "y":  616, "width":  32, "height":  24},
+        {"id":  67, "name":  "vaso-4", "rotation":  0, "type":  "", "visible":  true, "x":  1206, "y":  616, "width":  32, "height":  24}
+      ]
+    }
+  ]
+}

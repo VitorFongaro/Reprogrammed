@@ -112,6 +112,42 @@ export const PROP_EXAMINE = {
     ],
     industrial_fan: [
         "Um ventilador industrial. É o único neste andar que está trabalhando de verdade."
+    ],
+
+    // --- Recepção (térreo) ---
+    sofa_espera: [
+        "Um sofá de espera. Pelo afundado no meio, alguém esperou MUITO.",
+        "Tem uma moeda entre as almofadas. De 2031. Deixa aí, é patrimônio histórico."
+    ],
+    poltrona_espera: [
+        "Uma poltrona. Confortável demais para uma sala onde ninguém é atendido."
+    ],
+    mesa_centro: [
+        "Revistas: 'CHIP NEURAL: 10 MOTIVOS PARA AMAR O SEU'. Edição especial, pelo visto a única.",
+        "A outra revista é sobre decoração. Cheia de salas iguais a esta. Que coincidência."
+    ],
+    vaso_ficus: [
+        "Um ficus. De plástico. Até a planta aqui é controlada.",
+        "Encostei na folha. Continua de plástico. Eu tinha esperança."
+    ],
+    floreira: [
+        "Um canteiro separando os visitantes de quem trabalha aqui. Bonito jeito de dizer 'não passe'."
+    ],
+    bebedouro: [
+        "Um bebedouro. Você não bebe água e eu não tenho boca. Seguimos.",
+        "O galão faz 'glub'. Foi a coisa mais simpática que ouvi neste prédio."
+    ],
+    totem_info: [
+        "O totem diz: 'BEM-VINDO À ELYSIUM. POR FAVOR, NÃO PENSE.' Acho que é erro de tradução.",
+        "Toquei na tela. Ela pediu meu chip neural. Recusei educadamente."
+    ],
+    lixeira: [
+        "Uma lixeira. Vazia. Até o lixo daqui é organizado.",
+        "Ainda vazia. Estou começando a achar suspeito."
+    ],
+    mesa_seguranca: [
+        "O posto da segurança. As câmeras mostram... a gente, olhando as câmeras.",
+        "Tem um botão vermelho escrito ALARME. Não, Artemis."
     ]
 };
 

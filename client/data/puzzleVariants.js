@@ -334,6 +334,33 @@ export const ENIAC_DEFENSES = [
 
 const between = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
 
+// CATRACAS da recepção (cap2-recepcao): o primeiro `se` do capítulo. O nível
+// mínimo é sorteado; o crachá que o Cosmo arranja é de nível 4, então todo
+// sorteio precisa ficar em 4 ou menos para a história fechar.
+export function catracaPuzzle() {
+    const level = pick([2, 3, 4]);
+    return {
+        title: "CATRACAS // ACESSO",
+        briefing: [
+            "O bloqueio travou as catracas para todo mundo.",
+            `Reescreva a regra: só crachá de nível ${level} ou mais passa.`
+        ],
+        hint: `monte:  se cracha >= ${level} :   catraca = true`,
+        lines: [
+            "se [nome] [op] [valor] :",
+            "    catraca = [valor]"
+        ],
+        blocks: { nome: ["cracha"], op: [">=", "<", "=="], valor: [String(level), `"${level}"`, "true", "false"] },
+        defaults: { catraca: false },
+        tests: [
+            { given: { cracha: level - 1 }, expect: { catraca: false } },
+            { given: { cracha: level }, expect: { catraca: true } },
+            { given: { cracha: level + between(1, 3) }, expect: { catraca: true } }
+        ],
+        successMessage: "ACESSO CONFIGURADO"
+    };
+}
+
 // FAXINEIRO: recarrega abaixo de um limite sorteado.
 function faxineiroPuzzle() {
     const limit = pick([15, 20, 25, 30]);

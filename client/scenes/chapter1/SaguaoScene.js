@@ -6,7 +6,8 @@ import saguaoBg from "../../assets/images/saguao/saguao_bg.png";
 
 // Capítulo 1, sala 6 — Saguão: cutscene de encerramento. As portas do elevador
 // se abrem para o saguão da Elysium, diálogo de gancho para o capítulo 2 e o
-// cartão "FIM DO CAPÍTULO 1" com o resumo das variáveis aprendidas.
+// cartão "FIM DO CAPÍTULO 1" com o resumo das variáveis aprendidas; o
+// ESPAÇO segue para a recepção do térreo (cap2-recepcao).
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -158,7 +159,7 @@ export default class SaguaoScene extends Phaser.Scene {
             });
         });
 
-        const hint = this.add.text(WIDTH / 2, HEIGHT - 80, "[ESPAÇO] VOLTAR AO MENU", {
+        const hint = this.add.text(WIDTH / 2, HEIGHT - 80, "[ESPAÇO] CONTINUAR", {
             fontFamily: "VCR",
             fontSize: "20px",
             color: "#5b6178"
@@ -179,7 +180,8 @@ export default class SaguaoScene extends Phaser.Scene {
             this.input.keyboard.once("keydown-SPACE", () => {
                 this.cameras.main.fadeOut(700, 0, 0, 0);
                 this.cameras.main.once("camerafadeoutcomplete", () => {
-                    this.scene.start("game-scene");
+                    // O capítulo 2 começa na recepção do térreo, logo depois deste saguão.
+                    this.scene.start("cap2-recepcao");
                 });
             });
         });
