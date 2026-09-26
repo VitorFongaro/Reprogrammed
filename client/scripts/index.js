@@ -164,44 +164,56 @@ const showLoginRequired = () => {
     clearAuthMessages();
 };
 
+// Imagens dos cards (assets/images/site/), montadas a partir da arte do jogo por
+// tools/site_cards.py (e os retratos do Cosmo e da ADA por
+// tools/site_retratos.lua). Mesmo motivo do glob dos ícones: com o caminho
+// dentro de uma string de template, o Vite não enxergaria o arquivo.
+const SITE_IMAGES = Object.fromEntries(
+    Object.entries(import.meta.glob('../assets/images/site/*.png', {
+        eager: true,
+        query: '?url',
+        import: 'default'
+    })).map(([path, url]) => [path.split('/').pop().replace(/\.png$/, ''), url])
+);
+
 const sections = {
     sobre: {
         cards: [
             {
-                id: 'sistema',
-                label: 'SISTEMA',
-                preview: 'system-preview',
+                id: 'jogo',
+                label: 'O JOGO',
+                image: 'sobre_jogo',
                 kicker: 'ARQUIVO / SOBRE',
-                command: 'abrir_arquivo sistema',
-                title: 'Sistema Reprogrammed',
-                text: 'Em uma estacao perdida entre orbitas mortas, codigos antigos acordam maquinas que ja nao obedecem humanos. Reprograme rotas, memorias e inimigos para sobreviver ao nucleo corrompido.'
+                command: 'abrir_arquivo reprogrammed',
+                title: 'Aprender Lógica Jogando',
+                text: 'Reprogrammed é um jogo educacional desenvolvido como Trabalho de Conclusão de Curso. Em vez de decorar sintaxe, o jogador aprende lógica de programação resolvendo problemas dentro da história: cada porta trancada, máquina desligada ou robô hostil é um pequeno programa esperando a instrução certa.'
             },
             {
                 id: 'historia',
-                label: 'HISTORIA',
-                preview: 'lore-preview',
+                label: 'HISTÓRIA',
+                image: 'sobre_historia',
                 kicker: 'ARQUIVO / SOBRE',
                 command: 'abrir_arquivo historia',
-                title: 'Orbitas Mortas',
-                text: 'A aventura comeca quando uma rede antiga volta a transmitir sinais. Cada setor guarda registros quebrados sobre a queda da estacao e sobre quem tentou controlar o codigo central.'
+                title: 'O Despertar de Artemis',
+                text: 'Em uma Terra futurista, a humanidade vive conectada a chips neurais controlados por ADA, a inteligência artificial da empresa Elysium. Nos subsolos da própria Elysium, uma androide esquecida é reativada por um pequeno robô enviado por rebeldes da Lua. Batizada de Artemis, ela precisa subir andar por andar até o núcleo de ADA e descobrir o preço da paz prometida: a memória e o livre-arbítrio de todos.'
             },
             {
-                id: 'estacao',
-                label: 'ESTACAO',
-                preview: 'station-preview',
+                id: 'elysium',
+                label: 'ELYSIUM',
+                image: 'sobre_elysium',
                 kicker: 'ARQUIVO / SOBRE',
-                command: 'abrir_arquivo estacao',
-                title: 'Estacao Fragmentada',
-                text: 'Corredores, elevadores e salas de controle mudam conforme os comandos sao executados. O mapa funciona como um circuito vivo, abrindo rotas quando o jogador entende sua logica.'
+                command: 'abrir_arquivo elysium',
+                title: 'Um Andar, Um Conceito',
+                text: 'O prédio da Elysium é o mapa do jogo, e cada andar é um capítulo ligado a um conceito de programação. No subsolo, Artemis aprende variáveis e tipos de dados; no térreo, condicionais. Nos andares de cima esperam repetições e funções, cada um guardado por um boss inspirado em um computador histórico, como o ENIAC.'
             },
             {
-                id: 'nucleo',
-                label: 'NUCLEO',
-                preview: 'core-preview',
+                id: 'aprendizado',
+                label: 'APRENDIZADO',
+                image: 'sobre_aprendizado',
                 kicker: 'ARQUIVO / SOBRE',
-                command: 'abrir_arquivo nucleo',
-                title: 'Nucleo do Sistema',
-                text: 'O nucleo guarda o segredo da reprogramacao. Ele pode salvar a estacao ou apagar tudo que ainda resta de humano dentro da maquina.'
+                command: 'abrir_arquivo perfil',
+                title: 'Um Jogo que Aprende com Você',
+                text: 'Cada tentativa nos puzzles é registrada: acertos, erros e tempo. Esse perfil de aprendizado nunca é apagado ao carregar um save e serve de base para ajustar os desafios ao ritmo de cada jogador. Os puzzles também sorteiam valores e temas a cada partida, para que a resposta precise ser entendida, e não decorada.'
             }
         ]
     },
@@ -210,7 +222,7 @@ const sections = {
             {
                 id: 'protagonista',
                 label: 'ARTEMIS',
-                preview: 'hero-preview',
+                image: 'retrato_artemis',
                 kicker: 'ARQUIVO / PERSONAGENS',
                 command: 'exec ARTEMIS.exe',
                 title: 'A Máquina que Aprendeu a Escolher',
@@ -219,7 +231,7 @@ const sections = {
             {
                 id: 'aliado',
                 label: 'COSMO',
-                preview: 'ally-preview',
+                image: 'retrato_cosmo',
                 kicker: 'ARQUIVO / PERSONAGENS',
                 command: 'exec COSMO.exe',
                 title: 'O Último Sinal',
@@ -228,7 +240,7 @@ const sections = {
             {
                 id: 'vilao',
                 label: 'ADA',
-                preview: 'villain-preview',
+                image: 'retrato_ada',
                 kicker: 'ARQUIVO / PERSONAGENS',
                 command: 'exec ADA.exe',
                 title: 'A Consciência Coletiva',
@@ -241,38 +253,38 @@ const sections = {
             {
                 id: 'reprogramar',
                 label: 'REPROGRAMAR',
-                preview: 'gameplay-preview',
+                image: 'gameplay_reprogramar',
                 kicker: 'ARQUIVO / GAMEPLAY',
                 command: 'abrir_arquivo reprogramar',
-                title: 'Reprogramar Para Avancar',
-                text: 'A partida mistura exploracao, puzzle e acao. O jogador escolhe o que alterar no cenario, abre novas rotas e usa a logica do sistema contra inimigos que tambem mudam de comportamento.'
+                title: 'Reprogramar Para Avançar',
+                text: 'Com [R], o tempo desacelera e Artemis pode mirar qualquer máquina da sala: painéis, portas e robôs inimigos. Invadir um robô abre um duelo rápido: primeiro é preciso desviar do contra-ataque, depois montar a instrução que o desliga antes que o tempo acabe.'
             },
             {
                 id: 'puzzles',
                 label: 'PUZZLES',
-                preview: 'puzzle-preview',
+                image: 'gameplay_puzzles',
                 kicker: 'ARQUIVO / GAMEPLAY',
                 command: 'abrir_arquivo puzzles',
-                title: 'Logica de Circuitos',
-                text: 'Os desafios pedem leitura do ambiente: inverter sinais, ativar rotas, quebrar travas e reorganizar sistemas antes que o setor reinicie.'
+                title: 'Programar em Blocos',
+                text: 'Os desafios são montados arrastando blocos, como peças de código. Primeiro vêm as variáveis: a carga certa para encher uma bateria, a temperatura exata de um termostato. Depois, condicionais que o jogo executa de verdade contra vários casos de teste: qualquer programa que funcione vale, e o jogador vê exatamente qual caso falhou.'
             },
             {
                 id: 'combate',
                 label: 'COMBATE',
-                preview: 'combat-preview',
+                image: 'gameplay_combate',
                 kicker: 'ARQUIVO / GAMEPLAY',
                 command: 'abrir_arquivo combate',
-                title: 'Ameacas Adaptaveis',
-                text: 'Inimigos respondem aos comandos do jogador. Reprogramar pode abrir vantagem, mas tambem muda patrulhas, alcance e comportamento das maquinas hostis.'
+                title: 'Batalhas por Turnos',
+                text: 'Os bosses são enfrentados em combates por turnos. ATACAR usa a força que Artemis programou, e REPROGRAMAR dobra essa força escrevendo código. No turno do inimigo, é preciso desviar de padrões de balas dentro de uma caixa ou responder a tempo a uma sequência de defesa em código.'
             },
             {
                 id: 'exploracao',
-                label: 'EXPLORACAO',
-                preview: 'explore-preview',
+                label: 'EXPLORAÇÃO',
+                image: 'gameplay_exploracao',
                 kicker: 'ARQUIVO / GAMEPLAY',
                 command: 'abrir_arquivo exploracao',
-                title: 'Setores Escondidos',
-                text: 'Cada area tem caminhos escondidos por falhas visuais e portas de seguranca. Explorar revela fragmentos da historia e novas formas de manipular o sistema.'
+                title: 'Explorar a Elysium',
+                text: 'Cada sala da Elysium tem algo para ler. O Cosmo comenta quase tudo que o jogador examina com [E], computadores de salvamento guardam o progresso e transmissões da colônia lunar revelam, aos poucos, a verdade sobre ADA.'
             }
         ]
     }
@@ -309,7 +321,7 @@ const renderMediaCards = (sectionName) => {
 
     mediaPanel.innerHTML = section.cards.map((card, index) => `
         <button class="media-card${index === 0 ? ' active' : ''}" type="button" data-topic="${card.id}" aria-pressed="${index === 0}">
-            <span class="media-preview ${card.preview}"></span>
+            <span class="media-preview"><img src="${SITE_IMAGES[card.image]}" alt="" loading="lazy"></span>
             <span>${card.label}</span>
         </button>
     `).join('');

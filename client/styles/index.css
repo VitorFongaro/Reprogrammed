@@ -499,12 +499,15 @@ a {
         2px 2px 0 #111111;
 }
 
+/* Os cards de imagem levam a maior parte da largura: são arte do jogo e
+   precisam de tamanho para serem lidos. O painel de texto fica mais estreito. */
 .intel-section {
-    width: min(1280px, 100%);
+    width: min(1440px, 100%);
     margin: 0 auto;
     display: grid;
-    grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.4fr);
-    gap: 72px;
+    grid-template-columns: minmax(300px, 0.8fr) minmax(460px, 1.7fr);
+    align-items: start;
+    gap: 48px;
     padding: 56px 48px 116px;
 }
 
@@ -574,22 +577,27 @@ a {
     line-height: 1.55;
 }
 
+/* Flex em vez de grade fixa de 4: a aba com 3 cards (PERSONAGENS) usa a
+   largura toda em vez de deixar uma coluna vazia. Cada card cresce até
+   240px (o tamanho da arte) e termina junto com a imagem (sem vão embaixo). */
 .media-panel {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(120px, 1fr));
-    gap: 18px;
-    align-content: stretch;
-    align-items: stretch;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 16px;
 }
 
+/* Moldura enxuta: com 16px de respiro a arte ficava estreita e os rótulos
+   longos (APRENDIZADO, REPROGRAMAR) não cabiam na largura do card. */
 .media-card {
-    height: 100%;
-    min-height: 330px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 240px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 16px;
-    padding: 16px;
+    gap: 10px;
+    padding: 7px 7px 10px;
     color: #f7f7f7;
     border: 3px solid #7a7a7a;
     background: #0b0b0b;
@@ -598,88 +606,45 @@ a {
 }
 
 .media-card span:last-child {
-    font-size: 16px;
+    font-size: clamp(11px, 1.05vw, 15px);
     line-height: 1.1;
     text-align: center;
+    overflow-wrap: anywhere;
 }
 
+/* Imagem do card: arte do jogo (tools/site_cards.py). Em tons de cinza, como o
+   resto do site, e acende em cor no card ativo ou sob o mouse. */
 .media-preview {
-    flex: 1;
-    min-height: 230px;
-    border: 2px solid #2a2a2a;
+    position: relative;
+    overflow: hidden;
+    display: block;
+    width: 100%;
+    /* Mesma proporção das imagens (240x520): o card cresce com a coluna em vez
+       de cortar a arte para caber numa altura fixa. */
+    aspect-ratio: 240 / 520;
+    border: 1px solid #2a2a2a;
     background-color: #050505;
-    background-size: 28px 28px, 100% 100%;
 }
 
-.system-preview {
-    background-image:
-        linear-gradient(90deg, transparent 45%, #d9d9d9 45% 55%, transparent 55%),
-        linear-gradient(#111111, #2a2a2a);
+.media-preview img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    /* As imagens saem em 2x e aparecem MENORES que isso: reduzir com filtro
+       suave mantém o texto legível. `pixelated` só presta para ampliar — ao
+       reduzir, ele descarta colunas inteiras de pixel. */
+    image-rendering: auto;
+    filter: grayscale(1) contrast(1.05) brightness(0.8);
+    transition: filter 0.2s steps(3, end);
 }
 
-.hero-preview {
-    background-image:
-        linear-gradient(90deg, transparent 30%, #f7f7f7 30% 42%, transparent 42% 58%, #f7f7f7 58% 70%, transparent 70%),
-        linear-gradient(#050505, #2a2a2a);
-}
-
-.villain-preview {
-    background-image:
-        linear-gradient(135deg, transparent 38%, #7a7a7a 38% 50%, transparent 50%),
-        linear-gradient(#111111, #050505);
-}
-
-.gameplay-preview {
-    background-image:
-        linear-gradient(90deg, #2a2a2a 2px, transparent 2px),
-        linear-gradient(#050505, #1a1a1a);
-}
-
-.lore-preview {
-    background-image:
-        linear-gradient(135deg, transparent 42%, #d9d9d9 42% 48%, transparent 48%),
-        linear-gradient(#050505, #202020);
-}
-
-.station-preview {
-    background-image:
-        linear-gradient(90deg, #7a7a7a 3px, transparent 3px),
-        linear-gradient(180deg, transparent 46%, #d9d9d9 46% 54%, transparent 54%),
-        linear-gradient(#111111, #050505);
-    background-size: 34px 100%, 100% 34px, 100% 100%;
-}
-
-.core-preview {
-    background-image:
-        radial-gradient(circle at center, #f7f7f7 0 12px, #7a7a7a 13px 20px, transparent 21px),
-        linear-gradient(#050505, #1a1a1a);
-}
-
-.ally-preview {
-    background-image:
-        linear-gradient(90deg, transparent 20%, #7a7a7a 20% 30%, transparent 30% 70%, #7a7a7a 70% 80%, transparent 80%),
-        linear-gradient(180deg, transparent 18%, #f7f7f7 18% 32%, transparent 32%),
-        linear-gradient(#050505, #242424);
-}
-
-.puzzle-preview {
-    background-image:
-        linear-gradient(90deg, #7a7a7a 3px, transparent 3px),
-        linear-gradient(#050505, #1a1a1a);
-    background-size: 32px 32px, 100% 100%;
-}
-
-.combat-preview {
-    background-image:
-        linear-gradient(135deg, transparent 30%, #f7f7f7 30% 36%, transparent 36% 64%, #7a7a7a 64% 70%, transparent 70%),
-        linear-gradient(#111111, #050505);
-}
-
-.explore-preview {
-    background-image:
-        linear-gradient(90deg, transparent 38%, #d9d9d9 38% 43%, transparent 43% 57%, #d9d9d9 57% 62%, transparent 62%),
-        linear-gradient(180deg, transparent 62%, #7a7a7a 62% 67%, transparent 67%),
-        linear-gradient(#050505, #202020);
+.media-card:hover .media-preview img,
+.media-card.active .media-preview img,
+.media-card:focus-visible .media-preview img {
+    filter: none;
 }
 
 .media-card:hover,
@@ -1201,15 +1166,11 @@ a:hover {
     }
 
     .media-panel {
-        grid-template-columns: repeat(2, minmax(130px, 1fr));
+        flex-wrap: wrap;
     }
 
     .media-card {
-        min-height: 240px;
-    }
-
-    .media-preview {
-        min-height: 160px;
+        flex: 1 1 calc(25% - 16px);
     }
 }
 
@@ -1299,16 +1260,18 @@ a:hover {
         font-size: 16px;
     }
 
+    /* Duas colunas mesmo no celular: numa só, o card vertical ficaria mais
+       alto que a tela. */
     .media-panel {
-        grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     .media-card {
-        min-height: 180px;
+        flex: 1 1 calc(50% - 12px);
     }
 
-    .media-preview {
-        min-height: 120px;
+    .media-card {
+        padding: 10px;
     }
 
     .account-actions {

@@ -258,6 +258,30 @@ isometria, anti-aliasing e paleta solta. Por script, saem certas por construçã
 Não usa nenhum asset de terceiros como entrada: a paleta foi medida dos props já presentes na
 sala, o que é leitura de cor, não reuso de arte.
 
+**Recepção do térreo (cap. 2).** Os móveis (`client/assets/images/recepcao/props/`: balcão,
+catracas nos três estados, floreira, sofá, poltrona, mesa de centro, ficus, bebedouro, totem,
+lixeira e posto da segurança) saem de `tools/recepcao_props.lua`, um script do **Aseprite** em
+modo batch, no mesmo estilo e com as mesmas regras do `servidores.py` (3/4 com faces nos eixos,
+contorno de 1px, nativo exportado em 2x), e salvam o `.aseprite` ao lado de cada `.png`. O
+fundo (`recepcao/recepcao_bg.png`: parede, janelas, elevador, letreiro da Elysium, piso de
+pedra e a luz das janelas) sai de `tools/recepcao_bg.py`, que reaproveita o estêncil 5x7 e o
+carimbo da porta do `treinamento_bg.py`. Nada de pack entra como entrada: é arte nossa, feita
+por script escrito por um agente de IA — declarar no TCC junto com os outros.
+
+**Cards do site (`client/assets/images/site/`).** As imagens das abas SOBRE, PERSONAGENS e
+GAMEPLAY da página inicial saem de `tools/site_cards.py`, que só MONTA arte que já está no
+repositório (fundos das salas, mapas do Tiled, sprites, blocos do console e a fonte VCR) — nada
+é desenhado ou gerado ali. Os retratos do **Cosmo** e da **ADA** são desenhados por
+`tools/site_retratos.lua` no Aseprite (a ADA nunca aparece no jogo, então o retrato é um olho
+num monólito ligado a uma rede de chips). O card **HISTÓRIA** (a Lua, o sinal descendo, a
+torre da Elysium e a androide acordando no subsolo) foi **gerado pelo GPT (ChatGPT, geração de
+imagem)** a partir de um prompt descrevendo a cena, com a referência da Artemis anexada (ela
+também é gerada por IA; nenhum asset de pack foi usado como entrada). O original fica em
+`site/fonte/historia_gpt.png` e o `site_cards.py` só o recorta no formato do card. O retrato da **Artemis** é um recorte da referência
+`ChatGPT Image 22 de mai. de 2026, 19_59_11.png`, gerada por IA (ver a seção abaixo). Como os
+cards mostram arte de pack (fundos, inimigos), valem as licenças de cada pack — exibir o jogo na
+página dele não é o que as cláusulas anti-IA proíbem.
+
 ## Arte e áudio gerados por IA
 
 A **Artemis** (`client/assets/sprites/A_cute_android_maid_with/`, 8 direções + animações) foi
