@@ -1,6 +1,8 @@
 import BaseRoomScene from "../chapter1/BaseRoomScene";
 import WitchBoss from "../../characters/WitchBoss";
 import { addServicePanel } from "../../objects/ServicePanel";
+// Defesas do turno dela: condicionais no tema do relógio, sorteadas a cada turno.
+import { WITCH_DEFENSES } from "../../data/puzzleVariants";
 import Effects from "../../ui/Effects";
 
 // Capítulo 2: sala da WITCH, a boss FINAL do capítulo (a LEO virou pré-boss).
@@ -33,64 +35,6 @@ const WITCH_POS = { x: 640, y: 250 };
 // ataques de 40 = 160 >= 150, então 7 turnos na rota mais rápida — um a mais
 // que a LEO, por ser a boss final. Com o chip de cache (forca 80): 4 + 2 = 6.
 const WITCH_HP = 150;
-
-// Defesas do turno dela: condicionais com tempo, no tema do relógio.
-const WITCH_DEFENSES = [
-    {
-        title: "DEFESA // HORA DO GOLPE",
-        briefing: [
-            "Ela ataca quando o relógio bate.",
-            "Mais de 10 s: espere. Mais de 3 s: prepare. Senão: desvie."
-        ],
-        hint: 'comece pelo MAIOR: se tempo > 10 ... senão se tempo > 3 ...',
-        lines: [
-            "se [nome] [op] [valor] :",
-            "    acao = [valor]",
-            "senão se [nome] [op] [valor] :",
-            "    acao = [valor]",
-            "senão :",
-            "    acao = [valor]"
-        ],
-        blocks: {
-            nome: ["tempo", "tempo"],
-            op: [">", ">", "<"],
-            valor: ["10", "3", '"esperar"', '"preparar"', '"desviar"']
-        },
-        // As duas BORDAS estão nos testes (10 e 3): sem o caso de 3 s, soluções
-        // com `< 3` passavam e contrariavam o texto ("mais de 3" exclui o 3).
-        tests: [
-            { given: { tempo: 15 }, expect: { acao: "esperar" } },
-            { given: { tempo: 10 }, expect: { acao: "preparar" } },
-            { given: { tempo: 5 }, expect: { acao: "preparar" } },
-            { given: { tempo: 3 }, expect: { acao: "desviar" } }
-        ],
-        successMessage: "GOLPE ANTECIPADO",
-        timeLimitMs: 32000
-    },
-    {
-        title: "DEFESA // CONTRATEMPO",
-        briefing: [
-            "A foice erguida é perigo. O relógio girando também.",
-            "Com qualquer um dos dois, escudo. Sem nenhum, abaixe."
-        ],
-        hint: "monte:  se foice ou relogio :  escudo = true  /  senão :  escudo = false",
-        lines: [
-            "se [nome] [op] [nome] :",
-            "    escudo = [valor]",
-            "senão :",
-            "    escudo = [valor]"
-        ],
-        blocks: { nome: ["foice", "relogio"], op: ["e", "ou"], valor: ["true", "false"] },
-        tests: [
-            { given: { foice: true, relogio: true }, expect: { escudo: true } },
-            { given: { foice: true, relogio: false }, expect: { escudo: true } },
-            { given: { foice: false, relogio: true }, expect: { escudo: true } },
-            { given: { foice: false, relogio: false }, expect: { escudo: false } }
-        ],
-        successMessage: "ESCUDO NO TEMPO CERTO",
-        timeLimitMs: 26000
-    }
-];
 
 const WITCH_BATTLE = {
     name: "WITCH",

@@ -2,6 +2,7 @@ import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import Enemy from "../../characters/Enemy";
+import { barrierPuzzle } from "../../data/puzzleVariants";
 import treinamentoBg from "../../assets/images/treinamento/treinamento_bg.png";
 import treinamentoMap from "../../assets/maps/treinamento.json";
 
@@ -29,27 +30,6 @@ const LASER_DAMAGE = 5;
 const LASER_TOP = 136;
 const LASER_BOTTOM = 680;
 const LASER_H = LASER_BOTTOM - LASER_TOP;
-
-const LASER_PUZZLE = {
-    title: "BARREIRA // LASERS",
-    briefing: [
-        "A barreira de lasers corta a sala.",
-        "O emissor obedece à variável lasers:",
-        "ache o valor que desliga os feixes."
-    ],
-    hint: "lasers = <ligada ou desligada?>  (booleano true/false)",
-    variable: "lasers",
-    expected: false,
-    // Painel: os feixes ficam vermelhos (ligados) ou apagam conforme o valor.
-    gauge: { kind: "toggle", label: "BARREIRA" },
-    successMessage: "BARREIRA DESATIVADA",
-    wrongValueMessage: "a barreira continua ligada",
-    blockDistractors: {
-        nome: ["barreira", "feixe"],
-        op: ["=="],
-        valor: ["true", '"false"']
-    }
-};
 
 const ENEMY_SPAWNS = [
     { type: "exploding", x: 820, y: 300 },
@@ -209,7 +189,8 @@ export default class TreinamentoScene extends BaseRoomScene {
             // acende dentro do sinalizador que o prop tem no topo.
             drawBody: false,
             blocks: true,
-            puzzle: LASER_PUZZLE,
+            // Tema (e polaridade) sorteado a cada entrada (data/puzzleVariants.js).
+            puzzle: barrierPuzzle(),
             onSolved: () => this.disableLasers()
         });
     }

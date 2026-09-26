@@ -1,5 +1,7 @@
 import BaseRoomScene from "../chapter1/BaseRoomScene";
 import { addServicePanel } from "../../objects/ServicePanel";
+// Defesas do turno dela: condicionais com tempo, números sorteados a cada turno.
+import { LEO_DEFENSES } from "../../data/puzzleVariants";
 import maidWalk from "../../assets/sprites/enemies/biped_maid/walk.png";
 import maidDisabled from "../../assets/sprites/enemies/biped_maid/disabled.png";
 
@@ -27,52 +29,6 @@ import maidDisabled from "../../assets/sprites/enemies/biped_maid/disabled.png";
 // para 3 + 2 = 5 turnos, ainda no alvo.
 const LEO_HP = 120;
 const LEO_POS = { x: 640, y: 300 };
-
-// Defesas do turno dela: condicionais com tempo (o console roda os testes).
-const LEO_DEFENSES = [
-    {
-        title: "DEFESA // BANDEJA OU ESPANADOR",
-        briefing: [
-            "Ela vai atacar com o que estiver na mão.",
-            "Contra a bandeja, escudo. Contra o resto, desvie."
-        ],
-        hint: 'monte:  se arma == "bandeja" :  acao = "escudo"  /  senão :  acao = "desviar"',
-        lines: [
-            "se [nome] [op] [valor] :",
-            "    acao = [valor]",
-            "senão :",
-            "    acao = [valor]"
-        ],
-        blocks: { nome: ["arma"], op: ["==", "="], valor: ['"bandeja"', '"escudo"', '"desviar"'] },
-        tests: [
-            { given: { arma: "bandeja" }, expect: { acao: "escudo" } },
-            { given: { arma: "espanador" }, expect: { acao: "desviar" } }
-        ],
-        successMessage: "GOLPE BLOQUEADO",
-        timeLimitMs: 26000
-    },
-    {
-        title: "DEFESA // CHÁ FERVENDO",
-        briefing: [
-            "Ela vai servir chá na sua cabeça.",
-            "Se o chá estiver acima de 90 graus, resfrie o casco."
-        ],
-        hint: "monte:  se cha > 90 :   resfriar = true",
-        lines: [
-            "se [nome] [op] [valor] :",
-            "    resfriar = [valor]"
-        ],
-        blocks: { nome: ["cha"], op: [">", "<"], valor: ["90", "true", "false"] },
-        defaults: { resfriar: false },
-        tests: [
-            { given: { cha: 98 }, expect: { resfriar: true } },
-            { given: { cha: 90 }, expect: { resfriar: false } },
-            { given: { cha: 40 }, expect: { resfriar: false } }
-        ],
-        successMessage: "CASCO RESFRIADO",
-        timeLimitMs: 22000
-    }
-];
 
 const LEO_BATTLE = {
     name: "LEO",

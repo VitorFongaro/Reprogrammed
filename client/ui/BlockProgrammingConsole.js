@@ -481,20 +481,24 @@ export default class BlockProgrammingConsole {
         const valid = num !== null;
         const correct = this.valueCorrect();
         const fill = valid ? Phaser.Math.Clamp(num / max, 0, 1) : 0;
+        // Acima da capacidade a bateria acusa SOBRECARGA em vez de parecer
+        // cheia: a capacidade é sorteada, e o jogador descobre o limite testando.
+        const overload = valid && num > max;
 
-        const frame = correct ? COLOR.success : COLOR.border;
+        const frame = correct ? COLOR.success : overload ? 0xff4545 : COLOR.border;
         g.lineStyle(3, frame, 0.9);
         g.strokeRoundedRect(b.x, b.y, b.w, b.h, 8);
         g.fillStyle(frame, 0.9);
         g.fillRect(b.x + b.w + 2, b.y + b.h / 2 - 12, 8, 24);
         if (fill > 0) {
             const pad = 6;
-            g.fillStyle(correct ? 0x51e36b : 0xffb347, 0.9);
+            g.fillStyle(correct ? 0x51e36b : overload ? 0xff4545 : 0xffb347, 0.9);
             g.fillRoundedRect(b.x + pad, b.y + pad, (b.w - pad * 2) * fill, b.h - pad * 2, 4);
         }
         if (label === null) return { state: "", color: COLOR.dim };
         if (!valid) return { state: "TIPO INVÁLIDO", color: COLOR.error };
         if (correct) return { state: "CHEIA", color: COLOR.success };
+        if (overload) return { state: "SOBRECARGA!", color: COLOR.error };
         return { state: "CARREGANDO...", color: "#ffb347" };
     }
 
@@ -594,7 +598,10 @@ export default class BlockProgrammingConsole {
         const label = this.valueLabel();
         const boolVal = label === "true" ? true : label === "false" ? false : null;
         const correct = this.valueCorrect();
-        const barrierOn = boolVal !== false;   // ligada, a menos que seja exatamente false.
+        // Qual booleano APAGA os feixes depende do tema (`lasers = false`,
+        // `manutencao = true`...). Ligada, a menos que seja exatamente esse.
+        const offValue = this.puzzle.gauge.offValue ?? false;
+        const barrierOn = boolVal !== offValue;
 
         const frame = correct ? COLOR.success : COLOR.border;
         g.fillStyle(0x0b0d12, 1);
@@ -859,14 +866,16 @@ export default class BlockProgrammingConsole {
         return this.puzzle.wrongValueMessage ?? "valor incorreto";
     }
 
-    // Mensagem guiada pelo medidor: foca na bateria quando o VALOR está errado;
-    // senão, cai no diagnóstico normal (variável/operador).
+    // Mensagem guiada pelo medidor. Na bateria, fala da carga (faltou ou
+    // passou); nos outros medidores (que antes também caíam na frase da
+    // bateria), o diagnóstico normal cobre tipo errado e a `wrongValueMessage`.
     gaugeFailMessage(wrongSlots) {
         const vs = this.valueSlot();
-        if (vs && wrongSlots.includes(vs)) {
-            return this.currentValue() === null
-                ? "esse valor não carrega a bateria — confira o tipo"
-                : "a bateria ainda não está cheia";
+        if (this.puzzle.gauge.kind === "battery" && vs && wrongSlots.includes(vs)) {
+            const num = this.currentValue();
+            if (num === null) return "esse valor não carrega a bateria — confira o tipo";
+            if (num > (this.puzzle.gauge.max ?? 100)) return "sobrecarga: passou da capacidade da bateria";
+            return "a bateria ainda não está cheia";
         }
         return this.diagnose(wrongSlots);
     }

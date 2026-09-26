@@ -2,6 +2,7 @@ import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
 import SaveComputer from "../../objects/SaveComputer";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
+import { generatorPuzzle } from "../../data/puzzleVariants";
 import { save as saveProgress } from "../../state/progress";
 import poraoBg from "../../assets/images/porao/porao_bg.png";
 import poraoMap from "../../assets/maps/porao.json";
@@ -24,28 +25,6 @@ const DOOR = { x: 656, y: 98 };
 // arquivos. `y` é a base do móvel, para o y-sort casar com os outros objetos —
 // a parede acaba em y=136 na tela, então a base fica a uma altura de sprite dali.
 const SAVE_STATION = { x: 265, y: 200 };
-
-const GENERATOR_PUZZLE = {
-    title: "GERADOR // NÚCLEO",
-    briefing: [
-        "O gerador está sem carga.",
-        "Guarde na variável energia a carga certa",
-        "para deixar a bateria cheia."
-    ],
-    hint: "a estrutura é  energia = valor  — qual valor enche a bateria?",
-    variable: "energia",
-    expected: 100,
-    // Medidor visual: a bateria enche conforme o valor; cheia = 100.
-    gauge: { kind: "battery", label: "BATERIA", max: 100 },
-    successMessage: "GERADOR ATIVADO",
-    wrongValueMessage: "a bateria ainda não está cheia",
-    // Blocos extras (distratores) por categoria, além dos corretos.
-    blockDistractors: {
-        nome: ["voltagem", "sensor"],
-        op: ["=="],
-        valor: ["50", "\"100\""]
-    }
-};
 
 // Cosmo explica a mecânica de blocos ANTES do primeiro console abrir (o painel
 // em si só descreve o objetivo; a estrutura vem daqui e do botão [DICA]).
@@ -109,7 +88,8 @@ export default class PoraoScene extends BaseRoomScene {
             indicator: false,
             promptY: GENERATOR.y - GENERATOR.h / 2 - 20,
             blocks: true,
-            puzzle: GENERATOR_PUZZLE,
+            // Capacidade da bateria sorteada a cada entrada (data/puzzleVariants.js).
+            puzzle: generatorPuzzle(),
             introScript: PUZZLE_INTRO_SCRIPT,
             onSolved: () => this.handleGeneratorSolved(),
             // Save carregado com o gerador já resolvido: a porta abre calada,

@@ -2,6 +2,7 @@ import BaseRoomScene from "./BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import Enemy from "../../characters/Enemy";
+import { thermostatPuzzle, ventilationPuzzle } from "../../data/puzzleVariants";
 import controleBg from "../../assets/images/controle/controle_bg.png";
 import controleMap from "../../assets/maps/controle.json";
 
@@ -12,48 +13,6 @@ import controleMap from "../../assets/maps/controle.json";
 const VENT = { x: 420, y: 75, w: 92, h: 110 };
 const THERMO = { x: 860, y: 75, w: 92, h: 110 };
 const DEVICE_PROMPT_Y = 152;
-
-const VENTILATION_PUZZLE = {
-    title: "VENTILAÇÃO // SETOR",
-    briefing: [
-        "A ventilação precisa do setor onde você",
-        "está agora. Leia o mapa (o ponto azul) e",
-        "informe o código — é um texto (string)."
-    ],
-    hint: 'setor = "código do mapa" (a linha e a coluna, entre aspas)',
-    variable: "setor",
-    expected: "B2",
-    // Mapa/grade: o ponto azul marca onde a Artemis está; escolha a célula certa.
-    gauge: { kind: "sector", label: "SETOR", rows: ["A", "B", "C"], cols: ["1", "2", "3"] },
-    successMessage: "VENTILAÇÃO ATIVA",
-    wrongValueMessage: "setor não reconhecido",
-    blockDistractors: {
-        nome: ["duto", "ar"],
-        op: ["=="],
-        valor: ['"A1"', '"C3"']
-    }
-};
-
-const THERMOSTAT_PUZZLE = {
-    title: "TERMOSTATO // NÚCLEO",
-    briefing: [
-        "O núcleo está superaquecendo.",
-        "Ajuste a variável temperatura até o",
-        "termômetro bater no marcador seguro."
-    ],
-    hint: "temperatura = número decimal (com ponto) — qual bate no marcador?",
-    variable: "temperatura",
-    expected: 21.5,
-    // Termômetro: o mercúrio sobe até o valor; o marcador verde é o alvo (21.5).
-    gauge: { kind: "thermometer", label: "TERMOSTATO", min: 18, max: 25, target: 21.5 },
-    successMessage: "TEMPERATURA AJUSTADA",
-    wrongValueMessage: "fora da faixa segura",
-    blockDistractors: {
-        nome: ["nucleo", "calor"],
-        op: ["=="],
-        valor: ["21", "22.5", '"21.5"']
-    }
-};
 
 const ENEMY_SPAWNS = [
     { type: "biped", x: 940, y: 400 },
@@ -99,7 +58,7 @@ export default class SalaControleScene extends BaseRoomScene {
             drawBody: false,
             promptY: DEVICE_PROMPT_Y,
             blocks: true,
-            puzzle: VENTILATION_PUZZLE,
+            puzzle: ventilationPuzzle(),
             onSolved: () => this.checkAllSolved()
         });
 
@@ -112,7 +71,7 @@ export default class SalaControleScene extends BaseRoomScene {
             drawBody: false,
             promptY: DEVICE_PROMPT_Y,
             blocks: true,
-            puzzle: THERMOSTAT_PUZZLE,
+            puzzle: thermostatPuzzle(),
             onSolved: () => this.checkAllSolved()
         });
 

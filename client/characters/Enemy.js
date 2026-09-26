@@ -25,6 +25,7 @@ import msgShoot from "../assets/sprites/enemies/mensageiro/shoot.png";
 import msgDisabled from "../assets/sprites/enemies/mensageiro/disabled.png";
 import msgDash from "../assets/sprites/enemies/mensageiro/dash.png";
 import Sfx from "../ui/Sfx";
+import { ENEMY_DISABLE, resolvePuzzle } from "../data/puzzleVariants";
 
 // Inimigos dos capítulos 1 e 2 (packs SteamRobotsPack + biped_robot, quadros 32×32).
 // Cada inimigo anda/persegue a Artemis e ataca (contato ou tiro), tirando HP da
@@ -83,9 +84,7 @@ const TYPES = {
         disabledKey: "enemy-exploding-disabled",
         scale: 3.3, speed: 130, meleeHp: 2, ranged: false, contactDamage: 5,
         dodge: ["fallExplode"],        // bullet hell: balas que caem e explodem.
-        disablePuzzle: { variable: "carga", expected: 0,
-            hint: "monte:  carga = 0", wrongValueMessage: "ainda vai explodir",
-            blockDistractors: { nome: ["fusivel"], op: ["=="], valor: ["100", '"0"'] } }
+        disablePuzzle: ENEMY_DISABLE.exploding
     },
     pistol: {
         name: "ROBÔ PISTOLEIRO",
@@ -94,9 +93,7 @@ const TYPES = {
         weaponKey: "enemy-pistol-weapon",
         scale: 3.3, speed: 100, meleeHp: 2, ranged: true, fireMs: 1800, contactDamage: 3,
         dodge: ["bigDropHoming"],      // bullet hell: bala grande que deixa perseguidoras.
-        disablePuzzle: { variable: "mira", expected: false,
-            hint: "monte:  mira = false", wrongValueMessage: "ainda está mirando",
-            blockDistractors: { nome: ["gatilho"], op: ["=="], valor: ["true", '"false"'] } }
+        disablePuzzle: ENEMY_DISABLE.pistol
     },
     shotgun: {
         name: "ROBÔ ESCOPETA",
@@ -106,9 +103,7 @@ const TYPES = {
         scale: 3.3, speed: 90, meleeHp: 3, ranged: true, fireMs: 2500, contactDamage: 4,
         pellets: 5, spread: 0.6,       // rajada de 5 balas em leque.
         dodge: ["fan"],                // bullet hell: leque de balas.
-        disablePuzzle: { variable: "cartucho", expected: 0,
-            hint: "monte:  cartucho = 0", wrongValueMessage: "ainda tem cartucho",
-            blockDistractors: { nome: ["cano"], op: ["=="], valor: ["50", '"0"'] } }
+        disablePuzzle: ENEMY_DISABLE.shotgun
     },
     biped: {
         name: "MECH VERMELHO",
@@ -119,9 +114,7 @@ const TYPES = {
         // solta 4 bolas de energia que quicam nas paredes até sumirem.
         wander: true, slam: true, slamMs: 3800,
         dodge: ["laserSweep"],         // bullet hell: rastro laser deixando balas.
-        disablePuzzle: { variable: "sistema", expected: false,
-            hint: "monte:  sistema = false", wrongValueMessage: "sistema ainda ativo",
-            blockDistractors: { nome: ["motor", "servo"], op: ["=="], valor: ["true", '"false"'] } }
+        disablePuzzle: ENEMY_DISABLE.biped
     },
     car: {
         name: "CARRO DE ATAQUE",
@@ -135,9 +128,7 @@ const TYPES = {
         activateKey: "enemy-car-activate",
         shootKey: "enemy-car-shoot",
         dodge: ["fan"],                // bullet hell da reprogramação.
-        disablePuzzle: { variable: "arma", expected: false,
-            hint: "monte:  arma = false", wrongValueMessage: "a arma ainda dispara",
-            blockDistractors: { nome: ["torreta", "canhao"], op: ["=="], valor: ["true", '"false"'] } }
+        disablePuzzle: ENEMY_DISABLE.car
     },
 
     // === Capítulo 2 (condicionais) ============================================
@@ -160,24 +151,7 @@ const TYPES = {
         scale: 3.3, speed: 0, meleeHp: 2, ranged: true, fireMs: 650, contactDamage: 3,
         sentry: true,
         dodge: ["watchLight"],         // bullet hell: luz vermelha = não se mexa.
-        disablePuzzle: {
-            briefing: [
-                "A vigia atira em tudo que se mexe.",
-                "Faça ela ignorar a Artemis, mas continuar de guarda contra o resto."
-            ],
-            hint: 'monte:  se alvo == "artemis" :   atirar = false',
-            lines: [
-                "se [nome] [op] [valor] :",
-                "    atirar = [valor]"
-            ],
-            blocks: { nome: ["alvo"], op: ["==", "!="], valor: ['"artemis"', "false", "true"] },
-            defaults: { atirar: true },
-            tests: [
-                { given: { alvo: "artemis" }, expect: { atirar: false } },
-                { given: { alvo: "intruso" }, expect: { atirar: true } }
-            ],
-            timeLimitMs: 24000
-        }
+        disablePuzzle: ENEMY_DISABLE.vigia
     },
 
     // FAXINEIRO: robô de limpeza (a LEO, pré-boss do capítulo, é a governanta deles).
@@ -193,26 +167,7 @@ const TYPES = {
         wander: true,
         dash: { range: 230, windupMs: 450, speed: 430, durationMs: 420, dizzyMs: 1000, cooldownMs: 2200 },
         dodge: ["fan", "bigDropHoming"],
-        disablePuzzle: {
-            briefing: [
-                "Ele está quase sem bateria e não para de limpar.",
-                "Mande-o recarregar quando a bateria estiver ABAIXO de 20."
-            ],
-            hint: 'monte:  se bateria < 20 :  modo = "recarga"  /  senão :  modo = "limpeza"',
-            lines: [
-                "se [nome] [op] [valor] :",
-                "    modo = [valor]",
-                "senão :",
-                "    modo = [valor]"
-            ],
-            blocks: { nome: ["bateria"], op: ["<", ">", "=="], valor: ["20", "50", '"recarga"', '"limpeza"'] },
-            tests: [
-                { given: { bateria: 12 }, expect: { modo: "recarga" } },
-                { given: { bateria: 20 }, expect: { modo: "limpeza" } },
-                { given: { bateria: 85 }, expect: { modo: "limpeza" } }
-            ],
-            timeLimitMs: 30000
-        }
+        disablePuzzle: ENEMY_DISABLE.faxineiro
     },
 
     // MENSAGEIRO: robô de entregas de uma roda só. Único do cap. 2 com ARTE
@@ -249,28 +204,7 @@ const TYPES = {
             speed: 560, durationMs: 400, windedMs: 750, cooldownMs: 3400
         },
         dodge: ["laserLane", "fan"],    // bullet hell: laser na faixa avisada + leque.
-        disablePuzzle: {
-            briefing: [
-                "Ele roda por qualquer motivo - e entrega nenhuma tem agora.",
-                "Só deixe ele rodar se tiver entrega E rota."
-            ],
-            hint: "monte:  se entrega e rota :  rodar = true  /  senão :  rodar = false",
-            lines: [
-                "se [nome] [op] [nome] :",
-                "    rodar = [valor]",
-                "senão :",
-                "    rodar = [valor]"
-            ],
-            blocks: { nome: ["entrega", "rota"], op: ["e", "ou"], valor: ["true", "false"] },
-            // Os quatro casos: é a tabela-verdade do `e` (só o `ou` erra dois).
-            tests: [
-                { given: { entrega: true, rota: true }, expect: { rodar: true } },
-                { given: { entrega: true, rota: false }, expect: { rodar: false } },
-                { given: { entrega: false, rota: true }, expect: { rodar: false } },
-                { given: { entrega: false, rota: false }, expect: { rodar: false } }
-            ],
-            timeLimitMs: 30000
-        }
+        disablePuzzle: ENEMY_DISABLE.mensageiro
     }
 };
 
@@ -900,7 +834,8 @@ export default class Enemy {
     }
 
     reprogramPuzzle() {
-        const p = this.def.disablePuzzle;
+        // Sorteia a variação a cada abertura (data/puzzleVariants.js).
+        const p = resolvePuzzle(this.def.disablePuzzle);
         return {
             title: `${this.def.name} // NÚCLEO`,
             briefing: [

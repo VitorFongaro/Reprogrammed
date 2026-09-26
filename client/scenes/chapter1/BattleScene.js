@@ -8,6 +8,7 @@ import projetilUrl from "../../assets/sprites/projetil/projetil.png";
 import { MAX_HP, getHp, setHp, fullHeal } from "../../state/vitals";
 import { addItem } from "../../state/inventory";
 import { itemDef } from "../../data/items";
+import { ENIAC_DEFENSES, resolvePuzzle } from "../../data/puzzleVariants";
 import Effects, { DEATH_SKULL } from "../../ui/Effects";
 
 // Tela de COMBATE POR TURNOS contra o ENIAC (estilo Undertale), aberta pela
@@ -144,42 +145,8 @@ const DOUBLE_FORCA_PUZZLE = {
 };
 
 // --- Sequências de DEFESA (turno do boss; tentativa única + tempo limite) ---
-const DEFENSE_PUZZLES = [
-    {
-        title: "DEFESA // ESCUDO",
-        briefing: [
-            "Rotina hostil a caminho!",
-            "Levante o escudo antes do impacto:",
-            "escudo recebe true (booleano)."
-        ],
-        hint: "monte:  escudo = true",
-        variable: "escudo",
-        expected: true,
-        successMessage: "IMPACTO BLOQUEADO",
-        blockDistractors: {
-            nome: ["campo"],
-            op: ["=="],
-            valor: ["false", '"true"']
-        }
-    },
-    {
-        title: "DEFESA // FIREWALL",
-        briefing: [
-            "Pacote corrompido a caminho!",
-            "Suba o firewall na potência máxima:",
-            "firewall recebe 100 (inteiro)."
-        ],
-        hint: "monte:  firewall = 100",
-        variable: "firewall",
-        expected: 100,
-        successMessage: "PACOTE FILTRADO",
-        blockDistractors: {
-            nome: ["parede"],
-            op: ["=="],
-            valor: ['"100"', "50"]
-        }
-    }
-];
+// Moram em data/puzzleVariants.js (ENIAC_DEFENSES): cada uma é uma função que
+// sorteia nome e valor a cada turno.
 
 // Configuração padrão (boss ENIAC). Outras cenas podem lançar a batalha com
 // overrides: scene.launch("cap1-batalha", { config: { name, maxHp, ... } }) —
@@ -1890,7 +1857,8 @@ export default class BattleScene extends Phaser.Scene {
 
     defenseTurn() {
         this.setBattleStatus("> SEQUÊNCIA HOSTIL A CAMINHO — DEFENDA-SE!", "#ff4545");
-        const puzzle = Phaser.Utils.Array.GetRandom(this.config.defensePuzzles ?? DEFENSE_PUZZLES);
+        // Cada entrada pode ser uma função: gera números/temas novos a cada turno.
+        const puzzle = resolvePuzzle(this.config.defensePuzzles ?? ENIAC_DEFENSES);
 
         this.foeAttackAnim(() => {
             let solvedThisRun = false;

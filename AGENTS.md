@@ -43,6 +43,17 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
     (ver a seção Save).
 - `utils/tiledMap.js` — leitura dos `.json` do Tiled: `preloadProps` (carrega `assets/images/*/props/*.png` como `prop-<nome>`), `placeTiledObjects` (instancia a camada de objetos com y-sort; cada imagem sai com `propName`), `tiledColliders` e `tiledPropNames`.
 - `data/examine.js` — **EXAMINAR** (estilo Undertale): comentários curtos e engraçados do Cosmo sobre o cenário. `PROP_EXAMINE` é indexado pelo NOME DO PROP (o PNG que o Tiled usa), então todo prop com entrada vira examinável em qualquer sala sozinho, sem código na cena; `ENEMY_EXAMINE` (por `type` do `Enemy`) vale para robôs DESLIGADOS. Cada entrada é uma lista que cicla a cada `[E]`. No `BaseRoomScene` (`registerExaminable`): SEM prompt na tela, de propósito (o Cosmo avisa UMA vez, no roteiro de entrada do porão, que dá para examinar as coisas com `[E]`, e explorar fica a critério do jogador); só com a sala calma (nenhum inimigo ativo) e sempre PERDENDO para um interagível de verdade no mesmo alcance (`nearestAvailable` tenta os normais primeiro) — assim nunca rouba o `[E]` de um puzzle montado sobre um prop. Máquinas de puzzle ficam fora do catálogo. A fonte VCR não tem o travessão longo: use `-`, `:` ou `...` nesses textos. Na `BattleScene`, o equivalente é `config.analysisQuips` (falas do Cosmo no ANALISAR, em ciclo) — cada embate passa as suas.
+- `data/puzzleVariants.js` — **variações de puzzle**: cada puzzle é uma FUNÇÃO que devolve um
+  objeto novo no formato de sempre, com números, temas e iscas sorteados. Cobre os 4 medidores do
+  cap. 1 (capacidade da bateria — acima dela o medidor acusa SOBRECARGA —, alvo do termostato,
+  célula do setor e tema da barreira, que troca a POLARIDADE via `gauge.offValue`: em `lasers` o
+  false apaga, em `manutencao` é o true), o desligar de cada inimigo (`ENEMY_DISABLE[tipo]`,
+  referenciado pelo `disablePuzzle` do `TYPES`) e as defesas do ENIAC, da LEO e da WITCH. As salas
+  sorteiam no `onRoomCreate` (uma vez por entrada); inimigo e defesa, a cada abertura, via
+  `resolvePuzzle` (função = gera, lista = sorteia, objeto = usa). O `id`/slug não muda com a
+  variação. Nas condicionais, o LIMITE sorteado sempre entra num teste (caso de borda), senão `>` e
+  `>=` passariam os dois. Sem Phaser: ao mexer nas tabelas, gere variações no Node e rode todas as
+  montagens possíveis no `utils/condicional.js` — ao menos uma tem de passar e nem todas podem.
 - `characters/` — entidades do jogo:
   - `PlayerCharacter` — protagonista jogável (movimento WASD 4-direções; corrida segurando Shift — mesma animação de passos acelerada + velocidade maior). Sprite em `assets/sprites/artemis/` (template Eris Esra 16x32, quadros 32×32): caminhada sul/leste/norte, oeste espelhado em runtime (`flipX`); parada usa o quadro 0 e corrida reusa a caminhada acelerada (até haver ciclos de idle/run dedicados). `PlayerCharacter.idleTexture(dir)` dá a textura de repouso para cutscenes.
   - `CosmoCompanion` — companheiro que flutua no ombro da protagonista; sprite de 4 direções
