@@ -2,57 +2,69 @@
 
 > *“Reprogramming a machine… or rediscovering humanity?”*
 
+**▶️ Jogue em [reprogrammed.vercel.app](https://reprogrammed.vercel.app)**
+
+> ⏳ A API roda no plano gratuito do Render, que dorme depois de 15 minutos sem uso. Se o login
+> demorar, espere uns 30 a 50 segundos: é o servidor acordando.
+
+---
+
 ## 📖 Sobre o Projeto
 
 **Reprogrammed** é um jogo web educacional desenvolvido como Trabalho de Conclusão de Curso (TCC), com foco no ensino de **lógica de programação** por meio de mecânicas interativas e elementos de **gamificação**.
 
-O jogo coloca o jogador no controle de uma androide que desperta em um mundo controlado por uma Inteligência Artificial dominante. Ao longo da jornada, o jogador resolve desafios lógicos que representam conceitos fundamentais da programação, enquanto influencia a própria IA a reconsiderar suas diretrizes.
+Em uma Terra futurista, a humanidade vive conectada a chips neurais controlados por **ADA**, a inteligência artificial da empresa **Elysium**. Nos subsolos da própria Elysium, uma androide esquecida é reativada por **Cosmo**, um pequeno robô enviado por rebeldes da Lua. Batizada de **Artemis**, ela precisa subir andar por andar até o núcleo de ADA, resolvendo problemas que são, no fundo, pequenos programas: cada porta trancada, máquina desligada ou robô hostil espera a instrução certa.
 
 ---
 
-## 🧠 Objetivo
+## 🏢 Estrutura: um andar, um conceito
 
-Ensinar conceitos como:
+O prédio da Elysium é o mapa do jogo. Cada andar é um capítulo, ligado a um conceito de programação e guardado por um boss inspirado em um computador histórico.
 
-* Sequência lógica
-* Condicionais
-* Loops (repetições)
-* Variáveis
-* Funções
-* Resolução de problemas
-
-Tudo isso de forma **lúdica, interativa e progressiva**.
+| Capítulo | Andar | Conceito | Boss | Status |
+|---|---|---|---|---|
+| 1 | Subsolo | Variáveis e tipos de dados | ENIAC (1946) | ✅ Jogável |
+| 2 | Térreo | Condicionais | WITCH (1951) | 🚧 Em andamento |
+| 3 | — | Repetições (loops) | — | 📝 Planejado |
+| 4 | — | Funções | — | 📝 Planejado |
 
 ---
 
 ## 🎮 Mecânicas do Jogo
 
-* 🧩 **Fases de lógica**
-  Monte sequências de instruções para resolver desafios.
+* 🧩 **Programar em blocos**
+  Os desafios são montados arrastando blocos, como peças de código. Nas variáveis, medidores visuais (bateria, termômetro, mapa, barreira) reagem ao valor escolhido, para a resposta sair do raciocínio e não do texto.
 
-* ⚙️ **Sistema de execução**
-  Veja sua lógica sendo executada em tempo real.
+* ✅ **Condicionais executadas de verdade**
+  No capítulo 2, o jogo **executa** o programa montado contra vários casos de teste: qualquer solução que funcione vale, e o jogador vê exatamente qual caso falhou. Em alguns puzzles o programa mexe no próprio mapa, como caixas que liberam um corredor.
 
-* 🧠 **Adaptação inteligente**
-  O sistema analisa seu desempenho e ajusta os desafios.
+* 🎲 **Puzzles que não se decoram**
+  Valores, temas e iscas são sorteados a cada vez, então a resposta precisa ser entendida.
 
-* ⚔️ **Batalha final (RPG por turnos)**
-  Responda corretamente para atacar ou evitar dano.
+* ⏱️ **Reprogramação remota `[R]`**
+  O tempo desacelera e Artemis mira qualquer máquina da sala. Invadir um robô abre um duelo: desviar do contra-ataque e montar a instrução que o desliga antes que o tempo acabe.
 
-* 🤖 **Narrativa dinâmica**
-  Suas decisões influenciam a evolução da IA.
+* ⚔️ **Batalhas por turnos contra os bosses**
+  ATACAR usa a força que Artemis programou, REPROGRAMAR dobra essa força escrevendo código, e no turno do inimigo é preciso desviar de padrões de balas ou responder a tempo a uma sequência de defesa em código.
+
+* 🔍 **Exploração com o Cosmo**
+  O Cosmo comenta quase tudo que o jogador examina com `[E]`, e transmissões da colônia lunar revelam aos poucos a verdade sobre ADA.
+
+* 💾 **Save estilo Resident Evil**
+  Computadores de salvamento guardam o progresso (sala, puzzles, vida e itens), com um checkpoint automático ao entrar em cada sala.
 
 ---
 
-## 🤖 Inteligência Artificial
+## 🧠 Aprendizado e Inteligência Artificial
 
-O backend já expõe a rota `/ai` e a integração com **IA generativa (OpenAI)** está em implementação, com o objetivo de:
+O jogo separa duas coisas que nunca se misturam:
 
-* Gerar desafios automaticamente
-* Adaptar o nível de dificuldade
-* Personalizar a experiência do jogador
+* **Save**: onde o jogador está. É reversível: carregar volta para o ponto salvo.
+* **Perfil de aprendizado**: cada tentativa nos puzzles (acerto, erros e tempo), acumulada por tópico. Nunca é apagado ao carregar um save, então não dá para "zerar" o histórico saindo e voltando.
 
-⚠️ O sistema **não treina modelos próprios**; os dados do usuário servem apenas para orientar a geração de conteúdo.
+Esse perfil é a base da **adaptação de dificuldade**. A integração com IA generativa (**Google Gemini**) para gerar e ajustar desafios a partir dele **ainda está em implementação**: hoje o backend expõe a rota `/ai` apenas como status, e a variação dos puzzles é feita por sorteio no próprio jogo.
+
+⚠️ O sistema **não treina modelos próprios**; os dados do jogador servem apenas para orientar a geração de conteúdo.
 
 ---
 
@@ -76,31 +88,24 @@ O backend já expõe a rota `/ai` e a integração com **IA generativa (OpenAI)*
 ### 🔧 Ferramentas
 
 * Git / GitHub
-* Supabase (BaaS — banco de dados e autenticação)
+* Aseprite (pixel art) e Tiled (mapas)
+* Python e Lua para gerar arte e fundos por script (`tools/`)
 
 ---
 
 ## 🏗️ Arquitetura do Sistema
 
 ```text
-Frontend (Jogo - Phaser + Vite)
+Frontend (Jogo - Phaser + Vite)        → Vercel
         ↓  REST (JSON / JWT)
-Backend (Node.js + Express)
+Backend (Node.js + Express)            → Render
         ↓
 Supabase (PostgreSQL + Auth)
         ↓
-IA Generativa (OpenAI) — em implementação
+IA Generativa (Gemini) — em implementação
 ```
 
----
-
-## 📊 Funcionalidades
-
-* Sistema de login e cadastro
-* Salvamento de progresso
-* Análise de desempenho do jogador
-* Geração dinâmica de desafios
-* Sistema de pontuação e progressão
+Cada push na `main` publica o cliente na Vercel e a API no Render automaticamente.
 
 ---
 
@@ -120,23 +125,25 @@ git clone https://github.com/VitorFongaro/Reprogrammed
 cd Reprogrammed
 ```
 
+### 🔹 Banco de dados
+
+No SQL Editor do Supabase, rode `database/schema.sql` e depois `database/seed.sql`.
+
 ### 🔹 Backend
+
+Copie `server/.env.example` para um arquivo `.env` **na raiz do repositório** e preencha:
+
+```env
+SUPABASE_URL=sua-url-do-supabase
+SUPABASE_ANON_KEY=sua-anon-key
+PORT=3000
+CLIENT_ORIGIN=http://localhost:5173
+```
 
 ```bash
 cd server
 npm install
-
-# Crie um arquivo .env (veja o exemplo abaixo) e então:
 npm run dev        # http://localhost:3000
-```
-
-Exemplo de `server/.env`:
-
-```env
-PORT=3000
-CLIENT_ORIGIN=http://localhost:5173
-SUPABASE_URL=sua-url-do-supabase
-SUPABASE_ANON_KEY=sua-anon-key
 ```
 
 ### 🔹 Frontend
@@ -147,18 +154,26 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
+Sem configuração, o cliente procura a API em `http://localhost:3000`.
+
 ---
 
 ## 📌 Status do Projeto
 
-🚧 Em desenvolvimento (TCC)
+🚧 Em desenvolvimento (TCC). O capítulo 1 está completo; o capítulo 2 está sendo construído sala por sala.
+
+---
+
+## 🎨 Assets e créditos
+
+Parte da arte vem de packs de terceiros, cada um com sua licença, e parte foi feita no projeto (no Aseprite ou por script). Alguns elementos foram **gerados por IA** e estão declarados como tal. A origem e a licença de cada asset estão em [docs/ASSETS.md](docs/ASSETS.md).
 
 ---
 
 ## 📜 Licença
 
 * 📦 Código: Licenciado sob a MIT License
-* 🎨 Assets (arte, som, narrativa): Todos os direitos reservados
+* 🎨 Assets (arte, som, narrativa): Todos os direitos reservados, exceto os de terceiros, que seguem a licença original de cada pack
 
 > O uso comercial dos assets não é permitido sem autorização.
 
@@ -173,10 +188,10 @@ npm run dev        # http://localhost:5173
 
 ## 🎯 Trabalhos Futuros
 
-* Implementação de Machine Learning para recomendação
-* Sistema multiplayer competitivo
-* Expansão da narrativa
+* Geração de desafios por IA a partir do perfil de aprendizado
+* Capítulos 3 (repetições) e 4 (funções)
 * Editor de fases (modo sandbox)
+* Sistema multiplayer competitivo
 
 ---
 
@@ -184,6 +199,7 @@ npm run dev        # http://localhost:5173
 
 * Jogos educacionais de lógica
 * Programação visual
+* Undertale (combate e examinar)
 * Narrativas sci-fi envolvendo IA
 
 ---
@@ -204,6 +220,7 @@ Vitor
 Ryan
 * Email: [ryanramosvp@gmail.com](mailto:ryanramosvp@gmail.com)
 * GitHub: [https://github.com/ryanramosvp](https://github.com/ryanramosvp)
+
 ---
 
 > *“Understanding logic is not just about code… it's about understanding decisions.”*
