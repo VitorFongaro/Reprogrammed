@@ -14,11 +14,13 @@
 import { getMusicVolume } from "../state/audio";
 import menuUrl from "../assets/audio/music/menu.mp3";
 import cap1Url from "../assets/audio/music/cap1_subsolo.mp3";
+import cap2Url from "../assets/audio/music/cap2_terreo.mp3";
 import bossUrl from "../assets/audio/music/boss.mp3";
 
 const TRACKS = {
     menu: { key: "music-menu", url: menuUrl },   // menu principal
     cap1: { key: "music-cap1", url: cap1Url },   // capítulo 1 (subsolo)
+    cap2: { key: "music-cap2", url: cap2Url },   // capítulo 2 (térreo)
     boss: { key: "music-boss", url: bossUrl }    // embate com o boss de capítulo
 };
 

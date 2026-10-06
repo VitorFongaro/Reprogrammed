@@ -130,7 +130,7 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   `OptionsScene`, espelhado em `state/audio.js` (`getSfxVolume`), então os sons tocam de qualquer cena
   sem consultar a API.
 - `ui/Music.js` — **música de fundo** (`assets/audio/music/`: `menu.mp3` no menu principal,
-  `cap1_subsolo.mp3` no capítulo 1 e `boss.mp3` no embate com o boss). A faixa de cada sala vem de
+  `cap1_subsolo.mp3` no capítulo 1, `cap2_terreo.mp3` no térreo (capítulo 2, a partir da recepção) e `boss.mp3` no embate com o boss). A faixa de cada sala vem de
   `config.music` do `BaseRoomScene` (default `"cap1"`; `null` = silêncio, usado no laboratório do cap. 2). `Music.preload(scene, nome)`
   carrega UMA faixa — são vários MB cada, o menu não deve baixar as outras antes de abrir. Como o menu é a primeira tela e o
   navegador só libera áudio na primeira interação, o `play` detecta o contexto travado

@@ -82,7 +82,8 @@ export default class RecepcaoScene extends BaseRoomScene {
             ySort: true,
             bg: recepcaoBg,
             map: recepcaoMap,
-            combat: true
+            combat: true,
+            music: "cap2"
         });
     }
 
@@ -90,6 +91,7 @@ export default class RecepcaoScene extends BaseRoomScene {
         super.preload();
         BlockProgrammingConsole.preload(this);
         Enemy.preload(this);
+        SaveComputer.preload(this);
     }
 
     onRoomCreate() {
