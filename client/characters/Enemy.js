@@ -214,6 +214,14 @@ const MUZZLE_OFFSET = 26;       // saída da bala, à frente do robô.
 const HITBOX = 20;
 
 export default class Enemy {
+    // Folha de andar e tint de um tipo, para quem mostra o robô fora da sala
+    // (o retrato da ReprogramScene). Montar a chave pelo nome do tipo não serve:
+    // vigia e faxineiro reusam folhas de outros tipos, e o carro "anda" na move.
+    static look(type) {
+        const def = TYPES[type] ?? TYPES.exploding;
+        return { walkKey: def.walkKey, tint: def.tint };
+    }
+
     static preload(scene) {
         Object.entries(SHEETS).forEach(([key, def]) => {
             if (!scene.textures.exists(key)) {

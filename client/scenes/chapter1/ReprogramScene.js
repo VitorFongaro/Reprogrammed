@@ -62,9 +62,12 @@ export default class ReprogramScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor("#04060a");
         this.drawBackdrop();
 
-        const walkKey = `enemy-${this.config.type ?? "exploding"}-walk`;
+        const { walkKey, tint } = Enemy.look(this.config.type);
         this.portrait = this.add.sprite(WIDTH / 2, 160, walkKey, 0).setScale(PORTRAIT_SCALE);
         this.portrait.play(walkKey);
+        // Tint do tipo (vigia, faxineiro): os clarões de acerto voltam para ele.
+        this.portraitTint = tint;
+        this.restorePortraitTint();
         this.portraitBaseY = 160;
 
         this.add.text(WIDTH / 2, 76, this.config.name ?? "ROBÔ", {
@@ -201,7 +204,7 @@ export default class ReprogramScene extends Phaser.Scene {
             y: this.portraitBaseY + 24, duration: 150, yoyo: true, ease: "Quad.easeOut"
         });
         this.portrait.setTintFill(0xffb347);
-        this.time.delayedCall(140, () => this.portrait.clearTint());
+        this.time.delayedCall(140, () => this.restorePortraitTint());
 
         this.dodge.start({
             ...DODGE_ROUND,
@@ -273,7 +276,7 @@ export default class ReprogramScene extends Phaser.Scene {
         }
         this.portrait.setTintFill(0xffffff);
         this.cameras.main.shake(160, 0.005);
-        this.time.delayedCall(120, () => this.portrait.clearTint());
+        this.time.delayedCall(120, () => this.restorePortraitTint());
         this.setStatus(`CAMADA ${this.enemyStage}/${this.enemyStages} QUEBRADA — ELE RESISTE`, "#ffb347");
         this.time.delayedCall(1000, () => this.enemyAttack());
     }
@@ -301,5 +304,13 @@ export default class ReprogramScene extends Phaser.Scene {
         this.scene.resume(this.config.returnScene, {
             enemyReprogram: { index: this.config.enemyIndex, disabled }
         });
+    }
+
+    restorePortraitTint() {
+        if (this.portraitTint) {
+            this.portrait.setTint(this.portraitTint);
+        } else {
+            this.portrait.clearTint();
+        }
     }
 }
