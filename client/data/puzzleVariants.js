@@ -583,3 +583,43 @@ function witchCounterPuzzle() {
 }
 
 export const WITCH_DEFENSES = [witchClockPuzzle, witchCounterPuzzle];
+
+// =============================================================================
+// CAP. 2 — RESERVA LOCAL dos puzzles gerados por IA
+// =============================================================================
+// Estes puzzles saem do Gemini (ver data/aiSpecs.js e server/services/aiService.js).
+// As funções abaixo seguem a MESMA ficha e só entram quando a IA não responde a
+// tempo (sem rede, Render dormindo, cota estourada): o jogo nunca fica sem
+// puzzle por causa da IA.
+
+const PLANTS = ["samambaia", "cacto", "orquidea"];
+const LETTERS = "ABCDE";
+
+// JARDIM DE INVERNO: regar abaixo de um limite de umidade. O limite sempre está
+// num canteiro (o caso de borda) e sai SEM regar, para `<=` não passar.
+export function irrigacaoPuzzle() {
+    const limit = pick([30, 40, 50]);
+    const decoy = pick([60, 70, 80]);
+    const values = shuffle([between(5, limit - 10), limit, between(limit + 10, 95), between(5, limit - 5)]);
+    return {
+        title: "IRRIGAÇÃO // ESTUFA",
+        briefing: [
+            `Terra com menos de ${limit}% de umidade precisa de água.`,
+            "O resto não: planta regada demais encharca."
+        ],
+        hint: `monte:  se umidade < ${limit} :  regar = true  /  senão :  regar = false`,
+        lines: [
+            "se [nome] [op] [valor] :",
+            "    regar = [valor]",
+            "senão :",
+            "    regar = [valor]"
+        ],
+        blocks: { nome: ["umidade", "planta"], op: ["<", "<=", ">"], valor: [String(limit), String(decoy), "true", "false"] },
+        tests: values.map((umidade, i) => ({
+            label: LETTERS[i],
+            given: { umidade, planta: pick(PLANTS) },
+            expect: { regar: umidade < limit }
+        })),
+        successMessage: "IRRIGAÇÃO NO PONTO"
+    };
+}

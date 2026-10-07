@@ -15,6 +15,7 @@ import ReprogramScene from './scenes/chapter1/ReprogramScene';
 import CorredorScene from './scenes/chapter1/CorredorScene';
 import SaguaoScene from './scenes/chapter1/SaguaoScene';
 import RecepcaoScene from './scenes/chapter2/RecepcaoScene';
+import JardimScene from './scenes/chapter2/JardimScene';
 import LaboratorioScene from './scenes/chapter2/LaboratorioScene';
 import SalaLeoScene from './scenes/chapter2/SalaLeoScene';
 import DepositoScene from './scenes/chapter2/DepositoScene';
@@ -59,6 +60,7 @@ const config = {
         // Capítulo 2: a recepção é a primeira sala do mapa definitivo (térreo);
         // as outras ainda são salas de teste provisórias.
         RecepcaoScene,
+        JardimScene,
         LaboratorioScene,
         SalaLeoScene,
         DepositoScene,

@@ -83,7 +83,8 @@ select c.id, v.slug, v.title, v.description,
        v.base_difficulty::public.difficulty_level, v.main_topic::public.programming_topic, v.order_index
 from public.chapters c
 cross join (values
-  ('cap2-recepcao', 'Recepção', 'Térreo da Elysium: as catracas travadas pelo bloqueio pedem a primeira condicional do capítulo.', 'easy', 'conditionals', 1)
+  ('cap2-recepcao', 'Recepção', 'Térreo da Elysium: as catracas travadas pelo bloqueio pedem a primeira condicional do capítulo.', 'easy', 'conditionals', 1),
+  ('cap2-jardim', 'Jardim de Inverno', 'A estufa do térreo: a irrigação dos canteiros pede um se/senão, com a regra gerada pela IA.', 'easy', 'conditionals', 2)
 ) as v(slug, title, description, base_difficulty, main_topic, order_index)
 where c.order_index = 2;
 
@@ -123,7 +124,8 @@ join (values
   ('cap1-controle', 'controle-termostato', 'Termostato // Núcleo', 'O núcleo precisa de uma temperatura com casa decimal.', 'variables', 'Guarde a temperatura em uma variável de número quebrado.', 'temperatura = 21.5', 'easy', 2),
   ('cap1-treinamento', 'treinamento-lasers', 'Barreira // Lasers', 'A barreira de laser corta o corredor em ciclos.', 'variables', 'Desligue a barreira com um valor de verdadeiro ou falso.', 'lasers = false', 'medium', 1),
   ('cap1-treinamento', 'treinamento-municao', 'Torretas // Munição', 'As torretas continuam atirando enquanto tiverem munição.', 'variables', 'Zere a munição das torretas.', 'municao = 0', 'medium', 2),
-  ('cap2-recepcao', 'recepcao-catracas', 'Catracas // Acesso', 'As catracas travaram para todo mundo durante o bloqueio.', 'conditionals', 'Reescreva a regra de acesso: só crachá do nível mínimo ou mais passa.', 'se cracha >= 3 : catraca = true', 'easy', 1)
+  ('cap2-recepcao', 'recepcao-catracas', 'Catracas // Acesso', 'As catracas travaram para todo mundo durante o bloqueio.', 'conditionals', 'Reescreva a regra de acesso: só crachá do nível mínimo ou mais passa.', 'se cracha >= 3 : catraca = true', 'easy', 1),
+  ('cap2-jardim', 'jardim-irrigacao', 'Irrigação // Estufa', 'A irrigação da estufa rega todos os canteiros do mesmo jeito.', 'conditionals', 'Reescreva a regra para regar só os canteiros que precisam de água.', 'se umidade < 40 : regar = true / senão : regar = false', 'easy', 1)
 ) as v(level_slug, slug, title, description, topic, objective, expected_output, base_difficulty, order_index)
   on l.slug = v.level_slug;
 

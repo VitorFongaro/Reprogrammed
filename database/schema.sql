@@ -336,6 +336,15 @@ create table public.ai_analysis_logs (
   wrong_attempts_snapshot int,
 
   analysis_summary text,
+
+  -- Geração de puzzle pelo Gemini (POST /ai/puzzle): o que saiu, de qual
+  -- modelo, se o conferidor aceitou e por que não, e quanto demorou.
+  generated_puzzle jsonb,
+  model varchar(60),
+  accepted boolean,
+  problems text,
+  latency_ms int,
+
   created_at timestamp with time zone not null default now(),
 
   constraint check_ai_accuracy_snapshot check (

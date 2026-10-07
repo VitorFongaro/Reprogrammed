@@ -1,0 +1,385 @@
+{
+ "compressionlevel": -1,
+ "width": 40,
+ "height": 22,
+ "infinite": false,
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "tilewidth": 32,
+ "tileheight": 32,
+ "tiledversion": "1.10.2",
+ "version": "1.10",
+ "type": "map",
+ "nextlayerid": 4,
+ "nextobjectid": 100,
+ "layers": [
+  {
+   "id": 1,
+   "name": "fundo",
+   "type": "imagelayer",
+   "image": "../images/jardim/jardim_bg.png",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": 2,
+   "name": "objetos",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 1,
+     "gid": 4,
+     "name": "painel",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 228,
+     "y": 300,
+     "width": 64,
+     "height": 88
+    },
+    {
+     "id": 2,
+     "gid": 6,
+     "name": "regador",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 300,
+     "y": 300,
+     "width": 40,
+     "height": 28
+    },
+    {
+     "id": 3,
+     "gid": 7,
+     "name": "sacos",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 44,
+     "y": 300,
+     "width": 60,
+     "height": 44
+    },
+    {
+     "id": 4,
+     "gid": 3,
+     "name": "chafariz",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 568,
+     "y": 580,
+     "width": 144,
+     "height": 104
+    },
+    {
+     "id": 5,
+     "gid": 2,
+     "name": "banco_esq",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 400,
+     "y": 560,
+     "width": 92,
+     "height": 48
+    },
+    {
+     "id": 6,
+     "gid": 2,
+     "name": "banco_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 788,
+     "y": 560,
+     "width": 92,
+     "height": 48
+    },
+    {
+     "id": 7,
+     "gid": 1,
+     "name": "arvore_esq",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 60,
+     "y": 650,
+     "width": 80,
+     "height": 124
+    },
+    {
+     "id": 8,
+     "gid": 1,
+     "name": "arvore_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1170,
+     "y": 650,
+     "width": 80,
+     "height": 124
+    },
+    {
+     "id": 9,
+     "gid": 8,
+     "name": "flores1",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 170,
+     "y": 640,
+     "width": 40,
+     "height": 44
+    },
+    {
+     "id": 10,
+     "gid": 8,
+     "name": "flores2",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1070,
+     "y": 640,
+     "width": 40,
+     "height": 44
+    },
+    {
+     "id": 11,
+     "gid": 8,
+     "name": "flores3",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 360,
+     "y": 452,
+     "width": 40,
+     "height": 44
+    },
+    {
+     "id": 12,
+     "gid": 8,
+     "name": "flores4",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 880,
+     "y": 452,
+     "width": 40,
+     "height": 44
+    },
+    {
+     "id": 13,
+     "gid": 5,
+     "name": "prateleira",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1146,
+     "y": 470,
+     "width": 88,
+     "height": 76
+    },
+    {
+     "id": 14,
+     "gid": 1,
+     "name": "arvore_meio",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 40,
+     "y": 420,
+     "width": 80,
+     "height": 124
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "colisao",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 50,
+     "name": "painel",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 232,
+     "y": 268,
+     "width": 56,
+     "height": 32
+    },
+    {
+     "id": 51,
+     "name": "chafariz",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 574,
+     "y": 508,
+     "width": 132,
+     "height": 66
+    },
+    {
+     "id": 52,
+     "name": "banco_esq",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 402,
+     "y": 538,
+     "width": 88,
+     "height": 18
+    },
+    {
+     "id": 53,
+     "name": "banco_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 790,
+     "y": 538,
+     "width": 88,
+     "height": 18
+    },
+    {
+     "id": 54,
+     "name": "arvore_esq",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 76,
+     "y": 618,
+     "width": 48,
+     "height": 30
+    },
+    {
+     "id": 55,
+     "name": "arvore_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1186,
+     "y": 618,
+     "width": 48,
+     "height": 30
+    },
+    {
+     "id": 56,
+     "name": "arvore_meio",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 56,
+     "y": 388,
+     "width": 48,
+     "height": 30
+    },
+    {
+     "id": 57,
+     "name": "prateleira",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1148,
+     "y": 446,
+     "width": 84,
+     "height": 22
+    },
+    {
+     "id": 58,
+     "name": "sacos",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 46,
+     "y": 278,
+     "width": 56,
+     "height": 20
+    }
+   ]
+  }
+ ],
+ "tilesets": [
+  {
+   "columns": 0,
+   "firstgid": 1,
+   "grid": {
+    "height": 1,
+    "orientation": "orthogonal",
+    "width": 1
+   },
+   "margin": 0,
+   "name": "props",
+   "spacing": 0,
+   "tilecount": 8,
+   "tilewidth": 144,
+   "tileheight": 124,
+   "tiles": [
+    {
+     "id": 0,
+     "image": "../images/jardim/props/arvore_vaso.png",
+     "imagewidth": 80,
+     "imageheight": 124
+    },
+    {
+     "id": 1,
+     "image": "../images/jardim/props/banco_jardim.png",
+     "imagewidth": 92,
+     "imageheight": 48
+    },
+    {
+     "id": 2,
+     "image": "../images/jardim/props/chafariz.png",
+     "imagewidth": 144,
+     "imageheight": 104
+    },
+    {
+     "id": 3,
+     "image": "../images/jardim/props/painel_irrigacao.png",
+     "imagewidth": 64,
+     "imageheight": 88
+    },
+    {
+     "id": 4,
+     "image": "../images/jardim/props/prateleira_mudas.png",
+     "imagewidth": 88,
+     "imageheight": 76
+    },
+    {
+     "id": 5,
+     "image": "../images/jardim/props/regador.png",
+     "imagewidth": 40,
+     "imageheight": 28
+    },
+    {
+     "id": 6,
+     "image": "../images/jardim/props/sacos_terra.png",
+     "imagewidth": 60,
+     "imageheight": 44
+    },
+    {
+     "id": 7,
+     "image": "../images/jardim/props/vaso_flores.png",
+     "imagewidth": 40,
+     "imageheight": 44
+    }
+   ]
+  }
+ ]
+}

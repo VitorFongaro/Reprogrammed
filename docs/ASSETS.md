@@ -268,6 +268,15 @@ pedra e a luz das janelas) sai de `tools/recepcao_bg.py`, que reaproveita o est�
 carimbo da porta do `treinamento_bg.py`. Nada de pack entra como entrada: é arte nossa, feita
 por script escrito por um agente de IA — declarar no TCC junto com os outros.
 
+**Jardim de inverno (cap. 2).** Os objetos (`client/assets/images/jardim/props/`: canteiro, as
+plantas — samambaia, cacto e orquídea — nos três estados ok/seca/encharcada, painel e bico da
+irrigação, banco, chafariz, árvore no vaso, regador, sacos de terra, prateleira de mudas e vaso de
+flores) saem de `tools/jardim_props.lua` (Aseprite, mesmas regras da recepção). O fundo
+(`jardim/jardim_bg.png`: fachada de vidro com a neve lá fora, letreiro, cano de cobre da
+irrigação, lajota de barro, anel de pedra do chafariz e os dois gramados) sai de
+`tools/jardim_bg.py`, que reaproveita o desenho de letra do `recepcao_bg.py` e o carimbo da porta.
+Arte nossa, feita por script escrito por um agente de IA — declarar no TCC.
+
 **Cards do site (`client/assets/images/site/`).** As imagens das abas SOBRE, PERSONAGENS e
 GAMEPLAY da página inicial saem de `tools/site_cards.py`, que só MONTA arte que já está no
 repositório (fundos das salas, mapas do Tiled, sprites, blocos do console e a fonte VCR) — nada

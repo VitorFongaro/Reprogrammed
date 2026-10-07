@@ -182,6 +182,15 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
 
         this.container.add([backdrop, panel, title, escHint, briefing]);
 
+        // Regra que a IA acabou de gerar para este jogador (state/aiPuzzles.js).
+        // Diegético: quem reescreve as travas da Elysium é a ADA.
+        if (this.puzzle.source === "ai") {
+            const tag = s.add.text(escHint.x - escHint.width - 28, PANEL_Y + 13, "REGRA GERADA PELA IA", {
+                fontFamily: "VCR", fontSize: "15px", color: "#ff4545"
+            }).setOrigin(1, 0);
+            this.container.add(tag);
+        }
+
         // Números de linha + texto fixo do programa (palavras-chave em destaque).
         this.template.forEach((_, row) => {
             this.container.add(s.add.text(PANEL_X + PAD, CODE_Y + row * LINE_H, String(row + 1), {

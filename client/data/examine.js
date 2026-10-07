@@ -148,6 +148,36 @@ export const PROP_EXAMINE = {
     mesa_seguranca: [
         "O posto da segurança. As câmeras mostram... a gente, olhando as câmeras.",
         "Tem um botão vermelho escrito ALARME. Não, Artemis."
+    ],
+
+    // Jardim de inverno (cap2-jardim). Canteiros e plantas ficam de fora: são o
+    // puzzle, e o [E] perto deles é do painel.
+    chafariz: [
+        "Um chafariz no meio de uma estufa, num prédio fechado, com neve lá fora. Alguém aqui gosta de água.",
+        "Tem moedas no fundo. Todas com a cara da ADA."
+    ],
+    banco_jardim: [
+        "Um banco para sentar e olhar as plantas. Ninguém senta. Ninguém tem tempo.",
+        "Tem uma plaquinha: 'DESCANSO AUTORIZADO: 4 MIN'. Claro que tem."
+    ],
+    arvore_vaso: [
+        "Esta é de verdade! Toquei na folha. Pela primeira vez neste prédio, uma coisa viva.",
+        "Tem um sensor pendurado no galho. Até a árvore é monitorada."
+    ],
+    regador: [
+        "Um regador manual. Peça de museu: a irrigação aqui é toda automática.",
+        "Vazio. Quem regava na mão foi substituído pelo painel ali."
+    ],
+    sacos_terra: [
+        "Terra adubada, marca Elysium. 'Cresça dentro das especificações.'"
+    ],
+    prateleira_mudas: [
+        "Mudas em fila, todas do mesmo tamanho. Nem as plantas escapam do padrão.",
+        "Uma delas está torta. Gostei dela."
+    ],
+    vaso_flores: [
+        "Flores de várias cores. Alguém aqui dentro ainda tem bom gosto.",
+        "Cheiram bem, eu acho. Meu sensor de cheiro é teórico."
     ]
 };
 

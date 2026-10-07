@@ -62,7 +62,15 @@ O jogo separa duas coisas que nunca se misturam:
 * **Save**: onde o jogador está. É reversível: carregar volta para o ponto salvo.
 * **Perfil de aprendizado**: cada tentativa nos puzzles (acerto, erros e tempo), acumulada por tópico. Nunca é apagado ao carregar um save, então não dá para "zerar" o histórico saindo e voltando.
 
-Esse perfil é a base da **adaptação de dificuldade**. A integração com IA generativa (**Google Gemini**) para gerar e ajustar desafios a partir dele **ainda está em implementação**: hoje o backend expõe a rota `/ai` apenas como status, e a variação dos puzzles é feita por sorteio no próprio jogo.
+Esse perfil é a base da **adaptação de dificuldade**. No capítulo 2, a começar pelo jardim de inverno, os puzzles são **gerados por IA (Google Gemini)** para cada jogador:
+
+1. A sala tem uma *ficha*: o que ela consegue mostrar no mapa (por exemplo, canteiros com umidade e tipo de planta) e o conceito que o puzzle precisa ensinar.
+2. O servidor lê o perfil do jogador e escolhe uma dificuldade (fácil, médio ou difícil). Quem acerta muito com poucos erros sobe; quem erra muito desce.
+3. O Gemini gera a regra, os casos de teste, as peças-isca e o texto, preso a um formato montado a partir da ficha.
+4. Antes de chegar ao jogador, o puzzle é **executado** no mesmo interpretador do jogo, com todas as montagens possíveis das peças: precisa ter solução, não pode aceitar qualquer coisa e o limite da regra tem de estar nos testes. Se for recusado, o motivo volta para a IA, que tenta de novo.
+5. Toda geração fica registrada (puzzle, modelo, motivo da recusa e tempo de resposta).
+
+Se a IA não responder a tempo, o jogo usa um gerador local que segue a mesma ficha. A IA nunca trava a partida.
 
 ⚠️ O sistema **não treina modelos próprios**; os dados do jogador servem apenas para orientar a geração de conteúdo.
 
@@ -102,7 +110,7 @@ Backend (Node.js + Express)            → Render
         ↓
 Supabase (PostgreSQL + Auth)
         ↓
-IA Generativa (Gemini) — em implementação
+IA Generativa (Gemini) — gera os puzzles do cap. 2
 ```
 
 Cada push na `main` publica o cliente na Vercel e a API no Render automaticamente.
@@ -138,6 +146,8 @@ SUPABASE_URL=sua-url-do-supabase
 SUPABASE_ANON_KEY=sua-anon-key
 PORT=3000
 CLIENT_ORIGIN=http://localhost:5173
+GEMINI_API_KEY=sua-chave-do-google-ai-studio
+GEMINI_MODEL=gemini-3.5-flash
 ```
 
 ```bash
@@ -188,7 +198,7 @@ Parte da arte vem de packs de terceiros, cada um com sua licença, e parte foi f
 
 ## 🎯 Trabalhos Futuros
 
-* Geração de desafios por IA a partir do perfil de aprendizado
+* Puzzles gerados por IA em todas as salas do capítulo 2 em diante
 * Capítulos 3 (repetições) e 4 (funções)
 * Editor de fases (modo sandbox)
 * Sistema multiplayer competitivo

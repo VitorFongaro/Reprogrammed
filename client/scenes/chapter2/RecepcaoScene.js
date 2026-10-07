@@ -73,9 +73,7 @@ const CLEARED_SCRIPT = [
 export default class RecepcaoScene extends BaseRoomScene {
     constructor() {
         super("cap2-recepcao", {
-            // Até o jardim de inverno existir, a porta leva ao laboratório de
-            // testes do capítulo.
-            nextScene: "cap2-laboratorio",
+            nextScene: "cap2-jardim",
             spawn: SPAWN,
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
             door: DOOR,
