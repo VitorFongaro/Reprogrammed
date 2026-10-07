@@ -70,8 +70,11 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
     aprendizado → dificuldade (`estimateDifficulty`: sobe com acerto ≥ 80% e ≤ 1 erro por
     tentativa, desce com < 50% ou ≥ 3 erros, parado com menos de 3 tentativas no tópico; o nível
     vai para `user_topic_performance.estimated_skill_level`), prompt + `responseSchema` montados da
-    ficha, até 4 chamadas em ~16 s trocando de modelo em 503/429 (`GEMINI_MODEL` → lite) e
-    reenviando os problemas do conferidor. Toda geração, aceita ou recusada, entra em
+    ficha, até 4 chamadas em ~16 s, reenviando os problemas do conferidor. Modelos em ordem:
+    `GEMINI_MODEL` (`gemini-3.5-flash-lite`, o único com cota de jogo no plano gratuito: 500
+    pedidos/dia contra 20 dos Flash cheios) → `gemini-3.8-flash` (escreve melhor, cota curta) →
+    `gemini-flash-lite-latest`. Modelo que deu 429 fica 10 min de fora, e 503/tempo esgotado, 30 s
+    (`cooldownUntil`, em memória); com todos de fora, a rota falha na hora e o cliente usa o local. Toda geração, aceita ou recusada, entra em
     `ai_analysis_logs` (puzzle, modelo, motivo, latência) — é a prova, no TCC, do que a IA gerou
     para cada jogador. O servidor importa a ficha e o conferidor de `client/` (o Render clona o
     repo inteiro). `GEMINI_API_KEY` só no `.env`/Render, nunca com prefixo `VITE_`.

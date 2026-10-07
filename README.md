@@ -147,7 +147,7 @@ SUPABASE_ANON_KEY=sua-anon-key
 PORT=3000
 CLIENT_ORIGIN=http://localhost:5173
 GEMINI_API_KEY=sua-chave-do-google-ai-studio
-GEMINI_MODEL=gemini-3.5-flash
+GEMINI_MODEL=gemini-3.5-flash-lite
 ```
 
 ```bash

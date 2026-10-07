@@ -24,14 +24,26 @@ import { checkPuzzle } from '../../client/utils/puzzleCheck.js';
 // =========================================================
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-// Modelo do .env primeiro; os outros entram quando ele responde 503/429
-// (o "alta demanda" do Gemini é comum e passa sozinho). Os lite respondem em
-// ~1 s; o conferidor segura a diferença de qualidade.
-const FALLBACK_MODELS = ['gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
-// O primeiro modelo ganha pouco tempo: quando o Gemini está em "alta demanda"
-// ele demora para responder até o 503, e a sala inteira espera junto.
-const FIRST_CALL_TIMEOUT_MS = 6000;
+// Modelo do .env primeiro (gemini-3.5-flash-lite: no plano gratuito é o único
+// com cota para jogo de verdade, 500 pedidos/dia; os Flash cheios dão 20). Os
+// outros entram quando ele falha: o 3.8 Flash escreve melhor, mas a cota dele
+// acaba rápido. O conferidor segura a diferença de qualidade.
+const FALLBACK_MODELS = ['gemini-3.8-flash', 'gemini-flash-lite-latest'];
+// Modelo que estourou a cota (429) ou está lotado (503/tempo) fica de fora por
+// um tempo: sem isso, toda geração gastaria a primeira chamada batendo nele.
+// Em memória mesmo — o Render reinicia o processo e a lista zera, o que só
+// custa uma chamada a mais.
+const QUOTA_COOLDOWN_MS = 10 * 60 * 1000;
+const BUSY_COOLDOWN_MS = 30 * 1000;
+const cooldownUntil = new Map();
+
+const availableModels = () => {
+  const now = Date.now();
+  return [...new Set([process.env.GEMINI_MODEL, ...FALLBACK_MODELS].filter(Boolean))]
+    .filter((model) => (cooldownUntil.get(model) ?? 0) <= now);
+};
 const CALL_TIMEOUT_MS = 9000;
+const MIN_CALL_MS = 3000;
 const DEADLINE_MS = 16000;      // o cliente desiste em ~18 s e usa o gerador local
 const MAX_CALLS = 4;
 const RECENT_ATTEMPTS = 8;
@@ -309,7 +321,11 @@ const callGemini = async (model, prompt, schema, timeoutMs) => {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
-      return { retryable: response.status === 503 || response.status === 429 || response.status >= 500, error: `HTTP ${response.status}` };
+      return {
+        retryable: response.status === 429 || response.status >= 500,
+        cooldownMs: response.status === 429 ? QUOTA_COOLDOWN_MS : BUSY_COOLDOWN_MS,
+        error: `HTTP ${response.status}`
+      };
     }
 
     const text = data?.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
@@ -320,7 +336,7 @@ const callGemini = async (model, prompt, schema, timeoutMs) => {
       return { retryable: false, error: 'resposta não é JSON' };
     }
   } catch (error) {
-    return { retryable: true, error: error.name === 'AbortError' ? 'tempo esgotado' : error.message };
+    return { retryable: true, cooldownMs: BUSY_COOLDOWN_MS, error: error.name === 'AbortError' ? 'tempo esgotado' : error.message };
   } finally {
     clearTimeout(timer);
   }
@@ -462,24 +478,33 @@ export const generatePuzzle = async (userId, accessToken, slug) => {
 // pedaço que dá para exercitar no terminal (ver tools/ia_teste.mjs).
 export const runGeneration = async (spec, difficulty, profile) => {
   const schema = buildSchema(spec);
-  const models = [...new Set([process.env.GEMINI_MODEL, ...FALLBACK_MODELS].filter(Boolean))];
   const started = Date.now();
   let feedback = null;
-  let modelIndex = 0;
   let last = { problems: [], error: null, puzzle: null, model: null };
   const variety = spec.variety?.length ? spec.variety[Math.floor(Math.random() * spec.variety.length)] : null;
   const trace = [];
 
   for (let call = 0; call < MAX_CALLS && Date.now() - started < DEADLINE_MS; call += 1) {
-    const model = models[Math.min(modelIndex, models.length - 1)];
+    // Sem tempo para uma chamada que valha a pena: o cliente já vai desistir.
+    const timeLeft = DEADLINE_MS - (Date.now() - started);
+    if (timeLeft < MIN_CALL_MS) break;
+
+    // Todos de castigo: desiste já, e o cliente usa o gerador local sem esperar.
+    const [model] = availableModels();
+    if (!model) {
+      trace.push('todos os modelos sem cota ou lotados');
+      last = { ...last, error: last.error ?? 'todos os modelos sem cota ou lotados' };
+      break;
+    }
     const result = await callGemini(model, buildPrompt(spec, difficulty, profile, feedback, variety), schema,
-      call === 0 ? FIRST_CALL_TIMEOUT_MS : CALL_TIMEOUT_MS);
+      Math.min(CALL_TIMEOUT_MS, timeLeft));
 
     if (!result.puzzle) {
       last = { ...last, error: result.error, model };
       trace.push(`${model}: ${result.error}`);
-      // Modelo ocupado ou fora do ar: tenta o próximo da lista.
-      if (result.retryable) modelIndex += 1;
+      // Sem cota, ocupado ou fora do ar: fica de fora um tempo e a próxima
+      // chamada já vai para o seguinte da lista.
+      if (result.retryable) cooldownUntil.set(model, Date.now() + result.cooldownMs);
       continue;
     }
 
