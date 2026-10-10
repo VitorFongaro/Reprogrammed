@@ -3,7 +3,7 @@ import { createUserSupabaseClient } from '../config/supabase.js';
 // mesmos arquivos no gerador local de reserva. O Render clona o repositório
 // inteiro, então o caminho relativo existe lá também.
 import { AI_SPECS } from '../../client/data/aiSpecs.js';
-import { checkPuzzle } from '../../client/utils/puzzleCheck.js';
+import { checkPuzzle, LIMITS } from '../../client/utils/puzzleCheck.js';
 
 // =========================================================
 // GERADOR DE PUZZLES POR IA (Gemini)
@@ -62,10 +62,27 @@ const DIFFICULTY_GUIDE = {
     'Mais casos perto do limite.'
   ],
   hard: [
-    'A regra pode combinar duas condições com "e" ou "ou" (por exemplo, uma das entradas de texto com uma numérica). Ponha o nome das variáveis como texto fixo da linha para caber em 4 encaixes: "se umidade [op] [valor] e planta [op] [valor] :".',
     'Iscas fortes: o conectivo errado, o operador vizinho, o número como texto.',
     'O briefing descreve a regra por extenso, sem entregar a ordem das peças.'
   ]
+};
+
+// A linha mais larga que cabe no console tem uns 3 encaixes com dois nomes de
+// variável escritos. Duas comparações completas ("a [op] [valor] e b [op]
+// [valor]") NÃO cabem, então combinar condições só é sugerido quando a sala tem
+// uma entrada booleana, que entra sozinha na condição.
+const difficultyGuide = (spec, difficulty) => {
+  const guide = [...DIFFICULTY_GUIDE[difficulty]];
+  if (difficulty !== 'hard') return guide;
+  const names = Object.keys(spec.inputs);
+  const flag = names.find((n) => spec.inputs[n].type === 'bool');
+  const other = names.find((n) => n !== flag);
+  if (flag && other) {
+    guide.unshift(`A regra pode combinar duas condições com "e" ou "ou", com o conectivo como peça: "se ${other} [op] [valor] [op] ${flag} :" (no máximo 3 encaixes nessa linha).`);
+  } else {
+    guide.unshift('Uma comparação, com o limite fora do número redondo e casos dos dois lados bem perto dele.');
+  }
+  return guide;
 };
 
 const EXAMPLE = {
@@ -99,10 +116,16 @@ export const getAiServiceStatus = () => (process.env.GEMINI_API_KEY ? 'ready' : 
 // Sobe um nível com acerto alto e pouco erro por tentativa; desce com acerto
 // baixo ou muito erro. Com poucas tentativas no tópico, fica onde está: três
 // acertos de sorte não fazem ninguém "difícil".
-export const estimateDifficulty = ({ current, attempts, accuracy, avgErrors }) => {
+//
+// Só mexe se o jogador TENTOU algo desde a última análise (`analyzedAttempts`,
+// as tentativas no tópico quando o nível foi gravado). Sem isso, cada pedido
+// subia um nível com os mesmos números: entrar no jardim, dar F5 e entrar de
+// novo levava de fácil a difícil sem uma tentativa nova.
+export const estimateDifficulty = ({ current, attempts, accuracy, avgErrors, analyzedAttempts = null }) => {
   let index = Math.max(DIFFICULTIES.indexOf(current), 0);
+  const hasNewData = analyzedAttempts === null || attempts > analyzedAttempts;
 
-  if (attempts >= 3) {
+  if (attempts >= 3 && hasNewData) {
     if (accuracy >= 80 && avgErrors <= 1) {
       index += 1;
     } else if (accuracy < 50 || avgErrors >= 3) {
@@ -114,14 +137,25 @@ export const estimateDifficulty = ({ current, attempts, accuracy, avgErrors }) =
 };
 
 const loadProfile = async (client, userId, spec, slug) => {
-  const [topic, puzzle] = await Promise.all([
+  const [topic, puzzle, lastAnalysis] = await Promise.all([
     client
       .from('user_topic_performance')
       .select('attempts, correct_attempts, wrong_attempts, accuracy, estimated_skill_level')
       .eq('user_id', userId)
       .eq('topic', spec.topic)
       .maybeSingle(),
-    client.from('puzzles').select('id, level_id').eq('slug', slug).maybeSingle()
+    client.from('puzzles').select('id, level_id').eq('slug', slug).maybeSingle(),
+    // Só a geração ACEITA grava o nível no perfil (saveEstimate), então é a
+    // última aceita que diz com quantas tentativas ele foi calculado.
+    client
+      .from('ai_analysis_logs')
+      .select('attempts_snapshot')
+      .eq('user_id', userId)
+      .eq('topic', spec.topic)
+      .eq('accepted', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
   ]);
 
   let recent = [];
@@ -149,6 +183,7 @@ const loadProfile = async (client, userId, spec, slug) => {
     correct: t?.correct_attempts ?? 0,
     wrong: t?.wrong_attempts ?? 0,
     accuracy: Number(t?.accuracy ?? 0),
+    analyzedAttempts: lastAnalysis.data?.attempts_snapshot ?? null,
     recentCount: recent.length,
     avgErrors: Number(avg(recent, 'errors_count').toFixed(1)),
     avgSeconds: Math.round(avg(recent, 'time_spent_seconds'))
@@ -184,7 +219,8 @@ e o jogo EXECUTA o programa contra casos de teste. Qualquer montagem que acerte 
 - "lines": as linhas do programa. Cada encaixe é escrito [nome], [op] ou [valor]; o resto é texto fixo.
 - Texto fixo permitido: se, senão, :, =, e, ou, não e os nomes das variáveis da sala. NUNCA escreva um
   número, texto ou true/false fixo na linha: valores entram só por encaixe.
-- No máximo ${6} linhas e 4 encaixes por linha.
+- No máximo ${LIMITS.maxLines} linhas e ${LIMITS.maxSlotsPerLine} encaixes por linha; uma linha que também tenha nomes de
+  variável escritos cabe só com 3 encaixes.
 - "blocks": TODAS as peças, as certas e as iscas, como texto: nome = nomes de variável, op = operadores
   ou conectivos, valor = literais ("40", "\\"cacto\\"", "true"). No máximo 12 peças no total.
   Para precisar de duas peças iguais, repita o rótulo.
@@ -216,7 +252,7 @@ ${profile.attempts
 ${profile.recentCount
     ? `Neste puzzle: ${profile.recentCount} tentativas recentes, média de ${profile.avgErrors} erros e ${profile.avgSeconds} s por tentativa.`
     : ''}
-${DIFFICULTY_GUIDE[difficulty].map((l) => `- ${l}`).join('\n')}
+${difficultyGuide(spec, difficulty).map((l) => `- ${l}`).join('\n')}
 
 ## Regras de qualidade (o jogo confere e recusa o que não cumprir)
 - Tem de existir pelo menos uma montagem certa, e uma montagem qualquer não pode passar.
@@ -227,7 +263,8 @@ ${DIFFICULTY_GUIDE[difficulty].map((l) => `- ${l}`).join('\n')}
 - "briefing": 1 a 3 linhas de até 60 caracteres, na voz da sala, descrevendo só o OBJETIVO. Não escreva
   a estrutura do código nem a ordem das peças, mas DIGA o número exato de cada limite (o jogador não
   tem outro lugar para descobrir que o limite é 35).
-- "hint": começa com "monte:" e mostra a solução em uma linha, separando as linhas com " / ".
+- "hint": começa com "monte:" e mostra a solução em uma linha, separando as linhas com " / " e as peças
+  com espaço ("se umidade < 40 :"). Os operadores e números têm de ser os de uma montagem que passa.
 - "successMessage": curta, em MAIÚSCULAS.
 - Escreva em português com acentos (água, não, irrigação).
 

@@ -25,7 +25,8 @@ import jardimMap from "../../assets/maps/jardim.json";
 // (irrigacaoPuzzle) e o jogo segue igual.
 //
 // Puzzle de MUNDO: o console fecha e cada canteiro mostra o resultado (ver
-// objects/GardenBeds.js). A porta abre com a irrigação certa.
+// objects/GardenBeds.js). A porta abre com a irrigação certa e leva ao
+// depósito (`cap2-deposito`).
 //
 // Arte: fundo por tools/jardim_bg.py; plantas, canteiro e móveis por
 // tools/jardim_props.lua (Aseprite), no Tiled em assets/maps/jardim.json.
@@ -61,8 +62,7 @@ const SOLVED_SCRIPT = [
 export default class JardimScene extends BaseRoomScene {
     constructor() {
         super("cap2-jardim", {
-            // Até a expedição existir, a porta leva ao laboratório de testes.
-            nextScene: "cap2-laboratorio",
+            nextScene: "cap2-deposito",
             spawn: SPAWN,
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
             door: DOOR,

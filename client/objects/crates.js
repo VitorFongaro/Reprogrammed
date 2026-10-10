@@ -46,7 +46,8 @@ export function makeCrate(scene, x, y, { size = 60, kind = "madeira", letter = "
         parts.push(t);
     };
     if (letter) text(letter, 13, -half + 4, -half + 8, "#4ad6ff", 0);
-    if (label) text(label, 14, 0, tag ? -3 : 3, "#ffffff");
+    // Rótulo comprido ("PAPELÃO") desce de corpo para caber na caixa.
+    if (label) text(label, label.length > 5 ? 11 : 14, 0, tag ? -3 : 3, "#ffffff");
     if (tag) text(tag, 12, 0, label ? 13 : 5, "#f2e6c8");
 
     const flash = scene.add.rectangle(0, 0, size, size, 0xff4545, 1).setAlpha(0);

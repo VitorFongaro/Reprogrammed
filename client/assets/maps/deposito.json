@@ -1,0 +1,423 @@
+{
+ "compressionlevel": -1,
+ "width": 40,
+ "height": 22,
+ "infinite": false,
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "tilewidth": 32,
+ "tileheight": 32,
+ "tiledversion": "1.10.2",
+ "version": "1.10",
+ "type": "map",
+ "nextlayerid": 4,
+ "nextobjectid": 100,
+ "layers": [
+  {
+   "id": 1,
+   "name": "fundo",
+   "type": "imagelayer",
+   "image": "../images/deposito/deposito_bg.png",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": 2,
+   "name": "objetos",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 1,
+     "gid": 1,
+     "name": "painel_corredor",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 150,
+     "y": 330,
+     "width": 64,
+     "height": 88
+    },
+    {
+     "id": 2,
+     "gid": 3,
+     "name": "empilhadeira",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 84,
+     "y": 578,
+     "width": 108,
+     "height": 84
+    },
+    {
+     "id": 3,
+     "gid": 4,
+     "name": "pallet_entrada",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 40,
+     "y": 436,
+     "width": 72,
+     "height": 72
+    },
+    {
+     "id": 4,
+     "gid": 5,
+     "name": "pallets_a",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 120,
+     "y": 664,
+     "width": 72,
+     "height": 44
+    },
+    {
+     "id": 5,
+     "gid": 6,
+     "name": "tambores_a",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 40,
+     "y": 664,
+     "width": 64,
+     "height": 56
+    },
+    {
+     "id": 6,
+     "gid": 7,
+     "name": "cone_a",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 196,
+     "y": 606,
+     "width": 28,
+     "height": 32
+    },
+    {
+     "id": 7,
+     "gid": 2,
+     "name": "controle_guindaste",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 652,
+     "y": 264,
+     "width": 76,
+     "height": 72
+    },
+    {
+     "id": 8,
+     "gid": 9,
+     "name": "caixote_b",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 722,
+     "y": 664,
+     "width": 52,
+     "height": 52
+    },
+    {
+     "id": 9,
+     "gid": 7,
+     "name": "cone_b",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 852,
+     "y": 660,
+     "width": 28,
+     "height": 32
+    },
+    {
+     "id": 10,
+     "gid": 4,
+     "name": "pallet_saida",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1168,
+     "y": 476,
+     "width": 72,
+     "height": 72
+    },
+    {
+     "id": 11,
+     "gid": 8,
+     "name": "paleteira_c",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1100,
+     "y": 664,
+     "width": 72,
+     "height": 44
+    },
+    {
+     "id": 12,
+     "gid": 5,
+     "name": "pallets_c",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1170,
+     "y": 664,
+     "width": 72,
+     "height": 44
+    },
+    {
+     "id": 13,
+     "gid": 7,
+     "name": "cone_c",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1104,
+     "y": 300,
+     "width": 28,
+     "height": 32
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "colisao",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 50,
+     "name": "painel_corredor",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 152,
+     "y": 296,
+     "width": 60,
+     "height": 32
+    },
+    {
+     "id": 51,
+     "name": "empilhadeira",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 88,
+     "y": 540,
+     "width": 100,
+     "height": 36
+    },
+    {
+     "id": 52,
+     "name": "pallet_entrada",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 42,
+     "y": 404,
+     "width": 68,
+     "height": 30
+    },
+    {
+     "id": 53,
+     "name": "pallets_a",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 122,
+     "y": 640,
+     "width": 68,
+     "height": 22
+    },
+    {
+     "id": 54,
+     "name": "tambores_a",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 42,
+     "y": 630,
+     "width": 60,
+     "height": 32
+    },
+    {
+     "id": 55,
+     "name": "cone_a",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 198,
+     "y": 594,
+     "width": 24,
+     "height": 12
+    },
+    {
+     "id": 56,
+     "name": "controle_guindaste",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 654,
+     "y": 228,
+     "width": 72,
+     "height": 34
+    },
+    {
+     "id": 57,
+     "name": "caixote_b",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 724,
+     "y": 632,
+     "width": 48,
+     "height": 30
+    },
+    {
+     "id": 58,
+     "name": "cone_b",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 854,
+     "y": 648,
+     "width": 24,
+     "height": 12
+    },
+    {
+     "id": 59,
+     "name": "pallet_saida",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1170,
+     "y": 444,
+     "width": 68,
+     "height": 30
+    },
+    {
+     "id": 60,
+     "name": "paleteira_c",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1102,
+     "y": 640,
+     "width": 68,
+     "height": 22
+    },
+    {
+     "id": 61,
+     "name": "pallets_c",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1172,
+     "y": 640,
+     "width": 68,
+     "height": 22
+    },
+    {
+     "id": 62,
+     "name": "cone_c",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1106,
+     "y": 288,
+     "width": 24,
+     "height": 12
+    }
+   ]
+  }
+ ],
+ "tilesets": [
+  {
+   "columns": 0,
+   "firstgid": 1,
+   "grid": {
+    "height": 1,
+    "orientation": "orthogonal",
+    "width": 1
+   },
+   "margin": 0,
+   "name": "props",
+   "spacing": 0,
+   "tilecount": 9,
+   "tilewidth": 108,
+   "tileheight": 88,
+   "tiles": [
+    {
+     "id": 0,
+     "image": "../images/deposito/props/painel_pistao.png",
+     "imagewidth": 64,
+     "imageheight": 88
+    },
+    {
+     "id": 1,
+     "image": "../images/deposito/props/console_guindaste.png",
+     "imagewidth": 76,
+     "imageheight": 72
+    },
+    {
+     "id": 2,
+     "image": "../images/deposito/props/empilhadeira.png",
+     "imagewidth": 108,
+     "imageheight": 84
+    },
+    {
+     "id": 3,
+     "image": "../images/deposito/props/pallet_caixas.png",
+     "imagewidth": 72,
+     "imageheight": 72
+    },
+    {
+     "id": 4,
+     "image": "../images/deposito/props/pallets_vazios.png",
+     "imagewidth": 72,
+     "imageheight": 44
+    },
+    {
+     "id": 5,
+     "image": "../images/deposito/props/tambores.png",
+     "imagewidth": 64,
+     "imageheight": 56
+    },
+    {
+     "id": 6,
+     "image": "../images/deposito/props/cone.png",
+     "imagewidth": 28,
+     "imageheight": 32
+    },
+    {
+     "id": 7,
+     "image": "../images/deposito/props/paleteira.png",
+     "imagewidth": 72,
+     "imageheight": 44
+    },
+    {
+     "id": 8,
+     "image": "../images/deposito/props/caixote.png",
+     "imagewidth": 52,
+     "imageheight": 52
+    }
+   ]
+  }
+ ]
+}

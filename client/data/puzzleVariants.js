@@ -623,3 +623,91 @@ export function irrigacaoPuzzle() {
         successMessage: "IRRIGAÇÃO NO PONTO"
     };
 }
+
+// DEPÓSITO, corredor: leve para a estante de cima, pesada para a de baixo. A
+// caixa que pesa exatamente o limite está sempre no corredor (é ela que separa
+// `<=` de `<`), e a regra sai ora pelas leves ("até X"), ora pelas pesadas
+// ("acima de X") — as duas montagens existem com as peças, só muda qual o
+// texto puxa primeiro.
+export function corredorPuzzle() {
+    const limit = pick([40, 50, 60, 80]);
+    const lightFirst = Math.random() < 0.5;
+    const heavy = between(limit + 10, limit + 70);
+    // O número-isca fica ACIMA de uma caixa pesada: sem caixa entre o limite e
+    // a isca, `peso < isca` também passaria e o limite não seria o único.
+    const decoy = Math.ceil((heavy + 1) / 10) * 10;
+    const weights = shuffle([
+        limit,
+        between(5, limit - 10),
+        heavy,
+        ...(Math.random() < 0.5 ? [between(limit + 5, 190)] : [between(5, limit - 5), between(limit + 5, 190)])
+    ]);
+    return {
+        title: "CORREDOR DE CARGA",
+        briefing: lightFirst
+            ? ["As caixas travam o corredor. A prateleira de cima aguenta", `caixa LEVE, até ${limit} kg; as outras vão para baixo.`]
+            : ["As caixas travam o corredor. Caixa com mais de", `${limit} kg vai para a prateleira de baixo; as leves, para cima.`],
+        hint: lightFirst
+            ? `monte:  se peso <= ${limit} :  lado = "cima"  /  senão :  lado = "baixo"`
+            : `monte:  se peso > ${limit} :  lado = "baixo"  /  senão :  lado = "cima"`,
+        lines: [
+            "se [nome] [op] [valor] :",
+            "    lado = [valor]",
+            "senão :",
+            "    lado = [valor]"
+        ],
+        blocks: { nome: ["peso"], op: ["<=", "<", ">", ">="], valor: [String(limit), String(decoy), '"cima"', '"baixo"'] },
+        tests: weights.map((peso, i) => ({
+            label: LETTERS[i],
+            given: { peso },
+            expect: { lado: peso <= limit ? "cima" : "baixo" }
+        })),
+        successMessage: "CORREDOR LIVRE"
+    };
+}
+
+// DEPÓSITO, ponte: `ou` entre o material e o "cheia". Cada regra traz os casos
+// que a separam das vizinhas — o `e` no lugar do `ou` e o outro material.
+const PONTE_RULES = [
+    {
+        // material == "aco" ou cheia
+        briefing: ["Caixa de AÇO aguenta a Artemis, e caixa CHEIA também.", "Essas vão para a ponte; o resto, para o descarte."],
+        hint: 'monte:  se material == "aco" ou cheia :  destino = "ponte"  /  senão :  destino = "descarte"',
+        valor: ['"aco"', '"papelao"'],
+        crates: [["aco", true], ["papelao", false], ["aco", false], ["madeira", false]],
+        extra: ["papelao", true],
+        strong: (material, cheia) => material === "aco" || cheia
+    },
+    {
+        // material != "papelao" ou cheia
+        briefing: ["Só papelão VAZIO afunda: aço e madeira aguentam,", "e papelão cheio também. O resto vai para o descarte."],
+        hint: 'monte:  se material != "papelao" ou cheia :  destino = "ponte"  /  senão :  destino = "descarte"',
+        valor: ['"papelao"', '"aco"'],
+        crates: [["aco", true], ["papelao", false], ["madeira", false], ["papelao", true]],
+        extra: null,
+        strong: (material, cheia) => material !== "papelao" || cheia
+    }
+];
+
+export function pontePuzzle() {
+    const rule = pick(PONTE_RULES);
+    const crates = shuffle(rule.extra && Math.random() < 0.5 ? [...rule.crates, rule.extra] : rule.crates);
+    return {
+        title: "PONTE DE CARGA",
+        briefing: rule.briefing,
+        hint: rule.hint,
+        lines: [
+            "se material [op] [valor] [op] cheia :",
+            "    destino = [valor]",
+            "senão :",
+            "    destino = [valor]"
+        ],
+        blocks: { nome: [], op: ["==", "!=", "ou", "e"], valor: [...rule.valor, '"ponte"', '"descarte"'] },
+        tests: crates.map(([material, cheia], i) => ({
+            label: LETTERS[i],
+            given: { material, cheia },
+            expect: { destino: rule.strong(material, cheia) ? "ponte" : "descarte" }
+        })),
+        successMessage: "PONTE MONTADA"
+    };
+}

@@ -12,11 +12,15 @@ import { makeCrate, flashCrate } from "./crates";
 // buraco, forte no descarte faz falta no fim. O jogador vê onde ficou o buraco.
 //
 // Cada caixa é um caso de teste (`tests[i]`) e o número de vãos é o de caixas
-// que DEVEM ir para a ponte. A ORDEM da esteira importa: uma caixa fraca não
-// pode vir depois de tantas caixas quantos são os vãos, senão um programa que
-// manda TUDO para a ponte encheria os vãos antes dela, ela cairia sobrando e a
-// ponte ficaria inteira com o programa errado. O construtor avisa no console se
-// isso acontecer. Liga-se a um PuzzleDevice com `onRun: (r, done) => ponte.play(r, done)`.
+// que DEVEM ir para a ponte. Caixa mandada para a ponte quando os vãos já estão
+// todos ocupados cai em cima do ÚLTIMO: se for fraca, racha junto com ele (um
+// programa que manda TUDO para a ponte nunca passa, venha a fraca onde vier na
+// esteira — a ordem é livre, o que importa porque os testes podem vir da IA).
+// Liga-se a um PuzzleDevice com `onRun: (r, done) => ponte.play(r, done)`.
+//
+// `x1` (em vez de `x0`) ancora o fosso pela margem DIREITA: como a quantidade de
+// vãos muda com os testes, é a margem do lado da saída que fica no lugar.
+// Arte da esteira e do compactador: tools/deposito_props.lua.
 
 const SLOT_W = 60;
 const ROW_H = 64;
@@ -29,10 +33,10 @@ const DROP_MS = 120;
 const GAP_MS = 140;            // pausa entre uma caixa e a próxima
 const RESULT_HOLD_MS = 1200;   // a ponte furada fica à vista antes de desmontar
 const FADE_MS = 220;
-const CHUTE = 64;
+const CHUTE = 64;              // colisor da boca do compactador (descarte.png tem 72)
 
 export default class CrateBridge {
-    constructor(scene, { x0, y, queue, chute, tests, field, bridgeValue, discardValue, lookOf }) {
+    constructor(scene, { x0, x1, y, queue, chute, tests, field, bridgeValue, discardValue, lookOf }) {
         this.scene = scene;
         this.field = field;
         this.bridgeValue = bridgeValue;
@@ -41,8 +45,8 @@ export default class CrateBridge {
         this.chute = chute;
 
         const count = tests.filter((test) => test.expect[field] === bridgeValue).length;
-        this.x0 = x0;
-        this.x1 = x0 + count * SLOT_W;
+        this.x0 = x1 !== undefined ? x1 - count * SLOT_W : x0;
+        this.x1 = this.x0 + count * SLOT_W;
         const top = y - ROW_H / 2;
         const bottom = y + ROW_H / 2;
         const b = scene.bounds;
@@ -70,36 +74,42 @@ export default class CrateBridge {
             const homeY = queue.y0 + i * queue.gap;
             const look = lookOf(test.given);
             const box = makeCrate(scene, homeX, homeY, {
-                size: CRATE, kind: look.kind, letter: test.label ?? "", tag: look.tag
+                size: CRATE, kind: look.kind, letter: test.label ?? "", label: look.label ?? "", tag: look.tag
             }).setDepth(homeY + CRATE / 2);
             return { box, homeX, homeY, strong: test.expect[field] === bridgeValue };
-        });
-
-        this.crates.forEach((crate, i) => {
-            if (!crate.strong && i >= count) {
-                console.warn(`CrateBridge: a caixa ${i} é fraca e vem depois de ${count} caixas;`
-                    + " um programa que manda tudo para a ponte a deixaria sobrando com a ponte inteira.");
-            }
         });
     }
 
     // --- Cenário -------------------------------------------------------------
 
+    // Fosso de concreto: a parede do fundo (de cima) aparece em 3/4, as laterais
+    // vão escurecendo para dentro e as margens têm a faixa zebrada.
     drawChasm(b) {
         const g = this.scene.add.graphics().setDepth(-8);
         const w = this.x1 - this.x0;
-        g.fillStyle(0x000000, 1).fillRect(this.x0, b.y, w, b.h);
-        // Profundidade: as paredes do abismo vão escurecendo para dentro.
-        [0.22, 0.14, 0.07].forEach((alpha, k) => {
-            g.fillStyle(0x3a3f55, alpha);
-            g.fillRect(this.x0 + k * 6, b.y, 6, b.h);
-            g.fillRect(this.x1 - (k + 1) * 6, b.y, 6, b.h);
+        const y0 = b.y - 4;
+        const h = b.h + 18;
+        g.fillStyle(0x020203, 1).fillRect(this.x0, y0, w, h);
+        g.fillStyle(0x2a2c32, 1).fillRect(this.x0, y0, w, 26);          // parede do fundo
+        g.fillStyle(0x1c1e23, 1).fillRect(this.x0, y0 + 18, w, 8);
+        for (let x = this.x0 + 10; x < this.x1; x += 30) {
+            g.fillStyle(0x16171b, 1).fillRect(x, y0 + 4, 2, 14);         // juntas da concretagem
+        }
+        [0.2, 0.12, 0.06].forEach((alpha, k) => {
+            g.fillStyle(0x6a6e78, alpha);
+            g.fillRect(this.x0 + k * 6, y0, 6, h);
+            g.fillRect(this.x1 - (k + 1) * 6, y0, 6, h);
         });
-        // Faixa de perigo nas duas margens.
-        for (let y = b.y; y < b.y + b.h; y += 16) {
-            g.fillStyle(0xffb347, 0.85);
-            g.fillRect(this.x0 - 6, y, 6, 8);
-            g.fillRect(this.x1, y, 6, 8);
+        // Margens: guia de concreto e faixa zebrada.
+        g.fillStyle(0x5a5e66, 1).fillRect(this.x0 - 10, y0, 4, h);
+        g.fillStyle(0x5a5e66, 1).fillRect(this.x1 + 6, y0, 4, h);
+        for (let y = y0; y < y0 + h; y += 12) {
+            g.fillStyle(0xe2b01e, 1);
+            g.fillRect(this.x0 - 6, y, 6, 6);
+            g.fillRect(this.x1, y, 6, 6);
+            g.fillStyle(0x121214, 1);
+            g.fillRect(this.x0 - 6, y + 6, 6, 6);
+            g.fillRect(this.x1, y + 6, 6, 6);
         }
     }
 
@@ -123,30 +133,26 @@ export default class CrateBridge {
         });
     }
 
+    // Esteira: um trecho (esteira.png, 64x58) por caixa, emendados.
     drawConveyor(queue, n) {
-        const x = queue.x - 32;
+        const s = this.scene;
         const w = 64;
-        const y0 = queue.y0 - 34;
-        const y1 = queue.y0 + (n - 1) * queue.gap + 34;
-        const g = this.scene.add.graphics().setDepth(-5);
-        g.fillStyle(0x1a1d27, 1).fillRect(x, y0, w, y1 - y0);
-        g.lineStyle(1, 0x2f3446, 1);
-        for (let ry = y0 + 8; ry < y1; ry += 12) {
-            g.lineBetween(x + 4, ry, x + w - 4, ry);   // roletes
+        const x = queue.x - w / 2;
+        const y0 = queue.y0 - queue.gap / 2;
+        const y1 = queue.y0 + (n - 1) * queue.gap + queue.gap / 2;
+        for (let i = 0; i < n; i += 1) {
+            s.add.image(queue.x, queue.y0 + i * queue.gap, "prop-esteira").setDepth(-5);
         }
-        g.lineStyle(2, 0x3a3f55, 1).strokeRect(x, y0, w, y1 - y0);
-        this.scene.addColliders([{ x, y: y0, w, h: y1 - y0 }]);
+        const g = s.add.graphics().setDepth(-5);
+        g.fillStyle(0x2a2c34, 1).fillRect(x - 2, y0 - 8, w + 4, 8);       // cabeceiras
+        g.fillRect(x - 2, y1, w + 4, 8);
+        g.lineStyle(2, 0x000000, 1).strokeRect(x - 2, y0 - 8, w + 4, y1 - y0 + 16);
+        s.addColliders([{ x, y: y0, w, h: y1 - y0 }]);
     }
 
     drawChute() {
         const { x, y } = this.chute;
-        const g = this.scene.add.graphics().setDepth(-5);
-        g.fillStyle(0x000000, 1).fillRect(x - CHUTE / 2, y - CHUTE / 2, CHUTE, CHUTE);
-        for (let k = 0; k < CHUTE; k += 16) {
-            g.fillStyle(0xffb347, 0.85);
-            g.fillRect(x - CHUTE / 2 + k, y - CHUTE / 2 - 5, 8, 5);
-            g.fillRect(x - CHUTE / 2 + k, y + CHUTE / 2, 8, 5);
-        }
+        this.scene.add.image(x, y, "prop-descarte").setDepth(-5);
         this.scene.add.text(x, y + CHUTE / 2 + 16, "DESCARTE", {
             fontFamily: "VCR", fontSize: "13px", color: "#7a8099"
         }).setOrigin(0.5).setDepth(-5);
@@ -175,8 +181,9 @@ export default class CrateBridge {
                     next += 1;
                     this.carry(crate, slot.x, this.y, () => this.land(crate, slot, after));
                 } else {
-                    // Todos os vãos já usados: passa do fim da ponte e cai.
-                    this.carry(crate, this.x1 - SLOT_W / 2, this.y - ROW_H, () => this.fall(crate, after));
+                    // Todos os vãos já usados: cai em cima do último.
+                    const last = this.slots[this.slots.length - 1];
+                    this.carry(crate, last.x, this.y, () => this.overload(crate, last, after));
                 }
             } else if (dest === this.discardValue) {
                 this.carry(crate, this.chute.x, this.chute.y, () => this.fall(crate, after));
@@ -207,6 +214,7 @@ export default class CrateBridge {
         const s = this.scene;
         if (crate.strong) {
             slot.state = "cheio";
+            slot.crate = crate;
             slot.collider.body.enable = false;
             crate.box.setDepth(-3);              // virou chão: a Artemis passa por cima
             Sfx.play(s, "bump", 0.45);
@@ -228,6 +236,28 @@ export default class CrateBridge {
         });
     }
 
+    // Caixa a mais numa ponte já cheia. Forte, só rola para o fosso; fraca, cede
+    // e leva o último vão junto (e a caixa que estava nele).
+    overload(crate, slot, next) {
+        const s = this.scene;
+        if (crate.strong || slot.state !== "cheio") {
+            this.fall(crate, next);
+            return;
+        }
+        Sfx.play(s, "bump", 0.8);
+        flashCrate(s, crate.box);
+        flashCrate(s, slot.crate.box);
+        s.cameras.main.shake(140, 0.005);
+        Effects.play(s, "fx-spark", slot.x, this.y, { scale: 0.45, depth: 700 });
+        const under = slot.crate;
+        slot.state = "quebrado";
+        slot.crate = null;
+        slot.collider.body.enable = true;
+        this.drawSlots();
+        this.fall(under, () => {});
+        this.fall(crate, next);
+    }
+
     fall(crate, next) {
         this.scene.tweens.add({
             targets: crate.box, scale: 0.35, alpha: 0, angle: 25, duration: 380, ease: "Quad.easeIn",
@@ -241,6 +271,24 @@ export default class CrateBridge {
             targets: crate.box, x: crate.homeX + 4, duration: 50, yoyo: true, repeat: 3,
             onComplete: next
         });
+    }
+
+    // Save com a ponte já montada: as caixas fortes nos vãos, as fracas descartadas.
+    showSolved() {
+        let k = 0;
+        this.crates.forEach((crate) => {
+            if (!crate.strong) {
+                crate.box.setAlpha(0);
+                return;
+            }
+            const slot = this.slots[k];
+            k += 1;
+            crate.box.setPosition(slot.x, this.y).setDepth(-3);
+            slot.state = "cheio";
+            slot.crate = crate;
+            slot.collider.body.enable = false;
+        });
+        this.drawSlots();
     }
 
     finish(done) {
@@ -266,6 +314,7 @@ export default class CrateBridge {
                 });
                 this.slots.forEach((slot) => {
                     slot.state = "vazio";
+                    slot.crate = null;
                     slot.collider.body.enable = true;
                 });
                 this.drawSlots();

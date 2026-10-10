@@ -84,7 +84,8 @@ select c.id, v.slug, v.title, v.description,
 from public.chapters c
 cross join (values
   ('cap2-recepcao', 'Recepção', 'Térreo da Elysium: as catracas travadas pelo bloqueio pedem a primeira condicional do capítulo.', 'easy', 'conditionals', 1),
-  ('cap2-jardim', 'Jardim de Inverno', 'A estufa do térreo: a irrigação dos canteiros pede um se/senão, com a regra gerada pela IA.', 'easy', 'conditionals', 2)
+  ('cap2-jardim', 'Jardim de Inverno', 'A estufa do térreo: a irrigação dos canteiros pede um se/senão, com a regra gerada pela IA.', 'easy', 'conditionals', 2),
+  ('cap2-deposito', 'Depósito', 'O almoxarifado do térreo: puzzles de mundo com caixas (limite numérico e o conectivo ou), gerados pela IA.', 'medium', 'conditionals', 3)
 ) as v(slug, title, description, base_difficulty, main_topic, order_index)
 where c.order_index = 2;
 
@@ -125,7 +126,9 @@ join (values
   ('cap1-treinamento', 'treinamento-lasers', 'Barreira // Lasers', 'A barreira de laser corta o corredor em ciclos.', 'variables', 'Desligue a barreira com um valor de verdadeiro ou falso.', 'lasers = false', 'medium', 1),
   ('cap1-treinamento', 'treinamento-municao', 'Torretas // Munição', 'As torretas continuam atirando enquanto tiverem munição.', 'variables', 'Zere a munição das torretas.', 'municao = 0', 'medium', 2),
   ('cap2-recepcao', 'recepcao-catracas', 'Catracas // Acesso', 'As catracas travaram para todo mundo durante o bloqueio.', 'conditionals', 'Reescreva a regra de acesso: só crachá do nível mínimo ou mais passa.', 'se cracha >= 3 : catraca = true', 'easy', 1),
-  ('cap2-jardim', 'jardim-irrigacao', 'Irrigação // Estufa', 'A irrigação da estufa rega todos os canteiros do mesmo jeito.', 'conditionals', 'Reescreva a regra para regar só os canteiros que precisam de água.', 'se umidade < 40 : regar = true / senão : regar = false', 'easy', 1)
+  ('cap2-jardim', 'jardim-irrigacao', 'Irrigação // Estufa', 'A irrigação da estufa rega todos os canteiros do mesmo jeito.', 'conditionals', 'Reescreva a regra para regar só os canteiros que precisam de água.', 'se umidade < 40 : regar = true / senão : regar = false', 'easy', 1),
+  ('cap2-deposito', 'deposito-corredor', 'Corredor // Estantes', 'Caixas travam o corredor entre as estantes do depósito.', 'conditionals', 'Mande as caixas leves para a prateleira de cima e as pesadas para a de baixo.', 'se peso <= 50 : lado = "cima" / senão : lado = "baixo"', 'medium', 1),
+  ('cap2-deposito', 'deposito-ponte', 'Ponte // Guindaste', 'Um fosso corta o depósito; o guindaste monta a ponte com as caixas da esteira.', 'conditionals', 'Mande para a ponte só as caixas que aguentam a Artemis.', 'se material == "aco" ou cheia : destino = "ponte" / senão : destino = "descarte"', 'medium', 2)
 ) as v(level_slug, slug, title, description, topic, objective, expected_output, base_difficulty, order_index)
   on l.slug = v.level_slug;
 
