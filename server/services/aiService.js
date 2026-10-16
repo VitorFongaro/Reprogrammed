@@ -3,7 +3,7 @@ import { createUserSupabaseClient } from '../config/supabase.js';
 // mesmos arquivos no gerador local de reserva. O Render clona o repositório
 // inteiro, então o caminho relativo existe lá também.
 import { AI_SPECS } from '../../client/data/aiSpecs.js';
-import { checkPuzzle } from '../../client/utils/puzzleCheck.js';
+import { buildFromSolution, checkPuzzle } from '../../client/utils/puzzleCheck.js';
 
 // =========================================================
 // GERADOR DE PUZZLES POR IA (Gemini)
@@ -62,7 +62,7 @@ const DIFFICULTY_GUIDE = {
     'Mais casos perto do limite.'
   ],
   hard: [
-    'A regra pode combinar duas condições com "e" ou "ou" (por exemplo, uma das entradas de texto com uma numérica). Ponha o nome das variáveis como texto fixo da linha para caber em 4 encaixes: "se umidade [op] [valor] e planta [op] [valor] :".',
+    'A regra pode combinar duas condições com "e" ou "ou" (por exemplo, uma das entradas de texto com uma numérica): "se umidade < 35 e planta != \"cacto\" :".',
     'Iscas fortes: o conectivo errado, o operador vizinho, o número como texto.',
     'O briefing descreve a regra por extenso, sem entregar a ordem das peças.'
   ]
@@ -74,13 +74,12 @@ const EXAMPLE = {
     'O bloqueio travou as catracas para todo mundo.',
     'Reescreva a regra: só crachá de nível 3 ou mais passa.'
   ],
-  hint: 'monte:  se cracha >= 3 :  catraca = true  /  senão :  catraca = false',
-  lines: ['se [nome] [op] [valor] :', '    catraca = [valor]', 'senão :', '    catraca = [valor]'],
-  blocks: { nome: ['cracha'], op: ['>=', '<', '=='], valor: ['3', '"3"', 'true', 'false'] },
+  solution: ['se cracha >= 3 :', '    catraca = true', 'senão :', '    catraca = false'],
+  decoys: { nome: [], op: ['<', '>'], valor: ['"3"', '2'] },
   tests: [
-    { label: 'A', given: { cracha: 2 }, expect: { catraca: false } },
-    { label: 'B', given: { cracha: 3 }, expect: { catraca: true } },
-    { label: 'C', given: { cracha: 5 }, expect: { catraca: true } }
+    { label: 'A', given: { cracha: 2 } },
+    { label: 'B', given: { cracha: 3 } },
+    { label: 'C', given: { cracha: 5 } }
   ],
   successMessage: 'ACESSO CONFIGURADO'
 };
@@ -181,14 +180,15 @@ e o jogo EXECUTA o programa contra casos de teste. Qualquer montagem que acerte 
 - "3" == 3 é false (tipos diferentes). Comparar texto com número usando < ou > é ERRO.
 
 ## Formato do programa
-- "lines": as linhas do programa. Cada encaixe é escrito [nome], [op] ou [valor]; o resto é texto fixo.
-- Texto fixo permitido: se, senão, :, =, e, ou, não e os nomes das variáveis da sala. NUNCA escreva um
-  número, texto ou true/false fixo na linha: valores entram só por encaixe.
-- No máximo ${6} linhas e 4 encaixes por linha.
-- "blocks": TODAS as peças, as certas e as iscas, como texto: nome = nomes de variável, op = operadores
-  ou conectivos, valor = literais ("40", "\\"cacto\\"", "true"). No máximo 12 peças no total.
-  Para precisar de duas peças iguais, repita o rótulo.
-- "tests": cada caso tem "label" (A, B, C...), "given" (as entradas) e "expect" (as saídas).
+- "solution": o programa CERTO, uma linha de código por item, no máximo 6 linhas. O corpo de cada
+  "se"/"senão se"/"senão" vem 4 espaços mais recuado. Escreva só com espaço entre as palavras:
+  "se peso >= 30 :", "    rampa = \"carga\"". O jogo recorta desse código os encaixes que o
+  jogador vai preencher (valores, operadores, conectivos e nomes).
+- "decoys": as peças-ISCA, as erradas que vão junto na prateleira, por categoria: nome (variáveis),
+  op (operadores ou conectivos), valor (literais: "40", "\"cacto\"", "true"). De 2 a 5 no total.
+- "tests": cada caso tem "label" (A, B, C...) e "given" (as entradas). Você NÃO escreve o resultado:
+  o jogo executa a sua "solution" em cada caso para saber o que é o certo. Então escolha as entradas
+  pensando no que a sua solução vai fazer com elas.
 
 ## A sala
 ${spec.setting}
@@ -221,13 +221,12 @@ ${DIFFICULTY_GUIDE[difficulty].map((l) => `- ${l}`).join('\n')}
 ## Regras de qualidade (o jogo confere e recusa o que não cumprir)
 - Tem de existir pelo menos uma montagem certa, e uma montagem qualquer não pode passar.
 - Todo LIMITE da regra aparece em um caso de teste com o valor exato, para que < e <= (ou > e >=)
-  deem resultados diferentes. Inclua também os dois operadores vizinhos nas peças, como isca.
+  deem resultados diferentes. Inclua também o operador vizinho nas iscas (decoys).
 - Os casos precisam ter saídas diferentes entre si; varie as entradas que não importam.
 - "title": curto, em MAIÚSCULAS, no estilo "SISTEMA // FUNÇÃO" (até 40 caracteres).
-- "briefing": 1 a 3 linhas de até 60 caracteres, na voz da sala, descrevendo só o OBJETIVO. Não escreva
+- "briefing": 1 a 3 linhas de até 60 caracteres (no máximo 4 se o programa tiver três saídas), na voz da sala, descrevendo só o OBJETIVO. Não escreva
   a estrutura do código nem a ordem das peças, mas DIGA o número exato de cada limite (o jogador não
   tem outro lugar para descobrir que o limite é 35).
-- "hint": começa com "monte:" e mostra a solução em uma linha, separando as linhas com " / ".
 - "successMessage": curta, em MAIÚSCULAS.
 - Escreva em português com acentos (água, não, irrigação).
 
@@ -246,13 +245,8 @@ const schemaType = (def) => {
   return { type: 'STRING', enum: def.values };
 };
 
-const outputType = (values) => (values.every((v) => typeof v === 'boolean')
-  ? { type: 'BOOLEAN' }
-  : { type: 'STRING', enum: values.map(String) });
-
 const buildSchema = (spec) => {
   const inputNames = Object.keys(spec.inputs);
-  const outputNames = Object.keys(spec.outputs);
   const strings = { type: 'ARRAY', items: { type: 'STRING' } };
 
   return {
@@ -260,12 +254,10 @@ const buildSchema = (spec) => {
     properties: {
       title: { type: 'STRING' },
       briefing: strings,
-      hint: { type: 'STRING' },
-      lines: strings,
-      blocks: {
+      solution: strings,
+      decoys: {
         type: 'OBJECT',
-        properties: { nome: strings, op: strings, valor: strings },
-        required: ['nome', 'op', 'valor']
+        properties: { nome: strings, op: strings, valor: strings }
       },
       tests: {
         type: 'ARRAY',
@@ -277,19 +269,14 @@ const buildSchema = (spec) => {
               type: 'OBJECT',
               properties: Object.fromEntries(inputNames.map((n) => [n, schemaType(spec.inputs[n])])),
               required: inputNames.filter((n) => spec.inputs[n].required)
-            },
-            expect: {
-              type: 'OBJECT',
-              properties: Object.fromEntries(outputNames.map((n) => [n, outputType(spec.outputs[n])])),
-              required: outputNames
             }
           },
-          required: ['label', 'given', 'expect']
+          required: ['label', 'given']
         }
       },
       successMessage: { type: 'STRING' }
     },
-    required: ['title', 'briefing', 'hint', 'lines', 'blocks', 'tests', 'successMessage']
+    required: ['title', 'briefing', 'solution', 'decoys', 'tests', 'successMessage']
   };
 };
 
@@ -343,7 +330,7 @@ const callGemini = async (model, prompt, schema, timeoutMs) => {
 };
 
 // O modelo não conta caracteres: o briefing é refeito em linhas de até 60. Se
-// passar de 3 linhas, o conferidor recusa (não cabe no console).
+// passar de 4 linhas, o conferidor recusa (não cabe no console).
 const BRIEFING_WIDTH = 60;
 const wrapLines = (text) => text.split(/\s+/).filter(Boolean).reduce((lines, word) => {
   const lastLine = lines[lines.length - 1];
@@ -355,34 +342,19 @@ const wrapLines = (text) => text.split(/\s+/).filter(Boolean).reduce((lines, wor
   return lines;
 }, []);
 
-// O que vem do modelo, já no formato do console. Converte o que o schema não
-// consegue impedir (expect de texto que devia ser booleano) e põe a marca da IA.
-const normalize = (raw, spec) => {
-  const fixValue = (name, value) => {
-    const allowed = spec.outputs[name];
-    if (!allowed) return value;
-    return allowed.find((v) => String(v) === String(value)) ?? value;
-  };
-
-  return {
+// O texto que vem do modelo, com a marca da IA. Molde, peças, `expect` e dica
+// NÃO vêm prontos do modelo: saem da solução dele (buildFromSolution, em
+// runGeneration).
+const normalize = (raw) => ({
     title: String(raw.title ?? '').trim().toUpperCase(),
     briefing: wrapLines((raw.briefing ?? []).map((l) => String(l).trim()).filter(Boolean).join(' ')),
-    hint: String(raw.hint ?? '').trim(),
-    lines: (raw.lines ?? []).map((l) => String(l).replace(/\s+$/, '')),
-    blocks: {
-      nome: raw.blocks?.nome ?? [],
-      op: raw.blocks?.op ?? [],
-      valor: raw.blocks?.valor ?? []
-    },
     tests: (raw.tests ?? []).map((t, i) => ({
       label: String(t.label ?? 'ABCDEFGH'[i]).slice(0, 2),
-      given: t.given ?? {},
-      expect: Object.fromEntries(Object.entries(t.expect ?? {}).map(([k, v]) => [k, fixValue(k, v)]))
+      given: t.given ?? {}
     })),
     successMessage: String(raw.successMessage ?? 'SISTEMA REPROGRAMADO').trim().toUpperCase(),
     source: 'ai'
-  };
-};
+});
 
 // --- Registro ------------------------------------------------------------------
 
@@ -508,7 +480,16 @@ export const runGeneration = async (spec, difficulty, profile) => {
       continue;
     }
 
-    const puzzle = normalize(result.puzzle, spec);
+    const puzzle = normalize(result.puzzle);
+    // Molde, peças, resultado de cada caso e dica saem da solução do modelo.
+    const built = buildFromSolution(result.puzzle.solution, result.puzzle.decoys, puzzle.tests, spec);
+    if (built.problems.length) {
+      last = { problems: built.problems, error: null, puzzle, model };
+      trace.push(`${model}: ${built.problems.join('; ')}`);
+      feedback = built.problems;
+      continue;
+    }
+    Object.assign(puzzle, { lines: built.lines, blocks: built.blocks, tests: built.tests, hint: built.hint });
     const check = checkPuzzle(puzzle, spec);
     last = { problems: check.problems, error: null, puzzle, model };
     trace.push(`${model}: ${check.ok ? 'aceito' : check.problems.join('; ')}`);

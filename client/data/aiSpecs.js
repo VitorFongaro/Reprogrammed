@@ -68,5 +68,46 @@ export const AI_SPECS = {
             "um canteiro de cacto bem seco, que mesmo assim não deve ser regado (só na dificuldade difícil)",
             "texto do briefing na voz de um aviso de manutenção da estufa"
         ]
+    },
+
+    "expedicao-triagem": {
+        topic: "conditionals",
+        concept: "se / senão se / senão: três saídas, e a ORDEM dos testes importa. O primeiro teste verdadeiro ganha; um pacote que cabe em duas regras vai para a que vem primeiro.",
+        setting: "Expedição da Elysium, a sala de triagem do correio no térreo. Os pacotes descem por uma esteira e um braço empurra cada um para uma de três rampas: CARGA (caminhão, leva peso), EXPRESSO (moto, rápida mas só leva pacote leve) e NORMAL (o resto). O programa roda uma vez para cada pacote e decide a rampa. A triagem quebrou e manda tudo para o fim da esteira: a pilha entupiu a passarela.",
+        inputs: {
+            peso: { type: "int", min: 1, max: 60, unit: "kg", required: true },
+            urgente: { type: "bool", required: true },
+            fragil: { type: "bool", required: true }
+        },
+        outputs: { rampa: ["carga", "expresso", "normal"] },
+        requires: ["se", "senão se", "senão"],
+        tests: [4, 5],
+        defaults: false,
+        rules: [
+            "CARGA é para pacote pesado (peso acima de um limite). EXPRESSO é a moto: só pacote leve e urgente. NORMAL é o resto.",
+            "Inclua pelo menos um pacote PESADO e URGENTE: ele vai para a CARGA, porque a moto não leva peso. É ele que faz a ordem do senão se importar (testar urgente primeiro manda esse pacote para a moto).",
+            "Frágil só entra na regra na dificuldade difícil (por exemplo: frágil nunca vai de moto). Nas outras, varie o frágil nos pacotes sem que ele mude o destino."
+        ],
+        // A moto só leva urgente e leve; carga é o mais pesado; e tem de haver
+        // o pacote pesado+urgente que ensina a ordem.
+        sanity: (tests) => {
+            const go = (r) => tests.filter((t) => t.expect.rampa === r);
+            const moto = go("expresso");
+            const truck = go("carga");
+            const notUrgent = moto.find((t) => !t.given.urgente);
+            if (notUrgent) return `o pacote de ${notUrgent.given.peso} kg vai no expresso sem ser urgente: o expresso é só para urgente`;
+            const heavyMoto = moto.find((m) => truck.some((c) => c.given.peso <= m.given.peso));
+            if (heavyMoto) return `o expresso (moto) levando ${heavyMoto.given.peso} kg enquanto um pacote mais leve vai de carga não faz sentido`;
+            if (!truck.some((t) => t.given.urgente)) return "falta um pacote PESADO e URGENTE indo para a carga: é ele que faz a ordem do senão se importar";
+            if (!moto.length || !go("normal").length) return "use as três rampas: carga, expresso e normal";
+            return null;
+        },
+        variety: [
+            "limite de peso entre 15 e 25 kg",
+            "limite de peso entre 25 e 40 kg",
+            "a regra fala em peso A PARTIR do limite (inclusive)",
+            "um pacote pesado, urgente e frágil ao mesmo tempo",
+            "texto do briefing na voz de um aviso do supervisor da expedição"
+        ]
     }
 };

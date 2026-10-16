@@ -178,6 +178,32 @@ export const PROP_EXAMINE = {
     vaso_flores: [
         "Flores de várias cores. Alguém aqui dentro ainda tem bom gosto.",
         "Cheiram bem, eu acho. Meu sensor de cheiro é teórico."
+    ],
+
+    // Expedição (cap2-expedicao). Pacotes, rampas e a pilha são o puzzle.
+    mesa_embalagem: [
+        "A mesa de embalar. Fita, etiqueta, caixa. A Elysium embala até o que manda embora.",
+        "Uma etiqueta pronta: 'DESTINATÁRIO: TODOS. REMETENTE: ADA.' Sutil."
+    ],
+    balanca: [
+        "Uma balança. Subi nela uma vez: deu 'ERRO: CARGA NÃO CATALOGADA'. Sou eu.",
+        "Ela marca o peso de tudo que sai daqui. Ninguém pesa o que entra."
+    ],
+    prateleira_pacotes: [
+        "Pacotes esperando a vez. Uns estão aqui faz tanto tempo que viraram móvel.",
+        "Este aqui diz 'URGENTE' com data de três anos atrás."
+    ],
+    carrinho_carga: [
+        "Um carrinho de carga. Se a triagem não voltar, alguém vai ter que levar tudo na mão.",
+        "Uma roda está torta. Ele anda em círculo. Me identifico."
+    ],
+    gaiola_correio: [
+        "Uma gaiola de correspondência. As cartas lá dentro estão todas lacradas pela ADA.",
+        "Tem uma carta escrita à mão. Quase ninguém mais escreve à mão aqui."
+    ],
+    cone_triagem: [
+        "Um cone. A forma mais antiga de dizer 'não pise aqui'.",
+        "Dois cones na frente da pilha. Alguém viu o problema, sinalizou e foi embora."
     ]
 };
 

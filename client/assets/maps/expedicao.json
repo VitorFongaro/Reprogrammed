@@ -1,0 +1,343 @@
+{
+ "compressionlevel": -1,
+ "width": 40,
+ "height": 22,
+ "infinite": false,
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "tilewidth": 32,
+ "tileheight": 32,
+ "tiledversion": "1.10.2",
+ "version": "1.10",
+ "type": "map",
+ "nextlayerid": 4,
+ "nextobjectid": 100,
+ "layers": [
+  {
+   "id": 1,
+   "name": "fundo",
+   "type": "imagelayer",
+   "image": "../images/expedicao/expedicao_bg.png",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": 2,
+   "name": "objetos",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 1,
+     "gid": 6,
+     "name": "painel",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 440,
+     "y": 292,
+     "width": 64,
+     "height": 88
+    },
+    {
+     "id": 2,
+     "gid": 5,
+     "name": "mesa",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 210,
+     "y": 410,
+     "width": 116,
+     "height": 68
+    },
+    {
+     "id": 3,
+     "gid": 1,
+     "name": "balanca",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 380,
+     "y": 470,
+     "width": 64,
+     "height": 44
+    },
+    {
+     "id": 4,
+     "gid": 7,
+     "name": "prateleira_esq",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 40,
+     "y": 660,
+     "width": 112,
+     "height": 104
+    },
+    {
+     "id": 5,
+     "gid": 2,
+     "name": "carrinho_esq",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 170,
+     "y": 650,
+     "width": 48,
+     "height": 72
+    },
+    {
+     "id": 6,
+     "gid": 3,
+     "name": "cone_esq",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 500,
+     "y": 640,
+     "width": 24,
+     "height": 32
+    },
+    {
+     "id": 7,
+     "gid": 3,
+     "name": "cone_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 770,
+     "y": 640,
+     "width": 24,
+     "height": 32
+    },
+    {
+     "id": 8,
+     "gid": 7,
+     "name": "prateleira_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 840,
+     "y": 250,
+     "width": 112,
+     "height": 104
+    },
+    {
+     "id": 9,
+     "gid": 4,
+     "name": "gaiola",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1150,
+     "y": 660,
+     "width": 84,
+     "height": 96
+    },
+    {
+     "id": 10,
+     "gid": 2,
+     "name": "carrinho_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1080,
+     "y": 650,
+     "width": 48,
+     "height": 72
+    },
+    {
+     "id": 11,
+     "gid": 1,
+     "name": "balanca_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 900,
+     "y": 470,
+     "width": 64,
+     "height": 44
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "colisao",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 50,
+     "name": "painel",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 444,
+     "y": 262,
+     "width": 56,
+     "height": 30
+    },
+    {
+     "id": 51,
+     "name": "mesa",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 212,
+     "y": 370,
+     "width": 112,
+     "height": 38
+    },
+    {
+     "id": 52,
+     "name": "balanca",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 382,
+     "y": 440,
+     "width": 60,
+     "height": 28
+    },
+    {
+     "id": 53,
+     "name": "prateleira_esq",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 42,
+     "y": 630,
+     "width": 108,
+     "height": 30
+    },
+    {
+     "id": 54,
+     "name": "carrinho_esq",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 176,
+     "y": 628,
+     "width": 36,
+     "height": 22
+    },
+    {
+     "id": 55,
+     "name": "prateleira_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 842,
+     "y": 220,
+     "width": 108,
+     "height": 30
+    },
+    {
+     "id": 56,
+     "name": "gaiola",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1154,
+     "y": 630,
+     "width": 76,
+     "height": 30
+    },
+    {
+     "id": 57,
+     "name": "carrinho_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1086,
+     "y": 628,
+     "width": 36,
+     "height": 22
+    },
+    {
+     "id": 58,
+     "name": "balanca_dir",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 902,
+     "y": 440,
+     "width": 60,
+     "height": 28
+    }
+   ]
+  }
+ ],
+ "tilesets": [
+  {
+   "columns": 0,
+   "firstgid": 1,
+   "grid": {
+    "height": 1,
+    "orientation": "orthogonal",
+    "width": 1
+   },
+   "margin": 0,
+   "name": "props",
+   "spacing": 0,
+   "tilecount": 7,
+   "tilewidth": 116,
+   "tileheight": 104,
+   "tiles": [
+    {
+     "id": 0,
+     "image": "../images/expedicao/props/balanca.png",
+     "imagewidth": 64,
+     "imageheight": 44
+    },
+    {
+     "id": 1,
+     "image": "../images/expedicao/props/carrinho_carga.png",
+     "imagewidth": 48,
+     "imageheight": 72
+    },
+    {
+     "id": 2,
+     "image": "../images/expedicao/props/cone_triagem.png",
+     "imagewidth": 24,
+     "imageheight": 32
+    },
+    {
+     "id": 3,
+     "image": "../images/expedicao/props/gaiola_correio.png",
+     "imagewidth": 84,
+     "imageheight": 96
+    },
+    {
+     "id": 4,
+     "image": "../images/expedicao/props/mesa_embalagem.png",
+     "imagewidth": 116,
+     "imageheight": 68
+    },
+    {
+     "id": 5,
+     "image": "../images/expedicao/props/painel_triagem.png",
+     "imagewidth": 64,
+     "imageheight": 88
+    },
+    {
+     "id": 6,
+     "image": "../images/expedicao/props/prateleira_pacotes.png",
+     "imagewidth": 112,
+     "imageheight": 104
+    }
+   ]
+  }
+ ]
+}

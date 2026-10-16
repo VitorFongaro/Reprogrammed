@@ -277,6 +277,13 @@ irrigação, lajota de barro, anel de pedra do chafariz e os dois gramados) sai 
 `tools/jardim_bg.py`, que reaproveita o desenho de letra do `recepcao_bg.py` e o carimbo da porta.
 Arte nossa, feita por script escrito por um agente de IA — declarar no TCC.
 
+**Expedição (cap. 2).** Os objetos (`client/assets/images/expedicao/props/`: pacotes em três
+tamanhos, as três rampas com faixa e ícone, a pilha, o empurrador, o painel da triagem, prateleira,
+carrinho, balança, mesa de embalagem, gaiola de correio e cone_triagem) saem de
+`tools/expedicao_props.lua` (Aseprite, mesmas regras). O fundo (`expedicao/expedicao_bg.png`:
+parede com letreiro e quadro de rotas, escotilha e esteira, faixas de segurança, concreto) sai de
+`tools/expedicao_bg.py`. Arte nossa, feita por script escrito por um agente de IA — declarar no TCC.
+
 **Cards do site (`client/assets/images/site/`).** As imagens das abas SOBRE, PERSONAGENS e
 GAMEPLAY da página inicial saem de `tools/site_cards.py`, que só MONTA arte que já está no
 repositório (fundos das salas, mapas do Tiled, sprites, blocos do console e a fonte VCR) — nada

@@ -623,3 +623,40 @@ export function irrigacaoPuzzle() {
         successMessage: "IRRIGAÇÃO NO PONTO"
     };
 }
+
+// EXPEDIÇÃO: três rampas com `senão se`. As duas condições têm o MESMO formato
+// de linha, então quem decide a ordem é o jogador — e o pacote pesado+urgente
+// só vai para a carga se o peso for testado antes. O limite sempre está num
+// pacote, para `>` e `>=` não passarem os dois.
+export function triagemPuzzle() {
+    const limit = pick([20, 25, 30]);
+    const tests = shuffle([
+        { given: { peso: limit + between(5, 20), urgente: true, fragil: pick([true, false]) }, expect: { rampa: "carga" } },
+        { given: { peso: limit, urgente: false, fragil: pick([true, false]) }, expect: { rampa: "carga" } },
+        { given: { peso: between(2, limit - 6), urgente: true, fragil: false }, expect: { rampa: "expresso" } },
+        { given: { peso: between(2, limit - 3), urgente: false, fragil: pick([true, false]) }, expect: { rampa: "normal" } }
+    ]).map((t, i) => ({ label: LETTERS[i], ...t }));
+    return {
+        title: "TRIAGEM // EXPEDIÇÃO",
+        briefing: [
+            `Pacote de ${limit} kg ou mais vai de CARGA: a moto não aguenta.`,
+            "Urgente e leve vai no EXPRESSO. O resto, NORMAL."
+        ],
+        hint: `monte:  se peso >= ${limit} : carga  /  senão se urgente == true : expresso  /  senão : normal`,
+        lines: [
+            "se [nome] [op] [valor] :",
+            "    rampa = [valor]",
+            "senão se [nome] [op] [valor] :",
+            "    rampa = [valor]",
+            "senão :",
+            "    rampa = [valor]"
+        ],
+        blocks: {
+            nome: ["peso", "urgente"],
+            op: [">=", ">", "=="],
+            valor: [String(limit), "true", '"carga"', '"expresso"', '"normal"']
+        },
+        tests,
+        successMessage: "TRIAGEM EM ORDEM"
+    };
+}

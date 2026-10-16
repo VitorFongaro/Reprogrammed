@@ -17,12 +17,13 @@
 // tamanho que cabe no console. Sem Phaser: roda no Node (servidor) e no
 // navegador. Devolve a lista de problemas; vazia = aprovado.
 
-import { parseTemplateLine, runTests } from "./condicional.js";
+import { parseTemplateLine, run, runTests } from "./condicional.js";
 
 export const LIMITS = {
     maxLines: 6,
     maxSlotsPerLine: 4,
-    maxPieces: 12,
+    maxPieces: 14,          // a prateleira tem 2 fileiras de 8
+    maxBriefingLines: 4,
     maxFillings: 200000
 };
 
@@ -93,10 +94,11 @@ export function checkShape(puzzle, spec) {
     const need = (ok, msg) => { if (!ok) problems.push(msg); };
 
     need(typeof puzzle?.title === "string" && puzzle.title.length <= 40, "title ausente ou com mais de 40 caracteres");
-    need(Array.isArray(puzzle?.briefing) && puzzle.briefing.length >= 1 && puzzle.briefing.length <= 3
+    need(Array.isArray(puzzle?.briefing) && puzzle.briefing.length >= 1 && puzzle.briefing.length <= LIMITS.maxBriefingLines
         && puzzle.briefing.every((l) => typeof l === "string" && l.length <= 64),
-        "briefing deve ter de 1 a 3 linhas de até 64 caracteres");
-    need(typeof puzzle?.hint === "string" && puzzle.hint.length <= 110, "hint ausente ou longo demais");
+        `briefing longo demais: no máximo ${LIMITS.maxBriefingLines} linhas de 60 caracteres. Corte as palavras que repetem o que o código já mostra`);
+    need(typeof puzzle?.hint === "string" && puzzle.hint.length >= 8 && puzzle.hint.length <= 200,
+        "hint ausente ou longo demais: até 200 caracteres, só com a solução em uma linha (sem repetir \"rampa =\" à toa)");
     need(Array.isArray(puzzle?.lines) && puzzle.lines.length >= 2 && puzzle.lines.length <= LIMITS.maxLines,
         `lines deve ter de 2 a ${LIMITS.maxLines} linhas`);
     need(Array.isArray(puzzle?.tests), "tests ausente");
@@ -218,4 +220,83 @@ export function checkPuzzle(puzzle, spec) {
     if (shape.length) return { ok: false, problems: shape };
     const run = checkSolvable(puzzle);
     return { ok: run.problems.length === 0, problems: run.problems, solutions: run.solutions, total: run.total };
+}
+
+// A IA escreve a SOLUÇÃO como código ("se peso >= 30 :", "    rampa = \"carga\"")
+// e é o jogo que recorta os encaixes dela — em vez de pedir ao modelo o molde
+// com encaixes, a lista de valores na ordem e o resultado de cada caso, três
+// coisas que ele erra com facilidade e que têm de concordar entre si. Assim:
+//   - os encaixes saem da própria solução, então molde e solução não brigam;
+//   - no máximo 4 encaixes por linha, por prioridade (valor, comparação,
+//     conectivo, nome): o que não cabe fica como texto fixo;
+//   - o `expect` de cada caso é a solução EXECUTADA, e a dica é a solução.
+// Devolve { problems, lines, blocks, tests, hint }.
+const SLOT_PRIORITY = { valor: 0, op: 1, conectivo: 2, nome: 3 };
+
+function slotKind(token, i, tokens, names) {
+    if (LITERAL_RE.test(token)) return "valor";
+    if (COMPARISONS.includes(token)) return "op";
+    if (token === "e" || token === "ou") return "conectivo";
+    // nome numa condição (não o alvo de uma atribuição, que é fixo)
+    if (names.has(token) && tokens[i + 1] !== "=") return "nome";
+    return null;
+}
+
+export function buildFromSolution(solution, decoys, tests, spec) {
+    if (!Array.isArray(solution) || solution.length < 2) {
+        return { problems: ["solution tem de ser o programa certo, uma linha de código por item"] };
+    }
+    const names = new Set(Object.keys(spec.inputs));
+    const blocks = { nome: [], op: [], valor: [] };
+    const values = [];
+    const lines = solution.map((raw) => {
+        const text = String(raw).replace(/\s+$/, "").replace(/	/g, "    ");
+        const indent = text.length - text.trimStart().length;
+        const tokens = text.trim().split(/\s+/);
+        const kinds = tokens.map((t, i) => slotKind(t, i, tokens, names));
+        // Até 4 encaixes, pelos mais importantes primeiro.
+        const chosen = new Set(kinds.map((k, i) => [k, i]).filter(([k]) => k)
+            .sort((a, b) => SLOT_PRIORITY[a[0]] - SLOT_PRIORITY[b[0]] || a[1] - b[1])
+            .slice(0, LIMITS.maxSlotsPerLine).map(([, i]) => i));
+        const out = tokens.map((t, i) => {
+            if (!chosen.has(i)) return t;
+            const category = kinds[i] === "conectivo" ? "op" : kinds[i];
+            blocks[category].push(t);
+            values.push(t);
+            return `[${category}]`;
+        });
+        return " ".repeat(Math.round(indent / 4) * 4) + out.join(" ");
+    });
+
+    // Iscas do modelo, com as aspas consertadas e sem repetir peça certa à toa.
+    const fixQuotes = (v) => (/^-?\d|^"|^(true|false)$/.test(v) ? v : `"${v}"`);
+    ["nome", "op", "valor"].forEach((c) => {
+        (decoys?.[c] ?? []).map((v) => String(v).trim()).filter(Boolean).forEach((v) => {
+            const piece = c === "valor" ? fixQuotes(v) : v;
+            if (!blocks[c].includes(piece)) blocks[c].push(piece);
+        });
+    });
+
+    const parsed = lines.map(parseTemplateLine);
+    const program = fill(parsed, values);
+    const outputs = Object.keys(spec.outputs);
+    const derived = [];
+    for (const test of tests ?? []) {
+        let scope;
+        try {
+            scope = run(program, { ...test.given });
+        } catch (error) {
+            return { problems: [`a solução dá erro no caso ${test.label}: ${error.message}`] };
+        }
+        const expect = {};
+        for (const out of outputs) {
+            if (scope[out] === undefined) {
+                return { problems: [`a solução não define ${out} no caso ${test.label}: escreva a saída em todos os caminhos`] };
+            }
+            expect[out] = scope[out];
+        }
+        derived.push({ ...test, expect });
+    }
+    const hint = `monte:  ${solution.map((l) => String(l).trim()).join("  /  ")}`;
+    return { problems: [], lines, blocks, tests: derived, hint };
 }
