@@ -204,6 +204,34 @@ export const PROP_EXAMINE = {
     cone_triagem: [
         "Um cone. A forma mais antiga de dizer 'não pise aqui'.",
         "Dois cones na frente da pilha. Alguém viu o problema, sinalizou e foi embora."
+    ],
+
+    // --- Depósito (cap. 2) ---
+    empilhadeira: [
+        "Uma empilhadeira manual. Precisa de alguém sentado para andar. Por isso está parada desde o bloqueio.",
+        "A chave está no contato. Não, você não vai dirigir isso."
+    ],
+    pallet_caixas: [
+        "Caixas embrulhadas em filme plástico. Etiqueta: 'PEÇAS DE REPOSIÇÃO - UNIDADES ARTEMIS'.",
+        "...Peças de reposição suas. Vamos fingir que não lemos isso."
+    ],
+    pallets_vazios: [
+        "Pallets empilhados. O depósito inteiro é uma pilha de coisas esperando outra coisa em cima."
+    ],
+    tambores: [
+        "Tambores de óleo lubrificante. Para robô. Ou seja: comida de faxineiro.",
+        "O vermelho diz 'INFLAMÁVEL'. Vamos deixar quieto."
+    ],
+    cone: [
+        "Um cone. Ele não faz nada além de existir com autoridade.",
+        "Nunca vi ninguém desobedecer um cone. Nem a ADA."
+    ],
+    paleteira: [
+        "Uma paleteira. É o carrinho de mão do século seguinte."
+    ],
+    caixote: [
+        "Um caixote sem peso escrito. Esse ninguém precisa decidir para onde vai.",
+        "Bati nele: oco. Igual a metade das reuniões da diretoria."
     ]
 };
 

@@ -284,6 +284,15 @@ carrinho, balança, mesa de embalagem, gaiola de correio e cone_triagem) saem de
 parede com letreiro e quadro de rotas, escotilha e esteira, faixas de segurança, concreto) sai de
 `tools/expedicao_bg.py`. Arte nossa, feita por script escrito por um agente de IA — declarar no TCC.
 
+**Depósito (cap. 2).** Os objetos (`client/assets/images/deposito/props/`: os vãos de estante
+`estante_*`, a `esteira`, o `descarte`, os terminais `painel_pistao` e `console_guindaste`,
+empilhadeira, pallets, tambores, cone, paleteira e caixote) saem de `tools/deposito_props.lua`
+(Aseprite, mesmas regras da recepção e do jardim). Estantes e esteira são MÓDULOS que o código
+repete conforme o número de caixas que a IA gerou. O fundo (`deposito/deposito_bg.png`: chapa
+ondulada, letreiro a estêncil, porta de enrolar da doca, concreto com marcação amarela) sai de
+`tools/deposito_bg.py`, que reaproveita o desenho de letra do `recepcao_bg.py` e o carimbo da porta.
+Arte nossa, feita por script escrito por um agente de IA — declarar no TCC.
+
 **Cards do site (`client/assets/images/site/`).** As imagens das abas SOBRE, PERSONAGENS e
 GAMEPLAY da página inicial saem de `tools/site_cards.py`, que só MONTA arte que já está no
 repositório (fundos das salas, mapas do Tiled, sprites, blocos do console e a fonte VCR) — nada

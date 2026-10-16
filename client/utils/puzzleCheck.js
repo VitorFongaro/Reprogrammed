@@ -24,8 +24,15 @@ export const LIMITS = {
     maxSlotsPerLine: 4,
     maxPieces: 14,          // a prateleira tem 2 fileiras de 8
     maxBriefingLines: 4,
-    maxFillings: 200000
+    maxFillings: 200000,
+    // Largura da área de código do ConditionalConsole (do número da linha até a
+    // coluna dos casos), medida como ele mede: 13 px por caractere de texto
+    // fixo, 122 px por encaixe, 10 px entre peças e 44 px por nível de recuo.
+    maxLineWidth: 720
 };
+
+const lineWidth = (line) => line.indent * 44 + line.tokens.reduce(
+    (w, t) => w + (typeof t === "string" ? t.length * 13 : 122) + 10, 0);
 
 const COMPARISONS = ["==", "!=", ">", "<", ">=", "<="];
 const CONNECTIVES = ["e", "ou", "não"];
@@ -33,6 +40,8 @@ const FIXED_WORDS = ["se", "senão", ":", "=", ...CONNECTIVES];
 const LITERAL_RE = /^(-?\d+(\.\d+)?|"[^"]*"|true|false)$/;
 const NAME_RE = /^[a-z_][a-z0-9_]*$/;
 const BOUNDARY_PAIRS = { ">": ">=", ">=": ">", "<": "<=", "<=": "<" };
+
+const usesWord = (text, word) => new RegExp(`(^|\\s)${word}(\\s|$)`, "m").test(text);
 
 const literalOf = (value) => (typeof value === "string" ? `"${value}"` : String(value));
 
@@ -119,17 +128,23 @@ export function checkShape(puzzle, spec) {
     parsed.forEach((line, i) => {
         const slots = line.tokens.filter((t) => typeof t !== "string");
         need(slots.length <= LIMITS.maxSlotsPerLine, `linha ${i + 1} com ${slots.length} encaixes (máximo ${LIMITS.maxSlotsPerLine}): escreva os nomes das variáveis direto na linha, como texto fixo, em vez de [nome]`);
+        need(slots.length > LIMITS.maxSlotsPerLine || lineWidth(line) <= LIMITS.maxLineWidth,
+            `linha ${i + 1} não cabe na tela do console: use no máximo 3 encaixes quando a linha também tiver nomes de variável escritos`);
         slots.forEach((s) => need(["nome", "op", "valor"].includes(s.category), `linha ${i + 1}: encaixe [${s.category}] não existe`));
         line.tokens.filter((t) => typeof t === "string").forEach((t) => {
             need(known.has(t), `linha ${i + 1}: palavra fixa "${t}" não permitida`);
         });
     });
     const text = puzzle.lines.join("\n");
+    // Conectivo obrigatório pode vir como PEÇA em vez de texto fixo (é o que o
+    // jogador tem de escolher); aí o checkSolvable confere que toda solução o usa.
+    const opPieces = puzzle.blocks?.op ?? [];
     (spec.requires ?? []).forEach((word) => {
-        need(new RegExp(`(^|\\s)${word}(\\s|$)`, "m").test(text), `o programa precisa usar "${word}"`);
+        need(usesWord(text, word) || (CONNECTIVES.includes(word) && opPieces.includes(word)),
+            `o programa precisa usar "${word}"`);
     });
     (spec.forbids ?? []).forEach((word) => {
-        need(!new RegExp(`(^|\\s)${word}(\\s|$)`, "m").test(text), `o programa não pode usar "${word}"`);
+        need(!usesWord(text, word), `o programa não pode usar "${word}"`);
     });
 
     // Peças.
@@ -172,7 +187,8 @@ export function checkShape(puzzle, spec) {
 }
 
 // Executa todas as montagens. Devolve { problems, solutions, total }.
-export function checkSolvable(puzzle) {
+// `mustUse`: conectivos que vêm como peça e que toda solução tem de usar.
+export function checkSolvable(puzzle, { mustUse = [] } = {}) {
     const parsed = puzzle.lines.map(parseTemplateLine);
     const slots = parsed.flatMap((l) => l.tokens.filter((t) => typeof t !== "string").map((t) => t.category));
     const pools = puzzle.blocks ?? {};
@@ -184,11 +200,16 @@ export function checkSolvable(puzzle) {
     let solutions = 0;
     let boundaryLeak = null;
     let firstSolution = null;
+    let hintMatches = false;
+    let skipped = null;
     const ops = new Set(pools.op ?? []);
+    const hintTokens = new Set(String(puzzle.hint ?? "").split(/\s+/));
     for (const values of fillings(slots, pools)) {
         if (!passesAll(fill(parsed, values), puzzle)) continue;
         solutions += 1;
         firstSolution ??= values;
+        hintMatches ||= hintShows(values, hintTokens);
+        skipped ??= mustUse.find((word) => !values.includes(word)) ?? null;
         if (boundaryLeak) continue;
         // A mesma solução com a comparação "vizinha" também passa? Então o limite
         // não foi testado.
@@ -203,6 +224,7 @@ export function checkSolvable(puzzle) {
     if (solutions === 0) problems.push("nenhuma montagem das peças passa em todos os casos");
     if (solutions === total) problems.push("qualquer montagem passa: não há o que pensar");
     if (boundaryLeak) problems.push(`o limite não está em nenhum caso: ${boundaryLeak} passam os dois`);
+    if (skipped) problems.push(`dá para resolver sem usar "${skipped}": inclua um caso em que só uma das condições é verdade`);
     // O número da regra tem de estar no briefing: o jogador não tem de onde
     // adivinhar que o limite é 35.
     const briefing = (puzzle.briefing ?? []).join(" ");
@@ -212,13 +234,31 @@ export function checkSolvable(puzzle) {
             problems.push(`o briefing não diz o número ${n}, que a solução usa`);
         }
     });
+    // A dica também: ela mostra a resposta, e uma dica com outro número ou o
+    // operador vizinho ensina errado.
+    if (firstSolution && !hintMatches) {
+        const shown = firstSolution.filter((v) => COMPARISONS.includes(v) || NUMBER_RE.test(v)).join(" ");
+        problems.push(`o hint não mostra uma montagem que funciona: use os mesmos operadores e números de uma solução certa (${shown}), separados por espaço`);
+    }
     return { problems, solutions, total };
+}
+
+const NUMBER_RE = /^-?\d+(\.\d+)?$/;
+
+// A dica mostra esta solução? Confere só operadores de comparação e números,
+// que é onde uma dica errada engana (`<` no lugar de `<=`, 35 no lugar de 40).
+function hintShows(values, hintTokens) {
+    return values
+        .filter((v) => COMPARISONS.includes(v) || NUMBER_RE.test(v))
+        .every((v) => hintTokens.has(v));
 }
 
 export function checkPuzzle(puzzle, spec) {
     const shape = checkShape(puzzle, spec);
     if (shape.length) return { ok: false, problems: shape };
-    const run = checkSolvable(puzzle);
+    const text = puzzle.lines.join("\n");
+    const mustUse = (spec.requires ?? []).filter((w) => CONNECTIVES.includes(w) && !usesWord(text, w));
+    const run = checkSolvable(puzzle, { mustUse });
     return { ok: run.problems.length === 0, problems: run.problems, solutions: run.solutions, total: run.total };
 }
 
@@ -249,15 +289,31 @@ export function buildFromSolution(solution, decoys, tests, spec) {
     const names = new Set(Object.keys(spec.inputs));
     const blocks = { nome: [], op: [], valor: [] };
     const values = [];
+    const plain = [];
     const lines = solution.map((raw) => {
         const text = String(raw).replace(/\s+$/, "").replace(/	/g, "    ");
         const indent = text.length - text.trimStart().length;
-        const tokens = text.trim().split(/\s+/);
+        // `cheia == true` vira só `cheia`: é o mesmo teste e economiza dois
+        // encaixes, que fazem falta numa linha com duas condições.
+        const tokens = text.trim().split(/\s+/).reduce((out, t, i, all) => {
+            if (t === "==" && all[i + 1] === "true" && names.has(all[i - 1])) return out;
+            if (t === "true" && all[i - 1] === "==" && names.has(all[i - 2])) return out;
+            return [...out, t];
+        }, []);
+        plain.push(tokens.join(" "));
         const kinds = tokens.map((t, i) => slotKind(t, i, tokens, names));
         // Até 4 encaixes, pelos mais importantes primeiro.
         const chosen = new Set(kinds.map((k, i) => [k, i]).filter(([k]) => k)
             .sort((a, b) => SLOT_PRIORITY[a[0]] - SLOT_PRIORITY[b[0]] || a[1] - b[1])
             .slice(0, LIMITS.maxSlotsPerLine).map(([, i]) => i));
+        // Linha larga demais para o console: os nomes de variável voltam a ser
+        // texto fixo (mais estreito que um encaixe), do último para o primeiro.
+        const template = () => parseTemplateLine(" ".repeat(indent) + tokens
+            .map((t, i) => (chosen.has(i) ? `[${kinds[i] === "conectivo" ? "op" : kinds[i]}]` : t)).join(" "));
+        // Depois dos nomes, o conectivo (texto fixo permitido).
+        const dropOrder = [...chosen].filter((i) => kinds[i] === "nome" || kinds[i] === "conectivo")
+            .sort((x, y) => (kinds[y] === "nome") - (kinds[x] === "nome") || y - x);
+        while (dropOrder.length && lineWidth(template()) > LIMITS.maxLineWidth) chosen.delete(dropOrder.shift());
         const out = tokens.map((t, i) => {
             if (!chosen.has(i)) return t;
             const category = kinds[i] === "conectivo" ? "op" : kinds[i];
@@ -297,6 +353,6 @@ export function buildFromSolution(solution, decoys, tests, spec) {
         }
         derived.push({ ...test, expect });
     }
-    const hint = `monte:  ${solution.map((l) => String(l).trim()).join("  /  ")}`;
+    const hint = `monte:  ${plain.join("  /  ")}`;
     return { problems: [], lines, blocks, tests: derived, hint };
 }

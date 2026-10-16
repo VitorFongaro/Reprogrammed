@@ -9,7 +9,7 @@ import { isSolved } from "../../state/progress";
 import expedicaoBg from "../../assets/images/expedicao/expedicao_bg.png";
 import expedicaoMap from "../../assets/maps/expedicao.json";
 
-// Capítulo 2 (CONDICIONAIS), sala 3 — EXPEDIÇÃO, a triagem do correio.
+// Capítulo 2 (CONDICIONAIS), sala 4 — EXPEDIÇÃO, a triagem do correio.
 //
 // O `senão se` do capítulo: três saídas, e a ORDEM dos testes importa. A
 // esteira corta a sala ao meio e três rampas separam os pacotes: CARGA

@@ -31,6 +31,7 @@ import jardimMap from "../../assets/maps/jardim.json";
 // sem parar, a água transbordou e alagou a frente da porta, com um cabo de
 // força faiscando dentro da poça (objects/FloodedExit.js). Androide não passa.
 // Com a regra certa a água para de sobrar, o ralo dá conta e a saída seca.
+// A porta leva ao depósito (`cap2-deposito`).
 //
 // Arte: fundo por tools/jardim_bg.py; plantas, canteiro e móveis por
 // tools/jardim_props.lua (Aseprite), no Tiled em assets/maps/jardim.json.
@@ -78,7 +79,7 @@ const DRAINED_SCRIPT = [
 export default class JardimScene extends BaseRoomScene {
     constructor() {
         super("cap2-jardim", {
-            nextScene: "cap2-expedicao",
+            nextScene: "cap2-deposito",
             spawn: SPAWN,
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
             door: DOOR,
