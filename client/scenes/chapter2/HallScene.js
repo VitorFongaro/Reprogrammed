@@ -27,6 +27,10 @@ import hallMap from "../../assets/maps/hall.json";
 const DOOR = { x: 1152, y: 98 };
 const SPAWN = { x: 128, y: 200 };
 const WITCH_POS = { x: 640, y: 380 };
+// O relógio da parede e o mostrador do chão (CLOCK e DIAL do hall_bg.py, em
+// tela = mapa + 8): são a arena do golpe da MEIA-NOITE (ver WitchBoss).
+const WALL_CLOCK = { x: 640, y: 70, r: 54 };
+const FLOOR_DIAL = { cx: 640, cy: 418, rx: 330, ry: 190 };
 
 // HP: com 3 REPROGRAMAR, forca 10 -> 20 -> 40; 3 turnos investindo + 4
 // ataques de 40 = 160 >= 150, então 7 turnos na rota mais rápida — um a mais
@@ -67,12 +71,29 @@ export function witchBattle(overrides = {}) {
     };
 }
 
+// Avisos da luta no topo da sala (a barra de fôlego dela fica logo acima).
+// A sala de teste usa os mesmos.
+export function wireWitchStatus(scene, witch) {
+    const flash = (text, color, ms) => {
+        scene.setStatus(text, color);
+        scene.time.delayedCall(ms, () => scene.setStatus(""));
+    };
+    witch.onTired = () => scene.setStatus("> ELA ESTÁ SEM FÔLEGO: [R] PARA REPROGRAMAR", "#ffb347");
+    witch.onEnraged = () => flash("> FÚRIA: CADA GOLPE DELA GANHOU UMA CAMADA", "#ff4545", 2200);
+    witch.onRecovered = () => flash("> ELA RECUPEROU O FÔLEGO", "#ff4545", 1600);
+    witch.onClock = (mode) => flash(mode === "rewind"
+        ? "> MEIA-NOITE: O RELÓGIO VAI VOLTAR"
+        : "> MEIA-NOITE: O RELÓGIO VAI ACELERAR", "#b48cff", 2400);
+    witch.onClockTurn = () => flash("> O TEMPO VOLTOU", "#b48cff", 1400);
+}
+
 export const WITCH_ENTRY_SCRIPT = [
     { speaker: "COSMO", text: "Essa é a WITCH. Nome de um computador de 1951: o mais velho do mundo que ainda liga." },
     { speaker: "COSMO", text: "Enquanto ela luta, o núcleo fica blindado. O [R] não pega. Primeiro, canse ela." },
     { speaker: "COSMO", text: "Ela cansa sozinha de tanto atacar. E logo depois de um golpe abre a guarda: bata ali com [F]." },
     { speaker: "COSMO", text: "Só que todo golpe dela deixa um ECO que repete o golpe no mesmo lugar. Bata DEPOIS do eco." },
     { speaker: "COSMO", text: "E cuidado com o chão: ela escreve a sentença onde você está... e onde você acabou de estar." },
+    { speaker: "COSMO", text: "De longe, a foice solta uma onda. Saia da linha dela. E se o relógio voltar a andar, saia do mostrador." },
     { speaker: "COSMO", text: "Quando ela ficar tonta, sem fôlego, é a hora: [R]." }
 ];
 
@@ -114,16 +135,8 @@ export default class HallScene extends BaseRoomScene {
 
     onRoomCreate() {
         Effects.createAnimations(this);
-        this.witch = new WitchBoss(this, WITCH_POS.x, WITCH_POS.y);
-        this.witch.onTired = () => this.setStatus("> ELA ESTÁ SEM FÔLEGO: [R] PARA REPROGRAMAR", "#ffb347");
-        this.witch.onEnraged = () => {
-            this.setStatus("> FÚRIA: CADA GOLPE DELA GANHOU UMA CAMADA", "#ff4545");
-            this.time.delayedCall(2200, () => this.setStatus(""));
-        };
-        this.witch.onRecovered = () => {
-            this.setStatus("> ELA RECUPEROU O FÔLEGO", "#ff4545");
-            this.time.delayedCall(1600, () => this.setStatus(""));
-        };
+        this.witch = new WitchBoss(this, WITCH_POS.x, WITCH_POS.y, { arena: FLOOR_DIAL, wallClock: WALL_CLOCK });
+        wireWitchStatus(this, this.witch);
 
         // Alvo do [R] só com ela sem fôlego: fora disso, o modo nem a mostra.
         this.registerReprogrammable({

@@ -31,9 +31,26 @@ import attackUrl from "../assets/sprites/boss/witch/attack.png";
 //               chamas que sai dele é o dano. Fugir em linha reta pelo próprio
 //               rastro é o que mata. Enfurecida, marca também onde você VAI
 //               estar (a posição prevista).
-//   badalada  — a cada TOLL_EVERY golpes. Anéis de lâminas saem dela com UMA
-//               brecha cada, e a brecha gira 90° de um anel para o outro: é
-//               preciso correr em volta dela de brecha em brecha.
+//   onda      — de longe (ela anda pouco, e sem isto quase não alcançava a
+//               Artemis). A foice corta o ar e solta uma MEIA-LUA de energia
+//               que viaja reto, na mira travada no aviso: sair da linha basta.
+//               Enfurecida, são três, em leque.
+//   badalada  — a cada TOLL_EVERY golpes, alternando com a meia-noite. Anéis
+//               de lâminas saem dela com UMA brecha cada, e a brecha gira 90° de
+//               um anel para o outro: é preciso correr em volta dela de brecha
+//               em brecha.
+//   meia-noite — o golpe do TEMPO, que usa a própria sala. Ela some e
+//               reaparece no eixo do mostrador do chão (`arena`), o relógio da
+//               parede (`wallClock`) volta a andar e dois PONTEIROS de energia
+//               varrem o mostrador — dentro dele, só cruzando o ponteiro perto
+//               do eixo, onde ele é lento. Junto, BULLET HELL: do eixo sai uma
+//               espiral de lâminas e da ponta do minuto saem rajadas para fora,
+//               então fugir do mostrador também tem o que desviar. Alterna
+//               entre REBOBINAR (no meio do golpe os ponteiros e a espiral
+//               voltam: quem correu na frente deles é pego na volta) e ACELERAR
+//               (ponteiros e cadência dos tiros sobem, e ela sai do golpe
+//               acelerada). Enfurecida, um braço de espiral e duas lâminas por
+//               rajada a mais.
 //   passo     — se a Artemis fica longe tempo demais: ela some numa caveira de
 //               fumaça, um portal abre ATRÁS da Artemis e ela sai dele ceifando.
 // Se registra como inimigo (registerEnemy): colisão sólida com a Artemis, o [F]
@@ -96,13 +113,55 @@ const TOLL_GAP = 3;                  // lâminas que faltam em cada anel (a brec
 const TOLL_TURN = 5;                 // a brecha gira 5 posições (90°) por anel
 const TOLL_RING_MS = 560;
 
+// Onda da foice: meia-lua que viaja reto. O dano vale na FAIXA da meia-lua
+// (WAVE_HALF_W para cada lado da linha de voo, WAVE_HALF_T de espessura).
+const WAVE_MIN = 150;                // = MELEE_TRIGGER: de perto ela ceifa (e a ceifada também solta onda)
+const WAVE_COOLDOWN_MS = 2300;
+const WAVE_SPEED = 330;              // a Artemis anda a 220 e corre a 330: dá para sair da linha
+const WAVE_HALF_W = 50;
+const WAVE_HALF_T = 16;
+const WAVE_DAMAGE = 4;
+const WAVE_FAN_DEG = 24;             // enfurecida: três, em leque
+const WAVE_LIFE_MS = 2400;
+const WAVE_GHOST_MS = 45;            // rastro de imagens da meia-lua
+
+// Meia-noite. Ângulos de relógio em graus (0 = 12 h, sentido horário); os
+// ponteiros começam onde o relógio da parede está parado (hall_bg.py).
+const CLOCK_TELEGRAPH_MS = 600;      // o mostrador acende e os ponteiros aparecem fracos
+const CLOCK_ACTIVE_MS = 4200;
+const CLOCK_START = { hour: -28, minute: -6 };
+const MINUTE_SPEED = 100;            // graus/s: na borda do mostrador passa (e muito) da corrida dela
+const HOUR_SPEED = 40;
+const MINUTE_LEN = 1.08;             // fração do raio do mostrador (passa um pouco da borda)
+const HOUR_LEN = 0.62;
+const MINUTE_HALF_W = 12;
+const HOUR_HALF_W = 18;
+const CLOCK_DAMAGE = 4;
+const ACCEL_FROM = 0.8;              // ACELERAR: multiplica a velocidade de 0,8 a 1,8
+const ACCEL_TO = 1.8;
+// Bullet hell da meia-noite: do EIXO sai uma espiral de lâminas (os braços
+// giram; ao rebobinar, giram para o outro lado junto com os ponteiros) e da
+// PONTA do ponteiro dos minutos saem rajadas para fora — então fugir para fora
+// do mostrador também tem o que desviar. Ao acelerar, a cadência acelera junto.
+const SPIRAL_ARMS = 3;               // enfurecida: um braço a mais
+const SPIRAL_EVERY_MS = 120;
+const SPIRAL_SPIN = 150;             // graus/s que os braços giram
+const SPIRAL_SPEED = 170;            // px/s (o tiro comum da sala anda a 190)
+const TIP_EVERY_MS = 420;
+const TIP_SHOTS = 3;                 // enfurecida: 5
+const TIP_SPREAD_DEG = 14;
+const TIP_SPEED = 230;
+const HASTE_MS = 3500;               // depois de ACELERAR, ela mesma fica rápida
+const HASTE_MULT = 1.65;
+const HASTE_FX_MS = 380;
+
 const STEP_FAR = 300;                // longe assim...
 const STEP_AFTER_MS = 2400;          // ...por esse tempo, ela vem pelo portal
 const STEP_BEHIND = 110;
 
 const TIRED_TINT = 0x9a9aaa;
 const HUD = { x: 640, y: 52, w: 320, h: 12 };
-const FROZEN = new Set(["idle", "windup", "attack", "step", "battle", "down"]);
+const FROZEN = new Set(["idle", "windup", "attack", "step", "battle", "down", "clock"]);
 
 export default class WitchBoss {
     // Sprite da FASE 2: um combatente da BattleScene (config.combatants), de
@@ -163,7 +222,11 @@ export default class WitchBoss {
         }
     }
 
-    constructor(scene, x, y) {
+    // `arena`: o mostrador do chão onde a meia-noite acontece ({ cx, cy, rx, ry },
+    // em tela; sem ele, uma elipse em volta da posição inicial). `wallClock`:
+    // o relógio pintado na parede ({ x, y, r }), cujos ponteiros passam a ser
+    // desenhados aqui para andarem junto com os do chão.
+    constructor(scene, x, y, { arena, wallClock } = {}) {
         this.scene = scene;
         // Interface do registerEnemy / tryMelee da sala.
         this.type = "witch";
@@ -183,9 +246,23 @@ export default class WitchBoss {
         this.hazards = [];     // círculos de dano no chão (caveiras da sentença)
         this.marks = [];       // sprites das marcas, para limpar antes da hora
         this.echoes = [];      // sombras dos ecos pendentes
+        this.waves = [];       // meias-luas da onda da foice em voo
+        this.nextWave = 0;
+        this.specials = 0;     // badalada e meia-noite se alternam
+        this.clockMode = 0;    // meia-noite: rebobinar e acelerar se alternam
+        this.hasteUntil = 0;
+        this.arena = arena ?? { cx: x, cy: y + FEET, rx: 300, ry: 175 };
+        this.wallClock = wallClock ?? null;
+        this.hands = { ...CLOCK_START };
 
         WitchBoss.createAnimations(scene);
         this.createBladeTexture();
+        this.createWaveTexture();
+        this.floorClock = scene.add.graphics().setDepth(-3);
+        if (this.wallClock) {
+            this.wallHands = scene.add.graphics().setDepth(-9);   // em cima do fundo, embaixo das scanlines
+            this.drawWallHands(0);
+        }
 
         this.sprite = scene.physics.add.sprite(x, y, "witch-walk", ROWS.s * WALK_COLS)
             .setScale(SCALE)
@@ -220,6 +297,11 @@ export default class WitchBoss {
         const player = this.scene.player;
         this.recordTrail(now, player);
         this.updateHazards(now, player);
+        this.updateWaves(now, player);
+        if (this.state === "clock") {
+            this.updateClock(now, player);
+            return;
+        }
 
         if (this.state === "tired") {
             this.updateHud();
@@ -251,23 +333,54 @@ export default class WitchBoss {
             this.startStep();
             return;
         }
+        // Ao enfurecer, a meia-noite vem na hora: é a virada da luta.
+        if (this.clockPending) {
+            this.clockPending = false;
+            this.startClock();
+            return;
+        }
         if (this.attacks % TOLL_EVERY === TOLL_EVERY - 1) {
-            this.windup("badalada");
+            this.specials += 1;
+            // A meia-noite é a PRIMEIRA especial: batendo na guarda aberta ela
+            // cansa em poucos golpes, e a meia-noite no 8º nunca chegava.
+            if (this.specials % 2 === 1) {
+                this.startClock();
+            } else {
+                this.windup("badalada");
+            }
             return;
         }
         if (dist <= MELEE_TRIGGER) {
             this.windup("ceifada");
             return;
         }
-        if (dist >= SENTENCE_MIN && now >= this.nextSentence) {
+        // De longe, onda e sentença se revezam (a que estiver pronta, dando a
+        // vez para a outra quando as duas estão).
+        const waveReady = dist >= WAVE_MIN && now >= this.nextWave;
+        const sentenceReady = dist >= SENTENCE_MIN && now >= this.nextSentence;
+        if (sentenceReady && (!waveReady || this.lastRanged === "onda")) {
             this.nextSentence = now + SENTENCE_COOLDOWN_MS;
+            this.lastRanged = "sentenca";
             this.windup("sentenca");
             return;
         }
+        if (waveReady) {
+            this.nextWave = now + WAVE_COOLDOWN_MS;
+            this.lastRanged = "onda";
+            this.windup("onda");
+            return;
+        }
+        const hasted = now < this.hasteUntil;
+        const speed = hasted ? SPEED * HASTE_MULT : SPEED;
         const angle = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
-        this.sprite.body.setVelocity(Math.cos(angle) * SPEED, Math.sin(angle) * SPEED);
+        this.sprite.body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
         this.face(angle);
         this.sprite.play(`witch-walk-${this.facing}`, true);
+        this.sprite.anims.timeScale = hasted ? HASTE_MULT : 1;
+        if (hasted && now >= (this.nextHasteFx ?? 0)) {
+            this.nextHasteFx = now + HASTE_FX_MS;
+            Effects.play(this.scene, "fx-haste", this.x, this.y + 20, { scale: 1.1, depth: this.sprite.depth - 1 });
+        }
     }
 
     // --- Golpes ---------------------------------------------------------------
@@ -314,6 +427,8 @@ export default class WitchBoss {
             }
             if (kind === "sentenca") {
                 this.sentence();
+            } else if (kind === "onda") {
+                this.slashWave();
             } else if (kind === "badalada") {
                 this.toll();
             } else {
@@ -334,6 +449,8 @@ export default class WitchBoss {
         s.cameras.main.shake(110, 0.003);
         this.impactAt(this.x, this.y, this.aim);
         this.hitIfNear(this.x, this.y, MELEE_DAMAGE);
+        // O corte segue como onda: fugir para trás da foice não basta.
+        this.launchWave(this.aim);
         const echoes = this.enraged ? 2 : 1;
         for (let k = 1; k <= echoes; k += 1) {
             this.queueEcho(this.x, this.y, this.facing, this.aim, ECHO_DELAY_MS * k);
@@ -436,6 +553,241 @@ export default class WitchBoss {
             const blade = s.spawnEnemyBullet?.(this.x + Math.cos(a) * 30, this.y + Math.sin(a) * 22 + 20, a, "witch-blade", 1.6);
             blade?.setRotation(a);
         }
+    }
+
+    // ONDA: a foice corta o ar e a meia-lua sai na mira travada no aviso.
+    slashWave() {
+        const s = this.scene;
+        Sfx.play(s, "laser", 0.5);
+        s.cameras.main.shake(90, 0.002);
+        this.impactAt(this.x, this.y, this.aim);
+        const fan = this.enraged ? [-WAVE_FAN_DEG, 0, WAVE_FAN_DEG] : [0];
+        fan.forEach((deg) => this.launchWave(this.aim + Phaser.Math.DegToRad(deg)));
+    }
+
+    launchWave(angle) {
+        const s = this.scene;
+        const x = this.x + Math.cos(angle) * 46;
+        const y = this.y + FEET * 0.5 + Math.sin(angle) * 34;
+        const sprite = s.add.image(x, y, "witch-wave")
+            .setRotation(angle)
+            .setBlendMode(Phaser.BlendModes.ADD)
+            .setDepth(820);
+        this.waves.push({ sprite, x, y, angle, born: s.time.now, last: s.time.now, ghostAt: 0 });
+    }
+
+    // Anda com o relógio da CENA (desacelera no [R]) e confere a faixa da
+    // meia-lua contra os pés da Artemis, no referencial da própria onda.
+    updateWaves(now, player) {
+        if (!this.waves.length) {
+            return;
+        }
+        const b = this.scene.bounds;
+        this.waves = this.waves.filter((w) => {
+            const dt = (now - w.last) / 1000;
+            w.last = now;
+            w.x += Math.cos(w.angle) * WAVE_SPEED * dt;
+            w.y += Math.sin(w.angle) * WAVE_SPEED * dt;
+            w.sprite.setPosition(w.x, w.y);
+            if (now >= w.ghostAt) {
+                w.ghostAt = now + WAVE_GHOST_MS;
+                const ghost = this.scene.add.image(w.x, w.y, "witch-wave").setRotation(w.angle)
+                    .setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.35).setDepth(819);
+                this.scene.tweens.add({ targets: ghost, alpha: 0, scaleY: 0.7, duration: 240, onComplete: () => ghost.destroy() });
+            }
+            const dx = player.sprite.x - w.x;
+            const dy = player.feetY - w.y;
+            const along = dx * Math.cos(w.angle) + dy * Math.sin(w.angle);
+            const side = -dx * Math.sin(w.angle) + dy * Math.cos(w.angle);
+            if (Math.abs(along) <= WAVE_HALF_T && Math.abs(side) <= WAVE_HALF_W) {
+                this.scene.damagePlayer(WAVE_DAMAGE);
+            }
+            const out = w.x < b.x - 60 || w.x > b.x + b.w + 60 || w.y < b.y - 60 || w.y > b.y + b.h + 60;
+            if (out || now - w.born > WAVE_LIFE_MS) {
+                w.sprite.destroy();
+                return false;
+            }
+            return true;
+        });
+    }
+
+    // MEIA-NOITE: some, aparece no eixo do mostrador e o relógio anda.
+    startClock() {
+        const s = this.scene;
+        const { cx, cy } = this.arena;
+        this.state = "clock";
+        this.clockMode += 1;
+        const mode = this.clockMode % 2 === 1 ? "rewind" : "accel";
+        this.sprite.body.setVelocity(0, 0);
+        Sfx.play(s, "hack", 0.6);
+        Effects.play(s, "fx-skull", this.x, this.y, { scale: 1.8, depth: 830 });
+        this.sprite.body.reset(cx, cy - FEET);
+        this.facing = "s";
+        this.idle();
+        Effects.play(s, "fx-arrive", cx, cy - FEET - 10, { scale: 1.3, depth: 830 });
+        const now = s.time.now;
+        this.clock = {
+            mode,
+            start: now,
+            live: now + CLOCK_TELEGRAPH_MS,
+            end: now + CLOCK_TELEGRAPH_MS + CLOCK_ACTIVE_MS,
+            last: now,
+            turned: false,
+            spiralAt: 0,
+            tipAt: 0,
+            spin: 0,
+            hour: this.hands.hour,
+            minute: this.hands.minute
+        };
+        this.onClock?.(mode);
+    }
+
+    updateClock(now, player) {
+        const c = this.clock;
+        const s = this.scene;
+        this.sprite.body.setVelocity(0, 0);
+        const dt = (now - c.last) / 1000;
+        c.last = now;
+        const live = now >= c.live;
+        if (live) {
+            // Rebobinar: anda até a metade e volta pelo mesmo caminho.
+            // Acelerar: sempre para a frente, cada vez mais rápido.
+            const t = (now - c.live) / CLOCK_ACTIVE_MS;
+            let mult = 1;
+            if (c.mode === "rewind") {
+                mult = t < 0.5 ? 1 : -1.15;
+                if (t >= 0.5 && !c.turned) {
+                    c.turned = true;
+                    Sfx.play(s, "bump", 0.7);
+                    s.cameras.main.flash(160, 180, 140, 255, false);
+                    this.onClockTurn?.();
+                }
+            } else {
+                mult = ACCEL_FROM + (ACCEL_TO - ACCEL_FROM) * Math.min(1, t);
+            }
+            c.minute += MINUTE_SPEED * mult * dt;
+            c.hour += HOUR_SPEED * mult * dt;
+            this.hitByHand(player, c.minute, MINUTE_LEN, MINUTE_HALF_W);
+            this.hitByHand(player, c.hour, HOUR_LEN, HOUR_HALF_W);
+            this.clockBullets(now, c, mult, dt);
+        }
+        this.hands.hour = c.hour;
+        this.hands.minute = c.minute;
+        this.drawFloorClock(now, live);
+        this.drawWallHands(live ? now : 0);
+        if (now >= c.end) {
+            this.endClock();
+        }
+    }
+
+    endClock() {
+        const mode = this.clock.mode;
+        this.clock = null;
+        this.floorClock.clear();
+        this.drawWallHands(0);
+        if (mode === "accel") {
+            this.hasteUntil = this.scene.time.now + HASTE_MS;
+        }
+        this.state = "attack";      // afterAttack cansa e abre a guarda, como todo golpe
+        this.afterAttack();
+    }
+
+    // Ponta de um ponteiro do chão no ângulo de relógio `deg`, a `len` do raio.
+    handPoint(deg, len) {
+        const a = Phaser.Math.DegToRad(deg);
+        const { cx, cy, rx, ry } = this.arena;
+        return { x: cx + Math.sin(a) * rx * len, y: cy - Math.cos(a) * ry * len };
+    }
+
+    hitByHand(player, deg, len, halfW) {
+        // Distância dos pés da Artemis ao SEGMENTO eixo -> ponta.
+        const { cx, cy } = this.arena;
+        const tip = this.handPoint(deg, len);
+        const vx = tip.x - cx;
+        const vy = tip.y - cy;
+        const t = Phaser.Math.Clamp(((player.sprite.x - cx) * vx + (player.feetY - cy) * vy) / (vx * vx + vy * vy || 1), 0, 1);
+        if (Phaser.Math.Distance.Between(cx + vx * t, cy + vy * t, player.sprite.x, player.feetY) <= halfW) {
+            this.scene.damagePlayer(CLOCK_DAMAGE);
+        }
+    }
+
+    // Espiral no eixo + rajadas na ponta do minuto. `mult` é o mesmo dos
+    // ponteiros: negativo ao rebobinar (a espiral inverte), maior ao acelerar
+    // (a cadência sobe).
+    clockBullets(now, c, mult, dt) {
+        const { cx, cy } = this.arena;
+        const pace = Math.max(1, Math.abs(mult));
+        c.spin += SPIRAL_SPIN * Math.sign(mult) * pace * dt;
+        if (now >= c.spiralAt) {
+            c.spiralAt = now + SPIRAL_EVERY_MS / pace;
+            const arms = SPIRAL_ARMS + (this.enraged ? 1 : 0);
+            for (let k = 0; k < arms; k += 1) {
+                this.fireBlade(cx, cy - 18, Phaser.Math.DegToRad(c.spin) + (k / arms) * Math.PI * 2, SPIRAL_SPEED);
+            }
+        }
+        if (now >= c.tipAt) {
+            c.tipAt = now + TIP_EVERY_MS / pace;
+            const tip = this.handPoint(c.minute, MINUTE_LEN);
+            const out = Phaser.Math.Angle.Between(cx, cy, tip.x, tip.y);
+            const shots = this.enraged ? TIP_SHOTS + 2 : TIP_SHOTS;
+            for (let k = 0; k < shots; k += 1) {
+                const spread = (k - (shots - 1) / 2) * TIP_SPREAD_DEG;
+                this.fireBlade(tip.x, tip.y, out + Phaser.Math.DegToRad(spread), TIP_SPEED);
+            }
+            Sfx.play(this.scene, "laser", 0.25);
+        }
+    }
+
+    // Lâmina com velocidade própria (o spawnEnemyBullet da sala usa a padrão).
+    fireBlade(x, y, angle, speed) {
+        const blade = this.scene.spawnEnemyBullet?.(x, y, angle, "witch-blade", 1.4);
+        if (!blade) {
+            return;
+        }
+        blade.setRotation(angle);
+        blade.body.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+    }
+
+    // O mostrador acende (contorno pulsando) e os ponteiros: fracos no aviso,
+    // cheios quando passam a ferir.
+    drawFloorClock(now, live) {
+        const g = this.floorClock;
+        const { cx, cy, rx, ry } = this.arena;
+        const pulse = 0.35 + 0.25 * Math.sin(now / 90);
+        g.clear();
+        g.lineStyle(3, this.clock.mode === "rewind" ? ECHO_TINT : 0x7dff9a, pulse).strokeEllipse(cx, cy, rx * 2, ry * 2);
+        [[this.clock.minute, MINUTE_LEN, MINUTE_HALF_W], [this.clock.hour, HOUR_LEN, HOUR_HALF_W]].forEach(([deg, len, w]) => {
+            const tip = this.handPoint(deg, len);
+            if (!live) {
+                g.lineStyle(2, 0xffffff, 0.3).lineBetween(cx, cy, tip.x, tip.y);
+                return;
+            }
+            g.lineStyle(w * 2, ECHO_TINT, 0.35).lineBetween(cx, cy, tip.x, tip.y);
+            g.lineStyle(w, 0xe8e0ff, 0.85).lineBetween(cx, cy, tip.x, tip.y);
+            g.fillStyle(0xffffff, 0.9).fillCircle(tip.x, tip.y, w * 0.6);
+        });
+    }
+
+    // Ponteiros do relógio da PAREDE, os mesmos ângulos dos do chão. O dos
+    // segundos gira rápido enquanto o golpe dura (para trás, ao rebobinar).
+    drawWallHands(now) {
+        if (!this.wallHands) {
+            return;
+        }
+        const { x, y, r } = this.wallClock;
+        const g = this.wallHands;
+        const hand = (deg, len, width, color) => {
+            const a = Phaser.Math.DegToRad(deg);
+            g.lineStyle(width, color, 1).lineBetween(x - Math.sin(a) * 6, y + Math.cos(a) * 6,
+                x + Math.sin(a) * len, y - Math.cos(a) * len);
+        };
+        g.clear();
+        hand(this.hands.hour, r - 22, 4, 0xc4ccdc);
+        hand(this.hands.minute, r - 12, 3, 0xc4ccdc);
+        const back = this.clock?.mode === "rewind" && this.clock.turned;
+        const seconds = now ? ((now / 1000) * 720 * (back ? -1 : 1)) % 360 : 150;
+        hand(seconds, r - 10, 1, 0xff4545);
+        g.fillStyle(0x4ad6ff, 1).fillCircle(x, y, 3);
     }
 
     // PASSO NO TEMPO: some numa caveira de fumaça, o portal abre ATRÁS da
@@ -547,7 +899,7 @@ export default class WitchBoss {
     takeMeleeHit() {
         const s = this.scene;
         const now = s.time.now;
-        if (["tired", "down", "battle", "step"].includes(this.state)) {
+        if (["tired", "down", "battle", "step", "clock"].includes(this.state)) {
             return;                           // cansada: agora é com o [R]
         }
         if (this.state !== "recover") {
@@ -579,6 +931,7 @@ export default class WitchBoss {
     // prevê, badalada de três anéis).
     enrage() {
         this.enraged = true;
+        this.clockPending = true;
         Effects.play(this.scene, "fx-rage", this.x, this.y - 30, { scale: 1.1, depth: 830 });
         this.onEnraged?.();
     }
@@ -601,6 +954,7 @@ export default class WitchBoss {
         this.clearDizzy();
         this.stamina = STAMINA_MAX;
         this.attacks = 0;
+        this.specials = 0;
         this.enraged = false;
         this.state = "chase";
         this.lastNearAt = this.scene.time.now;
@@ -619,6 +973,15 @@ export default class WitchBoss {
         this.marks.forEach((m) => m.destroy());
         this.marks = [];
         this.hazards = [];
+        this.waves.forEach((w) => w.sprite.destroy());
+        this.waves = [];
+        if (this.clock) {
+            this.clock = null;
+            this.floorClock.clear();
+            this.drawWallHands(0);
+        }
+        this.hasteUntil = 0;
+        this.sprite.anims.timeScale = 1;
     }
 
     clearDizzy() {
@@ -643,6 +1006,7 @@ export default class WitchBoss {
         this.sprite.body.reset(this.home.x, this.home.y);
         this.stamina = STAMINA_MAX;
         this.attacks = 0;
+        this.specials = 0;
         this.enraged = false;
         this.state = "idle";
         this.facing = "s";
@@ -752,8 +1116,33 @@ export default class WitchBoss {
         g.destroy();
     }
 
+    // Meia-lua de energia da onda (aponta para +x, como a lâmina): o arco de
+    // fora brilha em branco-violeta e se apaga para dentro.
+    createWaveTexture() {
+        const s = this.scene;
+        if (s.textures.exists("witch-wave")) {
+            return;
+        }
+        const W = 52;                // folga para o traço mais grosso não cortar nas pontas
+        const H = WAVE_HALF_W * 2 + 8;
+        const g = s.add.graphics();
+        const arc = (r, width, color, alpha) => {
+            g.lineStyle(width, color, alpha);
+            g.beginPath();
+            g.arc(W / 2 - r + 12, H / 2, r, -1.05, 1.05);
+            g.strokePath();
+        };
+        arc(56, 16, ECHO_TINT, 0.35);
+        arc(56, 9, 0xc9a8ff, 0.8);
+        arc(56, 4, 0xffffff, 1);
+        g.generateTexture("witch-wave", W, H);
+        g.destroy();
+    }
+
     destroy() {
         this.clearField();
+        this.floorClock?.destroy();
+        this.wallHands?.destroy();
         this.hudGroup?.forEach((o) => o.destroy());
         this.sprite?.destroy();
     }

@@ -38,6 +38,7 @@ WALL_H = 128
 BASEBOARD_H = 8
 FLOOR = (32, 128, 1216, 544)
 SEED = 73
+COM_PONTEIROS = False               # ver clock(): o jogo desenha os ponteiros
 
 DOOR_IN_X = 128                     # vem da expedição
 DOOR_X = 1152                       # saída, = `door.x` da cena
@@ -111,13 +112,20 @@ def clock(px):
                 y = cy - math.cos(a) * t + math.sin(a) * w * 0.5
                 px[round(x), round(y)] = cor + (255,)
 
-    hand(-28, r - 22, 3, (196, 204, 220))      # horas, perto do 11
-    hand(-6, r - 12, 2, (196, 204, 220))       # minutos, quase meia-noite
-    hand(150, r - 10, 0, (255, 69, 69))        # segundos, em vermelho
-    for y in range(cy - 3, cy + 4):
-        for x in range(cx - 3, cx + 4):
-            if math.hypot(x - cx, y - cy) <= 3:
-                px[x, y] = (74, 214, 255, 255)
+    # Os ponteiros NÃO são pintados aqui: o WitchBoss os desenha por cima
+    # (perto da meia-noite: horas em -28°, minutos em -6°, segundos em 150°),
+    # porque no golpe da meia-noite o relógio volta a andar junto com os
+    # ponteiros do mostrador do chão. Para o fundo sozinho, sem o jogo, use
+    # --com-ponteiros.
+    if COM_PONTEIROS:
+        hand(-28, r - 22, 3, (196, 204, 220))  # horas, perto do 11
+        hand(-6, r - 12, 2, (196, 204, 220))   # minutos, quase meia-noite
+        hand(150, r - 10, 0, (255, 69, 69))    # segundos, em vermelho
+    if COM_PONTEIROS:
+        for y in range(cy - 3, cy + 4):
+            for x in range(cx - 3, cx + 4):
+                if math.hypot(x - cx, y - cy) <= 3:
+                    px[x, y] = (74, 214, 255, 255)
 
 
 def floor(px, rng):
@@ -202,7 +210,10 @@ def main():
     ap.add_argument("--porta", default=os.path.join(ASSETS, "controle", "controle_bg.png"),
                     help="fundo de onde a porta padrão é copiada")
     ap.add_argument("--out", default=os.path.join(ASSETS, "hall", "hall_bg.png"))
+    ap.add_argument("--com-ponteiros", action="store_true", help="pinta os ponteiros (só para olhar o fundo)")
     args = ap.parse_args()
+    global COM_PONTEIROS
+    COM_PONTEIROS = args.com_ponteiros
 
     rng = random.Random(SEED)
     im = Image.new("RGBA", (W, H), (5, 5, 5, 255))

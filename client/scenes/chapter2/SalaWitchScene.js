@@ -1,7 +1,7 @@
 import BaseRoomScene from "../chapter1/BaseRoomScene";
 import WitchBoss from "../../characters/WitchBoss";
 import { addServicePanel } from "../../objects/ServicePanel";
-import { witchBattle, WITCH_ENTRY_SCRIPT, WITCH_VICTORY_SCRIPT } from "./HallScene";
+import { witchBattle, WITCH_ENTRY_SCRIPT, WITCH_VICTORY_SCRIPT, wireWitchStatus } from "./HallScene";
 import Effects from "../../ui/Effects";
 
 // Capítulo 2: sala da WITCH, a boss FINAL do capítulo (a LEO virou pré-boss).
@@ -53,16 +53,10 @@ export default class SalaWitchScene extends BaseRoomScene {
 
     onRoomCreate() {
         Effects.createAnimations(this);
+        // Sem relógio na parede aqui: a meia-noite acontece numa elipse em
+        // volta dela, desenhada só durante o golpe.
         this.witch = new WitchBoss(this, WITCH_POS.x, WITCH_POS.y);
-        this.witch.onTired = () => this.setStatus("> ELA ESTÁ SEM FÔLEGO: [R] PARA REPROGRAMAR", "#ffb347");
-        this.witch.onEnraged = () => {
-            this.setStatus("> FÚRIA: CADA GOLPE DELA GANHOU UMA CAMADA", "#ff4545");
-            this.time.delayedCall(2200, () => this.setStatus(""));
-        };
-        this.witch.onRecovered = () => {
-            this.setStatus("> ELA RECUPEROU O FÔLEGO", "#ff4545");
-            this.time.delayedCall(1600, () => this.setStatus(""));
-        };
+        wireWitchStatus(this, this.witch);
 
         // Alvo do [R] só com ela sem fôlego: fora disso, o modo nem a mostra.
         this.registerReprogrammable({
