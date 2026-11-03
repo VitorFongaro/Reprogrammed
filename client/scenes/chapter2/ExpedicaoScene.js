@@ -97,6 +97,10 @@ export default class ExpedicaoScene extends BaseRoomScene {
     }
 
     onRoomCreate() {
+        // A instância da cena sobrevive ao scene.restart: sem zerar, o
+        // `this.sorter` da vez anterior faria o ready() desistir.
+        this.sorter = null;
+        this.waitingText = null;
         this.cleared = false;
         this.pileCleared = false;
         new Enemy(this, COURIER.x, COURIER.y, { type: "mensageiro" });
@@ -112,6 +116,7 @@ export default class ExpedicaoScene extends BaseRoomScene {
         this.events.once("shutdown", () => { left = true; });
         const ready = () => {
             if (!puzzle || !dialogueDone || this.sorter) return;
+            this.hideWaiting();
             this.buildSorter(puzzle);
             if (puzzle.source === "ai") {
                 this.playDialogue(AI_SCRIPT);
@@ -125,8 +130,30 @@ export default class ExpedicaoScene extends BaseRoomScene {
         });
         this.playDialogue(ENTRY_SCRIPT, () => {
             dialogueDone = true;
+            // A esteira e a pilha só ganham colisor quando o puzzle chega:
+            // andar antes deixaria a Artemis atravessar para o lado do
+            // mensageiro, ou ficar presa dentro da pilha quando ela nascer.
+            if (!puzzle) this.showWaiting();
             ready();
         });
+    }
+
+    // Aviso enquanto a IA não responde (só aparece se o diálogo acabar antes),
+    // o mesmo do depósito.
+    showWaiting() {
+        this.player.setEnabled(false);
+        this.waitingText = this.add.text(this.scale.width / 2, 196, "ADA REORGANIZANDO A TRIAGEM...", {
+            fontFamily: "VCR", fontSize: "18px", color: "#4ad6ff",
+            backgroundColor: "#05060a", padding: { x: 10, y: 6 }
+        }).setOrigin(0.5).setDepth(900);
+        this.tweens.add({ targets: this.waitingText, alpha: 0.35, duration: 520, yoyo: true, repeat: -1 });
+    }
+
+    hideWaiting() {
+        if (!this.waitingText) return;
+        this.waitingText.destroy();
+        this.waitingText = null;
+        this.player.setEnabled(true);
     }
 
     onRoomUpdate() {
