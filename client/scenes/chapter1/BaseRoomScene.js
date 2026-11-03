@@ -8,6 +8,7 @@ import { enterScene, save as saveProgress } from "../../state/progress";
 import { getHp, getMaxHp, damage as damageVitals, heal as healVitals, fullHeal, enterChapterScene } from "../../state/vitals";
 import fxHealUrl from "../../assets/sprites/effects/fx_heal.png";
 import { PROP_EXAMINE, ENEMY_EXAMINE } from "../../data/examine";
+import ItemDrop, { preloadItemDrops, rollDrop } from "../../objects/ItemDrop";
 
 // Cena-base das salas do capítulo 1: desenha a sala (mapa em imagem ou grade),
 // cria jogador/Cosmo/diálogo, gerencia interagíveis ([E] no mais próximo), a
@@ -57,6 +58,9 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.doorLabel = config.doorLabel ?? "[E] SEGUIR";
         // Checkpoint automático ao entrar na sala (ver saveCheckpoint).
         this.autoSave = config.autoSave ?? true;
+        // Robô neutralizado às vezes larga uma peça de cura (objects/ItemDrop).
+        // Salas de teste que dá para reiniciar desligam, senão viram farm.
+        this.itemDrops = config.itemDrops ?? true;
         this.bounds = config.bounds ?? DEFAULT_BOUNDS;
         // Porta customizada ({ x, y }) para salas cuja porta já está desenhada na
         // arte do mapa: o código só renderiza a luz da fechadura e o prompt.
@@ -92,6 +96,7 @@ export default class BaseRoomScene extends Phaser.Scene {
             this.load.spritesheet("fx-heal", fxHealUrl, { frameWidth: 128, frameHeight: 128 });
         }
         Music.preload(this, this.musicKey);
+        preloadItemDrops(this);
     }
 
     create() {
@@ -702,6 +707,14 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.onSceneResume = (_sys, data) => this.handleSceneResume(data);
         this.events.on("resume", this.onSceneResume);
         this.events.once("shutdown", () => this.events.off("resume", this.onSceneResume));
+    }
+
+    // Chamado pelo Enemy ao ser neutralizado (reprogramação ou melee).
+    onEnemyDisabled(enemy) {
+        const id = this.itemDrops ? rollDrop() : null;
+        if (id && enemy.sprite) {
+            new ItemDrop(this, enemy.sprite.x, enemy.sprite.y + 18, id);
+        }
     }
 
     // Inimigo se registra aqui (cria a colisão de contato com a Artemis).

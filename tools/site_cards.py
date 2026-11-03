@@ -197,11 +197,8 @@ def card_aprendizado():
 
 # --- PERSONAGENS -----------------------------------------------------------------
 
-def card_artemis():
-    ref = Image.open(asset("sprites", "ChatGPT Image 22 de mai. de 2026, 19_59_11.png")).convert("RGBA")
-    # Rosto e tronco, na proporção do card.
-    crop = ref.crop((252, 40, 772, 40 + round(520 * H / W)))
-    return crop.resize((W, H), Image.LANCZOS)
+# O retrato da Artemis é desenhado no Aseprite, junto com o do Cosmo e o da ADA
+# (tools/site_retratos.lua).
 
 
 # --- GAMEPLAY ----------------------------------------------------------------------
@@ -294,7 +291,6 @@ if __name__ == "__main__":
     save("sobre_historia", card_historia(), pixel=False)
     save("sobre_elysium", card_elysium())
     save("sobre_aprendizado", card_aprendizado())
-    save("retrato_artemis", card_artemis())
     save("gameplay_reprogramar", card_reprogramar())
     save("gameplay_puzzles", card_puzzles())
     save("gameplay_combate", card_combate())

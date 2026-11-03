@@ -86,7 +86,8 @@ cross join (values
   ('cap2-recepcao', 'Recepção', 'Térreo da Elysium: as catracas travadas pelo bloqueio pedem a primeira condicional do capítulo.', 'easy', 'conditionals', 1),
   ('cap2-jardim', 'Jardim de Inverno', 'A estufa do térreo: a irrigação dos canteiros pede um se/senão, com a regra gerada pela IA.', 'easy', 'conditionals', 2),
   ('cap2-deposito', 'Depósito', 'O almoxarifado do térreo: puzzles de mundo com caixas (limite numérico e o conectivo ou), gerados pela IA.', 'medium', 'conditionals', 3),
-  ('cap2-expedicao', 'Expedição', 'A triagem do correio: três rampas e um senão se em que a ordem dos testes importa, com a regra gerada pela IA.', 'medium', 'conditionals', 4)
+  ('cap2-expedicao', 'Expedição', 'A triagem do correio: três rampas e um senão se em que a ordem dos testes importa, com a regra gerada pela IA.', 'medium', 'conditionals', 4),
+  ('cap2-hall', 'Hall do Relógio', 'O saguão central do térreo: a arena da WITCH, a guardiã do capítulo 2.', 'hard', 'conditionals', 5)
 ) as v(slug, title, description, base_difficulty, main_topic, order_index)
 where c.order_index = 2;
 
@@ -156,6 +157,7 @@ select
 from public.levels l
 join (values
   ('cap1-sentinela', 'Sentinela', 'Unidade didática da Elysium: mini-batalha de treino, sem turno de defesa.', 25, 2, 'medium'),
-  ('cap1-seguranca', 'ENIAC', 'Unidade-sentinela do ENIAC, o computador central da Elysium.', 60, 4, 'hard')
+  ('cap1-seguranca', 'ENIAC', 'Unidade-sentinela do ENIAC, o computador central da Elysium.', 60, 4, 'hard'),
+  ('cap2-hall', 'WITCH', 'Inspirada no Harwell Dekatron (1951), o computador digital mais velho que ainda funciona. Os golpes brincam com o tempo.', 150, 5, 'hard')
 ) as v(level_slug, name, description, max_hp, attack_power, base_difficulty)
   on l.slug = v.level_slug;

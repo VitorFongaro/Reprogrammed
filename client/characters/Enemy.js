@@ -839,6 +839,7 @@ export default class Enemy {
         this.sprite.play(this.def.disabledKey);
         this.weapon?.destroy();
         this.weapon = null;
+        this.scene.onEnemyDisabled?.(this);
     }
 
     reprogramPuzzle() {

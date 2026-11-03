@@ -78,8 +78,7 @@ const CLEARED_SCRIPT = [
 export default class ExpedicaoScene extends BaseRoomScene {
     constructor() {
         super("cap2-expedicao", {
-            // Até a doca de carga existir, a porta leva ao laboratório de testes.
-            nextScene: "cap2-laboratorio",
+            nextScene: "cap2-hall",
             spawn: SPAWN,
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
             door: DOOR,

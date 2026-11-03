@@ -1,0 +1,330 @@
+{
+ "compressionlevel": -1,
+ "width": 40,
+ "height": 22,
+ "infinite": false,
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "tilewidth": 32,
+ "tileheight": 32,
+ "tiledversion": "1.10.2",
+ "version": "1.10",
+ "type": "map",
+ "nextlayerid": 4,
+ "nextobjectid": 100,
+ "layers": [
+  {
+   "id": 1,
+   "name": "fundo",
+   "type": "imagelayer",
+   "image": "../images/hall/hall_bg.png",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "id": 2,
+   "name": "objetos",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 1,
+     "gid": 1,
+     "name": "vaso_ficus",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 196,
+     "y": 212,
+     "width": 44,
+     "height": 84
+    },
+    {
+     "id": 2,
+     "gid": 1,
+     "name": "vaso_ficus",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1040,
+     "y": 212,
+     "width": 44,
+     "height": 84
+    },
+    {
+     "id": 3,
+     "gid": 1,
+     "name": "vaso_ficus",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 40,
+     "y": 668,
+     "width": 44,
+     "height": 84
+    },
+    {
+     "id": 4,
+     "gid": 1,
+     "name": "vaso_ficus",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1196,
+     "y": 668,
+     "width": 44,
+     "height": 84
+    },
+    {
+     "id": 5,
+     "gid": 2,
+     "name": "sofa_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 100,
+     "y": 668,
+     "width": 128,
+     "height": 60
+    },
+    {
+     "id": 6,
+     "gid": 5,
+     "name": "poltrona_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 240,
+     "y": 668,
+     "width": 56,
+     "height": 60
+    },
+    {
+     "id": 7,
+     "gid": 2,
+     "name": "sofa_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1052,
+     "y": 668,
+     "width": 128,
+     "height": 60
+    },
+    {
+     "id": 8,
+     "gid": 5,
+     "name": "poltrona_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 984,
+     "y": 668,
+     "width": 56,
+     "height": 60
+    },
+    {
+     "id": 9,
+     "gid": 3,
+     "name": "bebedouro",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 36,
+     "y": 330,
+     "width": 32,
+     "height": 72
+    },
+    {
+     "id": 10,
+     "gid": 4,
+     "name": "lixeira",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1210,
+     "y": 330,
+     "width": 24,
+     "height": 32
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "colisao",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 51,
+     "name": "vaso_ficus",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 198,
+     "y": 180,
+     "width": 40,
+     "height": 32
+    },
+    {
+     "id": 52,
+     "name": "vaso_ficus",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1042,
+     "y": 180,
+     "width": 40,
+     "height": 32
+    },
+    {
+     "id": 53,
+     "name": "vaso_ficus",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 42,
+     "y": 636,
+     "width": 40,
+     "height": 32
+    },
+    {
+     "id": 54,
+     "name": "vaso_ficus",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1198,
+     "y": 636,
+     "width": 40,
+     "height": 32
+    },
+    {
+     "id": 55,
+     "name": "sofa_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 102,
+     "y": 638,
+     "width": 124,
+     "height": 30
+    },
+    {
+     "id": 56,
+     "name": "poltrona_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 242,
+     "y": 638,
+     "width": 52,
+     "height": 30
+    },
+    {
+     "id": 57,
+     "name": "sofa_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1054,
+     "y": 638,
+     "width": 124,
+     "height": 30
+    },
+    {
+     "id": 58,
+     "name": "poltrona_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 986,
+     "y": 638,
+     "width": 52,
+     "height": 30
+    },
+    {
+     "id": 59,
+     "name": "bebedouro",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 38,
+     "y": 298,
+     "width": 28,
+     "height": 32
+    },
+    {
+     "id": 60,
+     "name": "lixeira",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 1212,
+     "y": 314,
+     "width": 20,
+     "height": 16
+    }
+   ]
+  }
+ ],
+ "tilesets": [
+  {
+   "columns": 0,
+   "firstgid": 1,
+   "grid": {
+    "height": 1,
+    "orientation": "orthogonal",
+    "width": 1
+   },
+   "margin": 0,
+   "name": "props",
+   "spacing": 0,
+   "tilecount": 5,
+   "tilewidth": 128,
+   "tileheight": 84,
+   "tiles": [
+    {
+     "id": 0,
+     "image": "../images/recepcao/props/vaso_ficus.png",
+     "imagewidth": 44,
+     "imageheight": 84
+    },
+    {
+     "id": 1,
+     "image": "../images/recepcao/props/sofa_espera.png",
+     "imagewidth": 128,
+     "imageheight": 60
+    },
+    {
+     "id": 2,
+     "image": "../images/recepcao/props/bebedouro.png",
+     "imagewidth": 32,
+     "imageheight": 72
+    },
+    {
+     "id": 3,
+     "image": "../images/recepcao/props/lixeira.png",
+     "imagewidth": 24,
+     "imageheight": 32
+    },
+    {
+     "id": 4,
+     "image": "../images/recepcao/props/poltrona_espera.png",
+     "imagewidth": 56,
+     "imageheight": 60
+    }
+   ]
+  }
+ ]
+}

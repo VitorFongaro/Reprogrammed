@@ -117,6 +117,7 @@ const ENTRY_SCRIPT = [
 export default class LaboratorioScene extends BaseRoomScene {
     constructor() {
         super("cap2-laboratorio", {
+            itemDrops: false,
             title: "CAP. 2 :: LABORATÓRIO DE TESTES",
             spawn: { x: 130, y: 560 },
             combat: true,

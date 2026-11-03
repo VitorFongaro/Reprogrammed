@@ -1,12 +1,12 @@
 import BaseRoomScene from "../chapter1/BaseRoomScene";
 import WitchBoss from "../../characters/WitchBoss";
 import { addServicePanel } from "../../objects/ServicePanel";
-// Defesas do turno dela: condicionais no tema do relógio, sorteadas a cada turno.
-import { WITCH_DEFENSES } from "../../data/puzzleVariants";
+import { witchBattle, WITCH_ENTRY_SCRIPT, WITCH_VICTORY_SCRIPT } from "./HallScene";
 import Effects from "../../ui/Effects";
 
 // Capítulo 2: sala da WITCH, a boss FINAL do capítulo (a LEO virou pré-boss).
-// Provisória como as outras salas de teste do cap. 2, até o mapa existir.
+// SALA DE TESTE: a luta de verdade é no hall do relógio (HallScene, `cap2-hall`),
+// que é de onde vêm o embate e os roteiros.
 //
 // A luta tem DUAS FASES:
 //   1. No MAPA, em tempo real (characters/WitchBoss): o núcleo dela é blindado
@@ -31,52 +31,9 @@ import Effects from "../../ui/Effects";
 
 const WITCH_POS = { x: 640, y: 250 };
 
-// HP: com 3 REPROGRAMAR, forca 10 -> 20 -> 40; 3 turnos investindo + 4
-// ataques de 40 = 160 >= 150, então 7 turnos na rota mais rápida — um a mais
-// que a LEO, por ser a boss final. Com o chip de cache (forca 80): 4 + 2 = 6.
-const WITCH_HP = 150;
-
-const WITCH_BATTLE = {
-    name: "WITCH",
-    maxHp: WITCH_HP,
-    maxReprograms: 3,
-    returnScene: "cap2-sala-witch",
-    defenseEnabled: true,
-    defensePuzzles: WITCH_DEFENSES,
-    // Um padrão por turno, cada um com uma regra nova (ver BattleScene).
-    dodgePatterns: ["rewind", "hands", "mirror", "sentence"],
-    dodgeDuration: 6500,
-    // O relógio é um ciclo só: converge (1,6 s), segura (0,7 s) e volta (~1,2 s),
-    // com as minas até ~3,9 s.
-    patternDurations: { rewind: 5000, hands: 7000, mirror: 6200, sentence: 6400 },
-    projectileInterval: 420,
-    projectileSpeed: { min: 140, max: 210 },
-    analysisLine: "WITCH :: HARWELL DEKATRON, 1951. RELIGADA EM 2012.",
-    analysisQuips: [
-        "Baseada no WITCH: o computador digital mais velho do mundo que ainda funciona.",
-        "WITCH quer dizer instrumento para ENSINAR computação. Ela reprova todo mundo.",
-        "Quando o relógio dela volta, tudo que você fez com o tempo parado volta junto. Ande pouco.",
-        "A outra alma é você também. Se ela apanha, quem sente é você."
-    ],
-    reward: null,                     // sala de teste (no jogo: "cache", boss de capítulo).
-    theme: "boss",
-    combatants: [
-        { ...WitchBoss.BATTLE_SPRITE, x: 640, y: 110, scale: 2.6 }
-    ]
-};
-
-const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Essa é a WITCH. Nome de um computador de 1951: o mais velho do mundo que ainda liga." },
-    { speaker: "COSMO", text: "Enquanto ela luta, o núcleo fica blindado. O [R] não pega. Primeiro, canse ela." },
-    { speaker: "COSMO", text: "Ela cansa sozinha de tanto atacar. E logo depois de um golpe abre a guarda: bata ali com [F]." },
-    { speaker: "COSMO", text: "Só que todo golpe dela deixa um ECO que repete o golpe no mesmo lugar. Bata DEPOIS do eco." },
-    { speaker: "COSMO", text: "E cuidado com o chão: ela escreve a sentença onde você está... e onde você acabou de estar." },
-    { speaker: "COSMO", text: "Quando ela ficar tonta, sem fôlego, é a hora: [R]." }
-];
-
-const VICTORY_SCRIPT = [
-    { speaker: "COSMO", text: "Parou. Pela primeira vez desde 1951, o relógio dela não anda." }
-];
+// O embate do hall, voltando para cá e sem espólio: refazer para testar não
+// pode virar farm de chip.
+const WITCH_BATTLE = witchBattle({ returnScene: "cap2-sala-witch", reward: null });
 
 export default class SalaWitchScene extends BaseRoomScene {
     constructor() {
@@ -129,7 +86,7 @@ export default class SalaWitchScene extends BaseRoomScene {
         this.events.on("resume", this.onBattleResume, this);
         this.events.once("shutdown", () => this.events.off("resume", this.onBattleResume, this));
 
-        this.playDialogue(ENTRY_SCRIPT, () => this.witch.start());
+        this.playDialogue(WITCH_ENTRY_SCRIPT, () => this.witch.start());
     }
 
     startBattle() {
@@ -147,7 +104,7 @@ export default class SalaWitchScene extends BaseRoomScene {
             return;
         }
         this.witch.defeat();
-        this.time.delayedCall(600, () => this.playDialogue(VICTORY_SCRIPT));
+        this.time.delayedCall(600, () => this.playDialogue(WITCH_VICTORY_SCRIPT));
     }
 
     // A Artemis caiu na fase 1: ela volta para o começo junto.

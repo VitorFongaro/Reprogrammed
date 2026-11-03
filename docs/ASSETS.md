@@ -284,6 +284,11 @@ carrinho, balança, mesa de embalagem, gaiola de correio e cone_triagem) saem de
 parede com letreiro e quadro de rotas, escotilha e esteira, faixas de segurança, concreto) sai de
 `tools/expedicao_bg.py`. Arte nossa, feita por script escrito por um agente de IA — declarar no TCC.
 
+**Hall do relógio (cap. 2).** O fundo (`client/assets/images/hall/hall_bg.png`: a parede e as
+janelas da recepção, o relógio grande na parede e o mostrador de mosaico no chão) sai de
+`tools/hall_bg.py`; os móveis são os props da recepção. Arte nossa, feita por script escrito por
+um agente de IA — declarar no TCC.
+
 **Depósito (cap. 2).** Os objetos (`client/assets/images/deposito/props/`: os vãos de estante
 `estante_*`, a `esteira`, o `descarte`, os terminais `painel_pistao` e `console_guindaste`,
 empilhadeira, pallets, tambores, cone, paleteira e caixote) saem de `tools/deposito_props.lua`
@@ -296,14 +301,13 @@ Arte nossa, feita por script escrito por um agente de IA — declarar no TCC.
 **Cards do site (`client/assets/images/site/`).** As imagens das abas SOBRE, PERSONAGENS e
 GAMEPLAY da página inicial saem de `tools/site_cards.py`, que só MONTA arte que já está no
 repositório (fundos das salas, mapas do Tiled, sprites, blocos do console e a fonte VCR) — nada
-é desenhado ou gerado ali. Os retratos do **Cosmo** e da **ADA** são desenhados por
-`tools/site_retratos.lua` no Aseprite (a ADA nunca aparece no jogo, então o retrato é um olho
+é desenhado ou gerado ali. Os retratos da **Artemis**, do **Cosmo** e da **ADA** são desenhados por
+`tools/site_retratos.lua` no Aseprite (a Artemis na paleta do sprite do jogo, com o anel de reativação do porão atrás; a ADA nunca aparece no jogo, então o retrato é um olho
 num monólito ligado a uma rede de chips). O card **HISTÓRIA** (a Lua, o sinal descendo, a
 torre da Elysium e a androide acordando no subsolo) foi **gerado pelo GPT (ChatGPT, geração de
 imagem)** a partir de um prompt descrevendo a cena, com a referência da Artemis anexada (ela
 também é gerada por IA; nenhum asset de pack foi usado como entrada). O original fica em
-`site/fonte/historia_gpt.png` e o `site_cards.py` só o recorta no formato do card. O retrato da **Artemis** é um recorte da referência
-`ChatGPT Image 22 de mai. de 2026, 19_59_11.png`, gerada por IA (ver a seção abaixo). Como os
+`site/fonte/historia_gpt.png` e o `site_cards.py` só o recorta no formato do card. Como os
 cards mostram arte de pack (fundos, inimigos), valem as licenças de cada pack — exibir o jogo na
 página dele não é o que as cláusulas anti-IA proíbem.
 

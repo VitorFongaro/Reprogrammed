@@ -1,7 +1,7 @@
--- Retratos do SITE (aba PERSONAGENS) que não existiam: COSMO e ADA.
+-- Retratos do SITE (aba PERSONAGENS): ARTEMIS, COSMO e ADA.
 --
--- A Artemis já tinha retrato (as imagens de referência em assets/sprites/,
--- recortadas por tools/site_cards.py). Estes dois são desenhados aqui, no
+-- Os três são desenhados aqui (a Artemis antes era um recorte de uma imagem do
+-- GPT, por tools/site_cards.py), no
 -- formato do card do site: vertical, 48x104 nativo, salvo em 5x (240x520) com
 -- vizinho-mais-próximo, para o pixel continuar pixel no navegador.
 --
@@ -44,6 +44,15 @@ end
 
 function Canvas:rect(x, y, w, h, col)
     for j = y, y + h - 1 do for i = x, x + w - 1 do self:dot(i, j, col) end end
+end
+
+function Canvas:hline(x, y, w, col) self:rect(x, y, w, 1, col) end
+function Canvas:vline(x, y, h, col) self:rect(x, y, 1, h, col) end
+
+function Canvas:ellipse(cx, cy, rx, ry, col)
+    for j = -ry, ry do for i = -rx, rx do
+        if (i * i) / (rx * rx) + (j * j) / (ry * ry) <= 1.0 then self:dot(cx + i, cy + j, col) end
+    end end
 end
 
 function Canvas:disc(cx, cy, r, col)
@@ -202,5 +211,138 @@ local function ada()
     return c
 end
 
-save("retrato_cosmo", cosmo())
-save("retrato_ada", ada())
+-- =============================================================================
+-- ARTEMIS: de corpo inteiro, como o retrato do GPT que ela tinha, mas na mesma
+-- paleta do sprite do jogo (assets/sprites/artemis/): chanel lilás, vestido
+-- roxo de mangas bufantes, avental branco, cinto e bolsa de couro. Atrás dela,
+-- o anel de reativação do porão onde acordou.
+-- =============================================================================
+local function artemis()
+    local c = canvas(W, H)
+    c:gradient(C(8, 8, 16), C(18, 14, 28))
+    -- chão do porão: grade em perspectiva, sumindo para cima
+    for y = 84, H - 1, 4 do c:rect(0, y, W, 1, C(22, 26, 40)) end
+    for x = -24, W + 24, 8 do c:line(24, 70, x, H - 1, C(16, 20, 32)) end
+    c:rect(0, 82, W, 2, C(10, 10, 18))
+    -- anel de reativação atrás da cabeça
+    c:ring(24, 24, 18, CYAN_DEEP)
+    c:ring(24, 24, 16, CYAN_DIM, 5)
+    for _ = 1, 14 do c:dot(math.random(2, W - 3), math.random(40, 80), math.random() < 0.4 and CYAN or CYAN_DIM) end
+
+    -- A personagem num canvas à parte, para o contorno ficar só nela.
+    local p = canvas(W, H)
+    p.img:clear(pc.rgba(0, 0, 0, 0))
+    local OUTL = C(4, 15, 29)
+    local H0, H1, H2, H3, H4 = C(67, 57, 149), C(99, 93, 163), C(127, 109, 196), C(177, 148, 230), C(200, 190, 245)
+    local SK, SK_D = C(251, 195, 171), C(222, 156, 136)
+    local D0, D1, D2, D3 = C(30, 20, 64), C(48, 32, 100), C(72, 50, 142), C(98, 76, 180)
+    local AP, AP_D, AP_L = C(236, 236, 246), C(184, 182, 214), C(252, 252, 255)
+    local BR0, BR1, GOLD = C(96, 56, 32), C(146, 90, 52), C(232, 184, 64)
+
+    -- saia: trapézio que abre para baixo, com a dobra clara à esquerda
+    for y = 53, 99 do
+        local t = (y - 53) / 46
+        local x0 = math.floor(13 - t * 7 + 0.5)
+        local x1 = math.floor(35 + t * 7 + 0.5)
+        p:rect(x0, y, x1 - x0 + 1, 1, D1)
+        p:dot(x0, y, D0); p:dot(x1, y, D0)
+        p:rect(x0 + 2, y, 2, 1, D2)
+        if y > 95 then p:rect(x0, y, x1 - x0 + 1, 1, y == 97 and D3 or D0) end
+    end
+    -- avental: abre um pouco menos que a saia, babado em zigue-zague na barra
+    for y = 53, 91 do
+        local t = (y - 53) / 38
+        local x0 = math.floor(17 - t * 4 + 0.5)
+        local x1 = math.floor(31 + t * 4 + 0.5)
+        p:rect(x0, y, x1 - x0 + 1, 1, AP)
+        p:dot(x1, y, AP_D); p:dot(x1 - 1, y, AP_D)
+        p:dot(x0 + 1, y, AP_L)
+    end
+    for x = 13, 35 do p:dot(x, 92 + (x % 2), AP_D); p:dot(x, 91 + (x % 2), AP) end
+    p:line(24, 60, 23, 88, AP_D)                          -- vinco do avental
+
+    -- tronco
+    p:rect(14, 33, 21, 20, D1)
+    p:rect(15, 34, 3, 18, D2)
+    p:rect(18, 36, 13, 15, AP)                            -- peitilho branco
+    p:rect(28, 37, 3, 13, AP_D)
+    p:hline(18, 36, 13, AP_L)
+    -- cinto, fivela e a bolsa no quadril
+    p:rect(14, 51, 21, 3, BR0); p:hline(14, 51, 21, BR1)
+    p:rect(22, 51, 5, 3, GOLD); p:dot(24, 52, BR0)
+    p:rect(31, 54, 6, 7, BR0); p:rect(31, 54, 6, 2, BR1); p:dot(34, 57, GOLD)
+
+    -- mangas bufantes, braços e mãos
+    for _, side in ipairs({ { 9, 16 }, { 32, 39 } }) do
+        local a, b = side[1], side[2]
+        p:ellipse((a + b) // 2, 37, 4, 4, D2)
+        p:ellipse((a + b) // 2 - 1, 36, 2, 2, D3)
+        p:rect(a + 1, 40, 5, 14, D1)
+        p:rect(a + 1, 40, 1, 14, D2)
+        p:rect(a + 1, 54, 5, 2, AP)                       -- punho branco
+        p:rect(a + 2, 56, 3, 4, SK); p:dot(a + 4, 59, SK_D)
+    end
+
+    -- gola alta branca com a cruzinha
+    p:rect(19, 30, 11, 4, AP); p:hline(19, 33, 11, AP_D)
+    p:dot(24, 31, D2); p:dot(23, 32, D2); p:dot(25, 32, D2); p:dot(24, 32, D2)
+    -- pescoço
+    p:rect(22, 27, 5, 3, SK_D)
+
+    -- cabeça: cabelo atrás, rosto, depois franja e laterais por cima
+    p:ellipse(24, 17, 10, 9, H2)                          -- volume de trás
+    p:rect(14, 17, 21, 11, H1)                            -- comprimento do chanel
+    p:ellipse(24, 21, 6, 7, SK)                           -- rosto
+    p:rect(19, 25, 11, 2, SK)
+    p:rect(14, 16, 4, 13, H2); p:rect(31, 16, 4, 13, H2)  -- laterais, emoldurando
+    p:vline(14, 18, 10, H1); p:vline(34, 18, 10, H1)
+    p:dot(15, 29, H1); p:dot(33, 29, H1); p:dot(16, 29, H2); p:dot(32, 29, H2)
+    -- franja repartida de lado, terminando ACIMA dos olhos
+    for x = 17, 31 do
+        local len = (x < 23) and (4 + (x % 2)) or (3 + ((x + 1) % 2))
+        if x == 23 then len = 2 end                       -- a risca
+        p:vline(x, 12, len, (x % 3 == 0) and H1 or H2)
+    end
+    p:ellipse(20, 11, 4, 2, H3)                           -- brilho do cabelo
+    p:dot(18, 10, H4); p:dot(19, 10, H4); p:dot(21, 9, H4)
+    -- olhos grandes: cílio, íris roxa e brilho branco
+    for _, ex in ipairs({ 19, 27 }) do
+        p:hline(ex - 1, 18, 4, OUTL)
+        p:rect(ex, 19, 3, 3, H0)
+        p:rect(ex, 20, 3, 2, H2)
+        p:dot(ex + 1, 21, H3)
+        p:dot(ex, 19, AP_L)
+    end
+    p:dot(24, 23, SK_D)                                   -- nariz
+    p:hline(23, 25, 2, C(204, 112, 124))                 -- boca
+    p:dot(18, 23, C(246, 170, 160)); p:dot(30, 23, C(246, 170, 160))   -- bochechas
+
+    -- contorno de 1px em volta dela
+    local marks = {}
+    for y = 0, H - 1 do for x = 0, W - 1 do
+        local a = pc.rgbaA(p.img:getPixel(x, y))
+        if a == 0 then
+            for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+                local nx, ny = x + d[1], y + d[2]
+                if nx >= 0 and ny >= 0 and nx < W and ny < H and pc.rgbaA(p.img:getPixel(nx, ny)) > 0 then
+                    marks[#marks + 1] = { x, y }
+                    break
+                end
+            end
+        end
+    end end
+    for _, m in ipairs(marks) do p:dot(m[1], m[2], OUTL) end
+
+    -- sombra no chão e composição por cima do fundo
+    for i = -12, 12 do c:dot(24 + i, 100, C(6, 6, 12)); if math.abs(i) < 9 then c:dot(24 + i, 101, C(6, 6, 12)) end end
+    for y = 0, H - 1 do for x = 0, W - 1 do
+        local px = p.img:getPixel(x, y)
+        if pc.rgbaA(px) > 0 then c:dot(x, y, px) end
+    end end
+    return c
+end
+
+local ONLY = app.params["only"]
+if not ONLY or ONLY == "cosmo" then save("retrato_cosmo", cosmo()) end
+if not ONLY or ONLY == "ada" then save("retrato_ada", ada()) end
+if not ONLY or ONLY == "artemis" then save("retrato_artemis", artemis()) end
