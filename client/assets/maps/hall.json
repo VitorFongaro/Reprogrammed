@@ -59,6 +59,54 @@
     },
     {
      "id": 3,
+     "gid": 2,
+     "name": "sofa_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 246,
+     "y": 190,
+     "width": 128,
+     "height": 60
+    },
+    {
+     "id": 4,
+     "gid": 5,
+     "name": "poltrona_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 386,
+     "y": 190,
+     "width": 56,
+     "height": 60
+    },
+    {
+     "id": 5,
+     "gid": 2,
+     "name": "sofa_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 906,
+     "y": 190,
+     "width": 128,
+     "height": 60
+    },
+    {
+     "id": 6,
+     "gid": 5,
+     "name": "poltrona_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 838,
+     "y": 190,
+     "width": 56,
+     "height": 60
+    },
+    {
+     "id": 7,
      "gid": 1,
      "name": "vaso_ficus",
      "rotation": 0,
@@ -70,7 +118,7 @@
      "height": 84
     },
     {
-     "id": 4,
+     "id": 8,
      "gid": 1,
      "name": "vaso_ficus",
      "rotation": 0,
@@ -80,54 +128,6 @@
      "y": 668,
      "width": 44,
      "height": 84
-    },
-    {
-     "id": 5,
-     "gid": 2,
-     "name": "sofa_espera",
-     "rotation": 0,
-     "type": "",
-     "visible": true,
-     "x": 100,
-     "y": 668,
-     "width": 128,
-     "height": 60
-    },
-    {
-     "id": 6,
-     "gid": 5,
-     "name": "poltrona_espera",
-     "rotation": 0,
-     "type": "",
-     "visible": true,
-     "x": 240,
-     "y": 668,
-     "width": 56,
-     "height": 60
-    },
-    {
-     "id": 7,
-     "gid": 2,
-     "name": "sofa_espera",
-     "rotation": 0,
-     "type": "",
-     "visible": true,
-     "x": 1052,
-     "y": 668,
-     "width": 128,
-     "height": 60
-    },
-    {
-     "id": 8,
-     "gid": 5,
-     "name": "poltrona_espera",
-     "rotation": 0,
-     "type": "",
-     "visible": true,
-     "x": 984,
-     "y": 668,
-     "width": 56,
-     "height": 60
     },
     {
      "id": 9,
@@ -189,6 +189,50 @@
     },
     {
      "id": 53,
+     "name": "sofa_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 248,
+     "y": 160,
+     "width": 124,
+     "height": 30
+    },
+    {
+     "id": 54,
+     "name": "poltrona_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 388,
+     "y": 160,
+     "width": 52,
+     "height": 30
+    },
+    {
+     "id": 55,
+     "name": "sofa_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 908,
+     "y": 160,
+     "width": 124,
+     "height": 30
+    },
+    {
+     "id": 56,
+     "name": "poltrona_espera",
+     "rotation": 0,
+     "type": "",
+     "visible": true,
+     "x": 840,
+     "y": 160,
+     "width": 52,
+     "height": 30
+    },
+    {
+     "id": 57,
      "name": "vaso_ficus",
      "rotation": 0,
      "type": "",
@@ -199,7 +243,7 @@
      "height": 32
     },
     {
-     "id": 54,
+     "id": 58,
      "name": "vaso_ficus",
      "rotation": 0,
      "type": "",
@@ -208,50 +252,6 @@
      "y": 636,
      "width": 40,
      "height": 32
-    },
-    {
-     "id": 55,
-     "name": "sofa_espera",
-     "rotation": 0,
-     "type": "",
-     "visible": true,
-     "x": 102,
-     "y": 638,
-     "width": 124,
-     "height": 30
-    },
-    {
-     "id": 56,
-     "name": "poltrona_espera",
-     "rotation": 0,
-     "type": "",
-     "visible": true,
-     "x": 242,
-     "y": 638,
-     "width": 52,
-     "height": 30
-    },
-    {
-     "id": 57,
-     "name": "sofa_espera",
-     "rotation": 0,
-     "type": "",
-     "visible": true,
-     "x": 1054,
-     "y": 638,
-     "width": 124,
-     "height": 30
-    },
-    {
-     "id": 58,
-     "name": "poltrona_espera",
-     "rotation": 0,
-     "type": "",
-     "visible": true,
-     "x": 986,
-     "y": 638,
-     "width": 52,
-     "height": 30
     },
     {
      "id": 59,
