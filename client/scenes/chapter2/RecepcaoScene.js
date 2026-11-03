@@ -125,7 +125,8 @@ export default class RecepcaoScene extends BaseRoomScene {
 
         // Chegada nova (catracas ainda travadas): card do capítulo e o Cosmo.
         // Quem volta pelo CONTINUAR já passou por isso.
-        if (!this.gatesOpen) {
+        // Nova tentativa depois de morrer também não repete o card.
+        if (!this.gatesOpen && !this.retrying) {
             this.showChapterCard(() => this.playDialogue(ENTRY_SCRIPT));
         }
     }

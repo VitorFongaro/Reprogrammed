@@ -11,7 +11,7 @@ import treinamentoMap from "../../assets/maps/treinamento.json";
 // outro lado desliga com `lasers = false`) e três robôs patrulham/atacam o lado
 // direito. Cada robô se neutraliza reprogramando ([R] seleciona direto → batalha
 // de reprogramação) ou no melee ([F], placeholder). Encostar/levar tiro tira HP
-// (base); zerar reinicia a Artemis no spawn. A porta abre com o laser desligado
+// (base); zerar reinicia a sala. A porta abre com o laser desligado
 // e todos os robôs desativados.
 //
 // Cenário: fundo gerado por tools/treinamento_bg.py (mesma parede e mesmo tile
@@ -80,7 +80,7 @@ export default class TreinamentoScene extends BaseRoomScene {
 
         ENEMY_SPAWNS.forEach((spawn) => new Enemy(this, spawn.x, spawn.y, { type: spawn.type }));
 
-        this.playDialogue(ENTRY_SCRIPT);
+        this.playEntryDialogue(ENTRY_SCRIPT);
     }
 
     onRoomUpdate() {

@@ -101,7 +101,7 @@ export default class SalaLeoScene extends BaseRoomScene {
         this.events.on("resume", this.onBattleResume, this);
         this.events.once("shutdown", () => this.events.off("resume", this.onBattleResume, this));
 
-        this.playDialogue(ENTRY_SCRIPT);
+        this.playEntryDialogue(ENTRY_SCRIPT);
     }
 
     createLeo() {

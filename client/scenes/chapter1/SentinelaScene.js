@@ -99,7 +99,7 @@ export default class SentinelaScene extends BaseRoomScene {
         this.events.on("resume", onResume);
         this.events.once("shutdown", () => this.events.off("resume", onResume));
 
-        this.playDialogue(ENTRY_SCRIPT);
+        this.playEntryDialogue(ENTRY_SCRIPT);
     }
 
     createUnit(u) {

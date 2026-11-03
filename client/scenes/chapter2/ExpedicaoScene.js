@@ -118,17 +118,23 @@ export default class ExpedicaoScene extends BaseRoomScene {
             if (!puzzle || !dialogueDone || this.sorter) return;
             this.hideWaiting();
             this.buildSorter(puzzle);
-            if (puzzle.source === "ai") {
+            if (!this.retrying && puzzle.source === "ai") {
                 this.playDialogue(AI_SCRIPT);
             }
         };
 
-        requestAiPuzzle(PUZZLE_ID, triagemPuzzle).then((result) => {
+        // Nova tentativa depois de morrer: o MESMO puzzle (sem outra ida à IA).
+        // `lastPuzzle` sobrevive ao restart porque a instância da cena é a mesma.
+        const request = this.retrying && this.lastPuzzle
+            ? Promise.resolve(this.lastPuzzle)
+            : requestAiPuzzle(PUZZLE_ID, triagemPuzzle);
+        request.then((result) => {
             if (left) return;            // saiu da sala antes de a IA responder
             puzzle = result;
+            this.lastPuzzle = result;
             ready();
         });
-        this.playDialogue(ENTRY_SCRIPT, () => {
+        this.playEntryDialogue(ENTRY_SCRIPT, () => {
             dialogueDone = true;
             // A esteira e a pilha só ganham colisor quando o puzzle chega:
             // andar antes deixaria a Artemis atravessar para o lado do

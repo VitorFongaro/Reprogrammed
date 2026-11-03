@@ -18,8 +18,8 @@ import hallMap from "../../assets/maps/hall.json";
 //      janela do [R].
 //   2. Reprogramada, vira o combate POR TURNOS da BattleScene com os padrões
 //      dela. A vitória larga o chip "cache" (boss de capítulo) e abre a porta.
-// Cair na fase 1 devolve ela ao começo; perder a fase 2 reinicia só o embate
-// por turnos (regra da BattleScene).
+// Morrer em qualquer das duas fases reinicia a SALA, com ela de volta ao
+// começo da fase 1 (BaseRoomScene.restartRoom).
 //
 // Arte: fundo por tools/hall_bg.py; os móveis são os da recepção, no Tiled
 // (assets/maps/hall.json).
@@ -138,7 +138,7 @@ export default class HallScene extends BaseRoomScene {
         this.events.on("resume", this.onBattleResume, this);
         this.events.once("shutdown", () => this.events.off("resume", this.onBattleResume, this));
 
-        this.playDialogue(HALL_SCRIPT, () => this.witch.start());
+        this.playEntryDialogue(HALL_SCRIPT, () => this.witch.start());
     }
 
     startBattle() {
@@ -149,8 +149,9 @@ export default class HallScene extends BaseRoomScene {
         this.scene.pause();
     }
 
-    // A BattleScene só devolve a sala na vitória (a derrota reinicia o embate
-    // lá dentro). O resto dos resumes (menu de pausa, inventário) passa reto.
+    // A BattleScene devolve a sala na vitória; a derrota (lá ou aqui na fase 1)
+    // reinicia a sala inteira, e a WITCH volta ao começo junto (BaseRoomScene).
+    // O resto dos resumes (menu de pausa, inventário) passa reto.
     onBattleResume(_scene, data) {
         if (!data?.victory || this.witch.state !== "battle") {
             return;
@@ -159,11 +160,4 @@ export default class HallScene extends BaseRoomScene {
         this.time.delayedCall(600, () => this.playDialogue([...WITCH_VICTORY_SCRIPT, ...DOOR_SCRIPT], () => this.unlockDoor()));
     }
 
-    // A Artemis caiu na fase 1: ela volta para o começo junto.
-    onPlayerDowned() {
-        super.onPlayerDowned();
-        if (!this.witch.disabled) {
-            this.witch.reset();
-        }
-    }
 }

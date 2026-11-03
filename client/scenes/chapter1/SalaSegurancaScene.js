@@ -63,7 +63,7 @@ export default class SalaSegurancaScene extends BaseRoomScene {
         this.events.on("resume", onResume);
         this.events.once("shutdown", () => this.events.off("resume", onResume));
 
-        this.playDialogue(ENTRY_SCRIPT);
+        this.playEntryDialogue(ENTRY_SCRIPT);
     }
 
     // --- Terminal do núcleo: abre a tela de combate ---

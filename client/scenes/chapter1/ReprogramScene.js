@@ -3,7 +3,7 @@ import Enemy from "../../characters/Enemy";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import { createConsole } from "../../ui/ConditionalConsole";
 import DodgeBox from "../../ui/DodgeBox";
-import { getHp, getMaxHp, damage as damageVitals, fullHeal } from "../../state/vitals";
+import { getHp, getMaxHp, damage as damageVitals } from "../../state/vitals";
 import Sfx from "../../ui/Sfx";
 
 // Batalha de REPROGRAMAÇÃO de um inimigo (aberta pelo modo [R] da sala via
@@ -288,21 +288,20 @@ export default class ReprogramScene extends Phaser.Scene {
         this.time.delayedCall(900, () => this.finish(true));
     }
 
+    // HP zerado aqui dentro é morte como outra qualquer: a sala reinicia
+    // (`defeat`, ver BaseRoomScene.restartRoom, que também cura).
     fail() {
         this.finished = true;
-        // HP zerado é uma "derrota": restaura a vitalidade (reset de checkpoint,
-        // como a morte na sala e o restart do embate), então a Artemis recua e
-        // volta à sala inteira em vez de chegar lá com 0 de HP.
-        fullHeal();
-        this.setStatus("REPROGRAMAÇÃO FALHOU — RECUANDO", "#ff4545");
+        this.setStatus("REPROGRAMAÇÃO FALHOU — REINICIANDO A SALA", "#ff4545");
         this.cameras.main.flash(300, 255, 40, 40);
-        this.time.delayedCall(1100, () => this.finish(false));
+        this.time.delayedCall(1100, () => this.finish(false, { defeat: true }));
     }
 
-    finish(disabled) {
+    finish(disabled, extra = {}) {
         this.scene.stop();
         this.scene.resume(this.config.returnScene, {
-            enemyReprogram: { index: this.config.enemyIndex, disabled }
+            enemyReprogram: { index: this.config.enemyIndex, disabled },
+            ...extra
         });
     }
 

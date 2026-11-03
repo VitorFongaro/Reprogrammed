@@ -4,7 +4,7 @@ import CosmoCompanion from "../../characters/CosmoCompanion";
 import DialogueBox from "../../ui/DialogueBox";
 import Music from "../../ui/Music";
 import { tiledColliders, placeTiledObjects, preloadProps } from "../../utils/tiledMap";
-import { enterScene, save as saveProgress } from "../../state/progress";
+import { enterScene, save as saveProgress, roomEntryState, restoreRoomEntry } from "../../state/progress";
 import { getHp, getMaxHp, damage as damageVitals, heal as healVitals, fullHeal, enterChapterScene } from "../../state/vitals";
 import fxHealUrl from "../../assets/sprites/effects/fx_heal.png";
 import { PROP_EXAMINE, ENEMY_EXAMINE } from "../../data/examine";
@@ -99,10 +99,20 @@ export default class BaseRoomScene extends Phaser.Scene {
         preloadItemDrops(this);
     }
 
-    create() {
+    create(data) {
         // O save grava a sala onde o jogador está; registrar aqui vale para
         // todas as salas de uma vez.
         enterScene(this.scene.key);
+        // Morte reinicia a sala (restartRoom): `retrying` diz às salas que é
+        // uma nova tentativa, para pularem o diálogo de entrada; o retrato de
+        // entrada é para onde a sala volta.
+        this.retrying = Boolean(data?.retry);
+        this.restarting = false;
+        this.entryState = roomEntryState();
+        // A instância sobrevive ao restart: sem zerar, o resyncHp acharia que a
+        // barra de HP já existe e tentaria atualizar a da sala anterior.
+        this.hpBarGraphics = null;
+        this.hpText = null;
         // Troca de capítulo cura por completo (única cura automática); passar de
         // sala dentro do mesmo capítulo NÃO cura.
         enterChapterScene(this.scene.key);
@@ -180,9 +190,38 @@ export default class BaseRoomScene extends Phaser.Scene {
         // onRoomCreate porque é lá que os puzzles restaurados do save
         // reaplicam o estado da sala — gravar antes arriscaria salvar um
         // retrato pela metade.
-        if (this.autoSave) {
+        // Nova tentativa não grava: a sala é a mesma da entrada, já gravada.
+        if (this.autoSave && !this.retrying) {
             this.saveCheckpoint();
         }
+    }
+
+    // Diálogo de ENTRADA da sala. Numa nova tentativa (depois de morrer) ele não
+    // toca de novo; o `onComplete` roda na hora, porque é nele que muitas salas
+    // começam a luta.
+    playEntryDialogue(script, onComplete) {
+        if (this.retrying) {
+            onComplete?.();
+            return;
+        }
+        this.playDialogue(script, onComplete);
+    }
+
+    // Reinicia a sala do zero, como estava na entrada: inimigos, puzzles
+    // resolvidos lá dentro e itens pegos ou gastos voltam ao que eram (o
+    // retrato de `entryState`). O HP volta cheio — é a derrota, o mesmo reset
+    // de checkpoint de antes, e entrar ferida numa sala difícil viraria um
+    // laço de mortes. O perfil de aprendizagem não volta: tentativa é registro.
+    restartRoom() {
+        if (this.restarting) {
+            return;
+        }
+        this.restarting = true;
+        this.player?.setEnabled(false);
+        fullHeal();
+        restoreRoomEntry(this.entryState);
+        this.cameras.main.fadeOut(350, 0, 0, 0);
+        this.cameras.main.once("camerafadeoutcomplete", () => this.scene.restart({ retry: true }));
     }
 
     // Save automático de entrada de sala. Não substitui o SaveComputer: o
@@ -822,20 +861,14 @@ export default class BaseRoomScene extends Phaser.Scene {
         }
     }
 
-    // HP zerado: reinicia a Artemis no spawn (sem reiniciar a sala inteira). A
-    // "derrota" restaura o HP — é o reset do checkpoint, não uma cura de jogo.
+    // HP zerado: a SALA reinicia, do jeito que estava na entrada (restartRoom).
+    // Antes só a Artemis voltava ao spawn, com os inimigos e os puzzles do jeito
+    // que ficaram — morrer quase não custava nada.
     onPlayerDowned() {
         this.player.setEnabled(false);
         this.cameras.main.flash(400, 255, 40, 40);
-        this.setStatus("> SISTEMAS CRÍTICOS — REINICIANDO", "#ff4545");
-        this.time.delayedCall(900, () => {
-            this.player.sprite.setPosition(this.spawn.x, this.spawn.y);
-            this.hp = fullHeal();
-            this.updateHpBar();
-            this.playerInvulnUntil = this.time.now + PLAYER_IFRAME_MS;
-            this.player.setEnabled(true);
-            this.setStatus("");
-        });
+        this.setStatus("> SISTEMAS CRÍTICOS — REINICIANDO A SALA", "#ff4545");
+        this.time.delayedCall(900, () => this.restartRoom());
     }
 
     drawHpBar() {
@@ -852,7 +885,13 @@ export default class BaseRoomScene extends Phaser.Scene {
     // Volta de uma sub-cena que mexeu no HP global (batalha/reprograma/inventário):
     // alinha o this.hp e a barra com o vitals, desenhando a barra se a Artemis
     // voltou ferida a uma sala que estava sem ela.
-    resyncHp() {
+    // Também é por aqui que a derrota numa batalha ou no [R] chega: quem caiu
+    // lá devolve a sala com `{ defeat: true }`, e a sala recomeça.
+    resyncHp(_sys, data) {
+        if (data?.defeat) {
+            this.restartRoom();
+            return;
+        }
         if (this.hp !== getHp()) {
             this.hp = getHp();
             if (!this.hpBarGraphics && this.hp < this.maxHp) {

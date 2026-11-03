@@ -134,7 +134,15 @@ export default class DepositoScene extends BaseRoomScene {
         // desenhar as caixas já no lugar.
         const corridorDone = isSolved(CORREDOR_ID);
         const bridgeDone = isSolved(PONTE_ID);
-        const fetchPuzzle = (id, local, done) => (done ? Promise.resolve(local()) : requestAiPuzzle(id, local));
+        // Nova tentativa depois de morrer: a sala volta, mas com as MESMAS caixas
+        // (sem outra ida à IA nem outra espera). `lastPuzzles` sobrevive ao
+        // restart porque a instância da cena é a mesma.
+        const retry = this.retrying ? this.lastPuzzles : null;
+        const fetchPuzzle = (id, local, done, i) => {
+            if (done) return Promise.resolve(local());
+            if (retry) return Promise.resolve(retry[i]);
+            return requestAiPuzzle(id, local);
+        };
 
         if (corridorDone && bridgeDone) {
             this.buildCorridor(corredorPuzzle());
@@ -156,20 +164,21 @@ export default class DepositoScene extends BaseRoomScene {
             this.buildBridge(bridgePuzzle);
             this.spawnGuard();
             this.cameras.main.flash(260, 74, 214, 255, false);
-            if (puzzles.some((p) => p.source === "ai")) {
+            if (!this.retrying && puzzles.some((p) => p.source === "ai")) {
                 this.playDialogue(AI_SCRIPT);
             }
         };
 
         Promise.all([
-            fetchPuzzle(CORREDOR_ID, corredorPuzzle, corridorDone),
-            fetchPuzzle(PONTE_ID, pontePuzzle, bridgeDone)
+            fetchPuzzle(CORREDOR_ID, corredorPuzzle, corridorDone, 0),
+            fetchPuzzle(PONTE_ID, pontePuzzle, bridgeDone, 1)
         ]).then((result) => {
             if (left) return;            // saiu da sala antes de a IA responder
             puzzles = result;
+            this.lastPuzzles = result;
             ready();
         });
-        this.playDialogue(corridorDone ? RETURN_SCRIPT : ENTRY_SCRIPT, () => {
+        this.playEntryDialogue(corridorDone ? RETURN_SCRIPT : ENTRY_SCRIPT, () => {
             dialogueDone = true;
             // As estantes e o fosso ainda não existem: andar agora deixaria a
             // Artemis onde o colisor vai nascer.

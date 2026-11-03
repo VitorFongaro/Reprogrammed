@@ -78,7 +78,7 @@ export default class SalaControleScene extends BaseRoomScene {
         ENEMY_SPAWNS.forEach((spawn) => new Enemy(this, spawn.x, spawn.y, { type: spawn.type }));
 
         this.restoreFromSave();
-        this.playDialogue(ENTRY_SCRIPT);
+        this.playEntryDialogue(ENTRY_SCRIPT);
     }
 
     // Save carregado com os dois painéis prontos: abre a porta sem repetir a

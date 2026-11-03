@@ -65,7 +65,7 @@ export default class SalaArquivosScene extends BaseRoomScene {
             overrides: { wander: false, speed: 0, slamMs: 3200, reprogramStages: 3 }
         });
 
-        this.playDialogue(ENTRY_SCRIPT);
+        this.playEntryDialogue(ENTRY_SCRIPT);
     }
 
     onRoomUpdate() {

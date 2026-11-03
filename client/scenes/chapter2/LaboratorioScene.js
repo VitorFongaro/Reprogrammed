@@ -159,6 +159,6 @@ export default class LaboratorioScene extends BaseRoomScene {
             onInteract: () => this.scene.start("cap2-sala-witch")
         });
 
-        this.playDialogue(ENTRY_SCRIPT);
+        this.playEntryDialogue(ENTRY_SCRIPT);
     }
 }

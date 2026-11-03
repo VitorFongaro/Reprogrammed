@@ -86,7 +86,7 @@ export default class SalaWitchScene extends BaseRoomScene {
         this.events.on("resume", this.onBattleResume, this);
         this.events.once("shutdown", () => this.events.off("resume", this.onBattleResume, this));
 
-        this.playDialogue(WITCH_ENTRY_SCRIPT, () => this.witch.start());
+        this.playEntryDialogue(WITCH_ENTRY_SCRIPT, () => this.witch.start());
     }
 
     startBattle() {
@@ -97,8 +97,9 @@ export default class SalaWitchScene extends BaseRoomScene {
         this.scene.pause();
     }
 
-    // A BattleScene só devolve a sala na vitória (a derrota reinicia o embate
-    // lá dentro). O resto dos resumes (menu de pausa, inventário) passa reto.
+    // A BattleScene devolve a sala na vitória; a derrota (lá ou aqui na fase 1)
+    // reinicia a sala inteira, e a WITCH volta ao começo junto (BaseRoomScene).
+    // O resto dos resumes (menu de pausa, inventário) passa reto.
     onBattleResume(_scene, data) {
         if (!data?.victory || this.witch.state !== "battle") {
             return;
@@ -107,11 +108,4 @@ export default class SalaWitchScene extends BaseRoomScene {
         this.time.delayedCall(600, () => this.playDialogue(WITCH_VICTORY_SCRIPT));
     }
 
-    // A Artemis caiu na fase 1: ela volta para o começo junto.
-    onPlayerDowned() {
-        super.onPlayerDowned();
-        if (!this.witch.disabled) {
-            this.witch.reset();
-        }
-    }
 }

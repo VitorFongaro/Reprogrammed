@@ -5,7 +5,7 @@ import Music from "../../ui/Music";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import { createConsole } from "../../ui/ConditionalConsole";
 import projetilUrl from "../../assets/sprites/projetil/projetil.png";
-import { MAX_HP, getHp, setHp, fullHeal } from "../../state/vitals";
+import { MAX_HP, getHp, setHp } from "../../state/vitals";
 import { addItem } from "../../state/inventory";
 import { itemDef } from "../../data/items";
 import { ENIAC_DEFENSES, resolvePuzzle } from "../../data/puzzleVariants";
@@ -200,6 +200,8 @@ export default class BattleScene extends Phaser.Scene {
 
     init(data) {
         this.config = { ...DEFAULT_CONFIG, ...(data?.config ?? {}) };
+        // A instância da cena é reaproveitada entre um embate e outro.
+        this.defeated = false;
     }
 
     preload() {
@@ -1902,30 +1904,22 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     // --- Fim de combate ---
-    // Derrota: o embate reinicia do zero (HP, boss e variáveis).
+    // Derrota: a batalha fecha e a SALA de onde ela veio reinicia do zero
+    // (BaseRoomScene.restartRoom, que também cura e devolve os itens gastos
+    // aqui). Antes só o embate recomeçava, ali mesmo, sem custo nenhum.
     defeat() {
+        if (this.defeated) {
+            return;
+        }
+        this.defeated = true;
         this.stopDodge();
         this.menu.hide();
         this.cameras.main.flash(500, 255, 40, 40);
-        this.setBattleStatus("> UNIDADE NEUTRALIZADA — REINICIANDO SISTEMAS...", "#ff4545");
+        this.setBattleStatus("> UNIDADE NEUTRALIZADA — REINICIANDO A SALA...", "#ff4545");
 
         this.time.delayedCall(2200, () => {
-            this.hp = fullHeal();
-            this.bossHp = this.config.maxHp;
-            this.forca = null;
-            this.reprogramCount = 0;
-            // O embate recomeça do zero: o bônus do Cache e o Overclock somem
-            // junto com o resto (os itens em si já foram consumidos).
-            this.maxReprograms = this.config.maxReprograms ?? MAX_REPROGRAMS;
-            this.ataqueDobrado = false;
-            this.bossAttackIndex = 0;
-            this.lastWasDefense = false;
-            this.invulnUntil = 0;
-            this.updateHpBar();
-            this.updateBossHp();
-            this.updateForca();
-            this.setBattleStatus("> SISTEMAS RESTAURADOS — O EMBATE RECOMEÇA", "#4ad6ff");
-            this.time.delayedCall(900, () => this.playerTurn());
+            this.scene.stop();
+            this.scene.resume(this.config.returnScene, { defeat: true });
         });
     }
 

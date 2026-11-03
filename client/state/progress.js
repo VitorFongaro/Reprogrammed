@@ -64,6 +64,20 @@ export function snapshot() {
     };
 }
 
+// Retrato da sala na ENTRADA (puzzles resolvidos e inventário), para a morte
+// reiniciar a sala do jeito que ela estava: o que foi resolvido ou gasto lá
+// dentro volta. Não toca na sala atual nem no HP (a derrota cura sozinha), e
+// não é save: nada aqui vai para a API.
+export function roomEntryState() {
+    return { solvedPuzzles: [...solved], inventory: snapshotInventory() };
+}
+
+export function restoreRoomEntry(state) {
+    if (!state) return;
+    solved = new Set(state.solvedPuzzles);
+    applyInventory(state.inventory);
+}
+
 export function applySnapshot(data) {
     currentScene = data?.scene || FIRST_SCENE;
     solved = new Set(Array.isArray(data?.solvedPuzzles) ? data.solvedPuzzles : []);
