@@ -429,7 +429,7 @@ export default class WitchBoss {
         }
         s.tweens.add({
             targets: this.sprite, alpha: 0.55, duration: ms / 4, yoyo: true, repeat: 1,
-            onStart: () => this.sprite.setTintFill(0xffffff),
+            onStart: () => this.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL),
             onComplete: () => {
                 this.sprite.setAlpha(1);
                 this.applyTint();
@@ -618,7 +618,7 @@ export default class WitchBoss {
             d.ghostAt = now + DASH_GHOST_MS;
             const ghost = s.add.sprite(this.x, this.y, this.sprite.texture.key, this.sprite.frame.name)
                 .setScale(SCALE).setOrigin(this.sprite.originX, this.sprite.originY)
-                .setTintFill(0xf2f0ff).setAlpha(0.45).setDepth(this.sprite.depth - 1);
+                .setTint(0xf2f0ff).setTintMode(Phaser.TintModes.FILL).setAlpha(0.45).setDepth(this.sprite.depth - 1);
             s.tweens.add({ targets: ghost, alpha: 0, duration: 260, onComplete: () => ghost.destroy() });
         }
         if (Phaser.Math.Distance.Between(this.x, this.y + FEET, player.sprite.x, player.feetY) <= DASH_HIT_R) {
@@ -1004,7 +1004,7 @@ export default class WitchBoss {
             return;
         }
         this.nextHitAt = now + HIT_COOLDOWN_MS;
-        this.sprite.setTintFill(0xffffff);
+        this.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
         s.time.delayedCall(80, () => this.applyTint());
         Sfx.play(s, "bump", 0.6);
         this.drain(TIRE_PER_HIT);
@@ -1152,9 +1152,9 @@ export default class WitchBoss {
 
     applyTint() {
         if (this.state === "tired") {
-            this.sprite.setTint(TIRED_TINT);
+            this.sprite.setTint(TIRED_TINT).setTintMode(Phaser.TintModes.MULTIPLY);
         } else {
-            this.sprite.clearTint();
+            this.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
         }
     }
 

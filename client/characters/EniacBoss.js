@@ -1,3 +1,4 @@
+import Phaser from "phaser";
 import bossSheet from "../assets/sprites/boss/boss.png";
 
 // Boss do capítulo 1 (sala de segurança): a unidade-sentinela do ENIAC. Sprite
@@ -50,9 +51,9 @@ export default class EniacBoss {
 
     restoreTint() {
         if (this.baseTint) {
-            this.sprite.setTint(this.baseTint);
+            this.sprite.setTint(this.baseTint).setTintMode(Phaser.TintModes.MULTIPLY);
         } else {
-            this.sprite.clearTint();
+            this.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
         }
     }
 
@@ -61,7 +62,7 @@ export default class EniacBoss {
         if (this.defeated) {
             return;
         }
-        this.sprite.setTintFill(0xff4545);
+        this.sprite.setTint(0xff4545).setTintMode(Phaser.TintModes.FILL);
         this.scene.time.delayedCall(100, () => {
             if (!this.defeated) {
                 this.restoreTint();
@@ -85,7 +86,7 @@ export default class EniacBoss {
             onComplete?.();
             return;
         }
-        this.sprite.setTintFill(0xffb347);
+        this.sprite.setTint(0xffb347).setTintMode(Phaser.TintModes.FILL);
         this.scene.time.delayedCall(140, () => {
             if (!this.defeated) {
                 this.restoreTint();

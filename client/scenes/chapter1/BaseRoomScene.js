@@ -640,7 +640,7 @@ export default class BaseRoomScene extends Phaser.Scene {
             .setScale(sprite.scaleX, sprite.scaleY)
             .setDepth(sprite.depth - 1)
             .setAlpha(0.45);
-        ghost.setTintFill(0x4ad6ff);
+        ghost.setTint(0x4ad6ff).setTintMode(Phaser.TintModes.FILL);
 
         this.tweens.add({
             targets: ghost,

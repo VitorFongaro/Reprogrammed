@@ -1,6 +1,8 @@
 @font-face {
     font-family: 'VCR';
-    src: url('../assets/fonts/VCR_OSD_MONO_1.001.ttf') format('truetype');
+    /* m6x11plus (Daniel Linssen): mais legível que a VCR OSD Mono no texto corrido.
+       O nome 'VCR' ficou para não mexer nas cenas. */
+    src: url('../assets/fonts/m6x11plus.ttf') format('truetype');
 }
 
 * {

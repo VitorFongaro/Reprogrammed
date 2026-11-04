@@ -203,7 +203,7 @@ export default class ReprogramScene extends Phaser.Scene {
             targets: this.portrait,
             y: this.portraitBaseY + 24, duration: 150, yoyo: true, ease: "Quad.easeOut"
         });
-        this.portrait.setTintFill(0xffb347);
+        this.portrait.setTint(0xffb347).setTintMode(Phaser.TintModes.FILL);
         this.time.delayedCall(140, () => this.restorePortraitTint());
 
         this.dodge.start({
@@ -274,7 +274,7 @@ export default class ReprogramScene extends Phaser.Scene {
         if (this.finished) {
             return;
         }
-        this.portrait.setTintFill(0xffffff);
+        this.portrait.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
         this.cameras.main.shake(160, 0.005);
         this.time.delayedCall(120, () => this.restorePortraitTint());
         this.setStatus(`CAMADA ${this.enemyStage}/${this.enemyStages} QUEBRADA — ELE RESISTE`, "#ffb347");
@@ -307,9 +307,9 @@ export default class ReprogramScene extends Phaser.Scene {
 
     restorePortraitTint() {
         if (this.portraitTint) {
-            this.portrait.setTint(this.portraitTint);
+            this.portrait.setTint(this.portraitTint).setTintMode(Phaser.TintModes.MULTIPLY);
         } else {
-            this.portrait.clearTint();
+            this.portrait.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
         }
     }
 }

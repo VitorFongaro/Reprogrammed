@@ -209,6 +209,13 @@ abrindo/fechando, na `InventoryScene`). Tocados pelo mesmo helper `Sfx` (tiros c
 menor para não dominarem). Licença: uso livre inclusive comercial; **atribuição pedida** — creditar
 "Sound Effects by Coffee 'Valen' Bat" (doar no itch.io é apreciado). Creditar no TCC.
 
+### Fonte m6x11plus (Daniel Linssen)
+
+- **Origem:** https://managore.itch.io/m6x11 (`client/assets/fonts/m6x11plus.ttf`).
+- **Licença:** gratuita para uso, inclusive comercial; o autor pede crédito.
+- **Uso:** a fonte do jogo inteiro, no lugar da VCR OSD Mono (mais legível no texto corrido). O
+  `@font-face` em `client/styles/global.css` mantém o nome `VCR`, então as cenas não mudam.
+
 ## Arte feita no projeto
 
 Sem restrição de licença de terceiros. Sempre com o `.aseprite` fonte versionado ao lado do

@@ -666,8 +666,8 @@ export default class BattleScene extends Phaser.Scene {
             return;
         }
         this.combatantSprites.forEach((s) => {
-            s.setTintFill(0xffffff);
-            this.time.delayedCall(90, () => { if (s.active) s.clearTint(); });
+            s.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+            this.time.delayedCall(90, () => { if (s.active) s.clearTint().setTintMode(Phaser.TintModes.MULTIPLY); });
         });
     }
 
@@ -686,8 +686,8 @@ export default class BattleScene extends Phaser.Scene {
                 return;
             }
             this.tweens.add({ targets: s, y: s.baseY + 18, duration: 140, yoyo: true, ease: "Quad.easeOut" });
-            s.setTintFill(0xffb347);
-            this.time.delayedCall(160, () => { if (s.active) s.clearTint(); });
+            s.setTint(0xffb347).setTintMode(Phaser.TintModes.FILL);
+            this.time.delayedCall(160, () => { if (s.active) s.clearTint().setTintMode(Phaser.TintModes.MULTIPLY); });
         });
         this.time.delayedCall(320, cb);
     }
@@ -1748,7 +1748,7 @@ export default class BattleScene extends Phaser.Scene {
                 if (!b.active) {
                     return;
                 }
-                b.clearTint();
+                b.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
                 const k = reverse ? -REWIND_BACK_SPEED : HASTE_SPEED;
                 b.body.setVelocity(b.v0.x * k, b.v0.y * k);
                 if (reverse) {
@@ -1760,7 +1760,7 @@ export default class BattleScene extends Phaser.Scene {
             } else {
                 this.soulHasteUntil = this.time.now + SOUL_HASTE_MS;
                 this.soul.setTint(TIME_TINT);
-                this.later(SOUL_HASTE_MS, () => this.soul.clearTint());
+                this.later(SOUL_HASTE_MS, () => this.soul.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
             }
             this.setBattleStatus(`> TURNO DE ${this.config.name} — DESVIE COM WASD!`, "#ff4545");
         });

@@ -667,10 +667,10 @@ export default class Enemy {
     applyBaseTint() {
         const tint = this.alert && this.def.alertTint ? this.def.alertTint : this.def.tint;
         if (tint) {
-            this.sprite.setTint(tint);
+            this.sprite.setTint(tint).setTintMode(Phaser.TintModes.MULTIPLY);
             this.weapon?.setTint(tint);
         } else {
-            this.sprite.clearTint();
+            this.sprite.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
         }
     }
 
@@ -810,7 +810,7 @@ export default class Enemy {
         if (this.courierState === "asleep") {
             this.wakeCourier(this.scene.time.now);
         }
-        this.sprite.setTintFill(0xffffff);
+        this.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
         this.scene.time.delayedCall(80, () => {
             if (!this.disabled) this.applyBaseTint();
         });

@@ -1,3 +1,4 @@
+import Phaser from "phaser";
 import Sfx from "../ui/Sfx";
 
 // PUZZLE DE MUNDO da expedição (cap. 2): a ESTEIRA da triagem, com três rampas
@@ -116,8 +117,8 @@ export default class ParcelSorter {
             targets: parcel.c, x: chute.x + 40, scale: 0.75, duration: PUSH_MS, ease: "Quad.easeOut",
             onComplete: () => {
                 s.tweens.add({ targets: parcel.c, alpha: 0, scale: 0.5, duration: 160 });
-                chute.image.setTintFill(parcel.right ? COLORS.ok : COLORS.bad);
-                s.time.delayedCall(170, () => chute.image.clearTint());
+                chute.image.setTint(parcel.right ? COLORS.ok : COLORS.bad).setTintMode(Phaser.TintModes.FILL);
+                s.time.delayedCall(170, () => chute.image.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
                 Sfx.play(s, parcel.right ? "select" : "error", 0.5);
                 s.time.delayedCall(200, next);
             }
