@@ -328,6 +328,14 @@ página dele não é o que as cláusulas anti-IA proíbem.
 
 ## Arte e áudio gerados por IA
 
+A **ADA** (boss final do cap. 3, `client/assets/sprites/boss/ada/`) foi gerada na **PixelLab**
+(pixellab.ai, IA de pixel art) a partir da ficha de personagem feita no **GPT** (ChatGPT, geração
+de imagem): personagem no modo *pro* com a ilustração de corpo inteiro da ficha como arte
+conceitual, 80×80, 8 direções. `parada_*.png` são as direções sul, leste e norte; `idle.png` é a
+respiração (4 quadros de 80×80, linhas norte, sul, leste e oeste — o oeste é o leste espelhado); 
+`cast.png` é a magia virada para o sul (9 quadros de 112×112, animação personalizada). Os ataques
+da ficha (círculo no chão, hexágonos, foice de energia, pilares) ficam para o código.
+
 A **Artemis** (`client/assets/sprites/A_cute_android_maid_with/`, 8 direções + animações) foi
 gerada por uma ferramenta de sprites por prompt; o prompt, o tamanho (60×60), as 8 direções e
 a data ficaram registrados em `client/assets/sprites/metadata.json`. As imagens soltas
