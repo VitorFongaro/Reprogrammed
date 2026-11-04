@@ -1,3 +1,11 @@
+/* Dentro do jogo, a fonte 'VCR' é a m6x11plus (Daniel Linssen), mais legível
+   no texto corrido; o site continua com a VCR OSD Mono (global.css). Mesmo nome
+   de família para as cenas não mudarem: esta regra vem depois e vence. */
+@font-face {
+    font-family: 'VCR';
+    src: url('../assets/fonts/m6x11plus.ttf') format('truetype');
+}
+
 body {
     font-family: 'VCR';
     background: #000000;

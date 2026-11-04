@@ -213,8 +213,8 @@ menor para não dominarem). Licença: uso livre inclusive comercial; **atribuiç
 
 - **Origem:** https://managore.itch.io/m6x11 (`client/assets/fonts/m6x11plus.ttf`).
 - **Licença:** gratuita para uso, inclusive comercial; o autor pede crédito.
-- **Uso:** a fonte do jogo inteiro, no lugar da VCR OSD Mono (mais legível no texto corrido). O
-  `@font-face` em `client/styles/global.css` mantém o nome `VCR`, então as cenas não mudam.
+- **Uso:** a fonte DENTRO do jogo, no lugar da VCR OSD Mono (mais legível no texto corrido); o site segue com a VCR. O
+  `@font-face` em `client/styles/game.css` mantém o nome `VCR`, então as cenas não mudam.
 
 ## Arte feita no projeto
 
