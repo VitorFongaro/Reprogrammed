@@ -176,10 +176,18 @@ mão, então escalar um no lugar do outro borra). Carregados por `client/ui/Effe
 
 ### WITCH — boss final do cap. 2
 
+**Pixel Top-Down Maid Character**, de **TT666_ayaya**
+([itch.io](https://tt666-ayaya.itch.io/2d-pixel-art-top-down-character-female-adventurer)), "pague
+quanto quiser". Licença da página: uso livre em jogos gratuitos e comerciais, modificação
+permitida, **proibido redistribuir ou revender o asset**, crédito apreciado mas não obrigatório
+(creditar no TCC mesmo assim).
+
 `client/assets/sprites/boss/witch/walk.png` (5×4) e `attack.png` (10×4), quadros de **144×144**,
 uma linha por direção (norte, sul, leste, oeste). Entraram no repo como vieram, sem conversão: a
-grade já é o formato de spritesheet do Phaser. **Origem e licença ainda não registradas** — anotar
-aqui de onde a arte veio (e a forma de crédito) antes da entrega do TCC.
+grade já é o formato de spritesheet do Phaser. Os nomes no repo não batem com os do pack:
+`walk.png` é o **Maid Idle.png** (a parada, 5 quadros) e `attack.png` é o arquivo gratuito
+**Maid Run.png**, que, apesar do nome, traz o ATAQUE de 10 quadros com o efeito branco (um
+comentário na página aponta o mesmo). A corrida de verdade (8 quadros) não está no repo.
 
 ### Interface Sounds — Kenney ([kenney.nl](https://kenney.nl/assets/interface-sounds))
 

@@ -31,6 +31,12 @@ import attackUrl from "../assets/sprites/boss/witch/attack.png";
 //               chamas que sai dele é o dano. Fugir em linha reta pelo próprio
 //               rastro é o que mata. Enfurecida, marca também onde você VAI
 //               estar (a posição prevista).
+//   investida — de média distância. A mira trava no "!" (onde a Artemis ESTAVA)
+//               e ela avança em disparada até lá e um pouco além, com o golpe
+//               da foice e um rastro branco; quem estiver no caminho leva. É
+//               o que a tira do lugar (a folha do pack não tem corrida: o
+//               "Maid Run.png" gratuito é o ataque, ver docs/ASSETS.md).
+//               Enfurecida, termina soltando uma onda.
 //   onda      — de longe (ela anda pouco, e sem isto quase não alcançava a
 //               Artemis). A foice corta o ar e solta uma MEIA-LUA de energia
 //               que viaja reto, na mira travada no aviso: sair da linha basta.
@@ -155,13 +161,24 @@ const HASTE_MS = 3500;               // depois de ACELERAR, ela mesma fica rápi
 const HASTE_MULT = 1.65;
 const HASTE_FX_MS = 380;
 
+// Investida: avanço em linha reta até onde a Artemis estava no aviso.
+const DASH_MIN = 190;
+const DASH_MAX = 560;
+const DASH_COOLDOWN_MS = 3200;
+const DASH_WINDUP_MS = 420;
+const DASH_SPEED = 640;              // quase o dobro da corrida da Artemis: sair da linha, não fugir
+const DASH_OVERSHOOT = 80;           // passa um pouco de onde ela estava
+const DASH_HIT_R = 46;               // pés com pés
+const DASH_DAMAGE = 4;
+const DASH_GHOST_MS = 40;
+
 const STEP_FAR = 300;                // longe assim...
 const STEP_AFTER_MS = 2400;          // ...por esse tempo, ela vem pelo portal
 const STEP_BEHIND = 110;
 
 const TIRED_TINT = 0x9a9aaa;
 const HUD = { x: 640, y: 52, w: 320, h: 12 };
-const FROZEN = new Set(["idle", "windup", "attack", "step", "battle", "down", "clock"]);
+const FROZEN = new Set(["idle", "windup", "attack", "step", "battle", "down", "clock", "dash"]);
 
 export default class WitchBoss {
     // Sprite da FASE 2: um combatente da BattleScene (config.combatants), de
@@ -248,6 +265,7 @@ export default class WitchBoss {
         this.echoes = [];      // sombras dos ecos pendentes
         this.waves = [];       // meias-luas da onda da foice em voo
         this.nextWave = 0;
+        this.nextDash = 0;
         this.specials = 0;     // badalada e meia-noite se alternam
         this.clockMode = 0;    // meia-noite: rebobinar e acelerar se alternam
         this.hasteUntil = 0;
@@ -302,6 +320,10 @@ export default class WitchBoss {
             this.updateClock(now, player);
             return;
         }
+        if (this.state === "dash") {
+            this.updateDash(now, player);
+            return;
+        }
 
         if (this.state === "tired") {
             this.updateHud();
@@ -354,6 +376,11 @@ export default class WitchBoss {
             this.windup("ceifada");
             return;
         }
+        if (dist >= DASH_MIN && dist <= DASH_MAX && now >= this.nextDash) {
+            this.nextDash = now + DASH_COOLDOWN_MS;
+            this.windup("investida", DASH_WINDUP_MS);
+            return;
+        }
         // De longe, onda e sentença se revezam (a que estiver pronta, dando a
         // vez para a outra quando as duas estão).
         const waveReady = dist >= WAVE_MIN && now >= this.nextWave;
@@ -394,6 +421,7 @@ export default class WitchBoss {
         this.state = "windup";
         this.sprite.body.setVelocity(0, 0);
         this.aim = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
+        this.aimDist = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
         this.face(this.aim, true);
         this.idle();
         if (kind !== "sentenca") {
@@ -419,6 +447,10 @@ export default class WitchBoss {
         // cairia em dobro. Só o golpe da ficha atual conta.
         const token = (this.attackToken = (this.attackToken ?? 0) + 1);
         const current = () => this.state === "attack" && this.attackToken === token;
+        if (kind === "investida") {
+            this.startDash(token);
+            return;
+        }
         this.state = "attack";
         this.sprite.play(`witch-attack-${this.facing}`);
         s.time.delayedCall(HIT_MS, () => {
@@ -552,6 +584,67 @@ export default class WitchBoss {
             const a = (i / TOLL_BLADES) * Math.PI * 2;
             const blade = s.spawnEnemyBullet?.(this.x + Math.cos(a) * 30, this.y + Math.sin(a) * 22 + 20, a, "witch-blade", 1.6);
             blade?.setRotation(a);
+        }
+    }
+
+    // INVESTIDA: sai na mira travada, com o golpe tocando e o rastro branco.
+    startDash(token) {
+        const s = this.scene;
+        const b = s.bounds;
+        const len = Math.min(this.aimDist + DASH_OVERSHOOT, DASH_MAX + DASH_OVERSHOOT);
+        this.state = "dash";
+        this.dash = {
+            token,
+            until: s.time.now + (len / DASH_SPEED) * 1000,
+            ghostAt: 0,
+            // Destino preso na sala: bater na parede também encerra.
+            tx: Phaser.Math.Clamp(this.x + Math.cos(this.aim) * len, b.x + 30, b.x + b.w - 30),
+            ty: Phaser.Math.Clamp(this.y + Math.sin(this.aim) * len, b.y, b.y + b.h - FEET)
+        };
+        Sfx.play(s, "laser", 0.4);
+        Effects.play(s, "fx-impact", this.x, this.y + FEET * 0.6, {
+            scale: 1.2, depth: 830, angle: Phaser.Math.RadToDeg(this.aim) + 90
+        });
+        // Toca o golpe esticado para durar a investida inteira.
+        this.sprite.play(`witch-attack-${this.facing}`);
+        this.sprite.anims.timeScale = (ATTACK_COLS / ATTACK_FPS) / Math.max(0.25, len / DASH_SPEED);
+        this.sprite.body.setVelocity(Math.cos(this.aim) * DASH_SPEED, Math.sin(this.aim) * DASH_SPEED);
+    }
+
+    updateDash(now, player) {
+        const d = this.dash;
+        const s = this.scene;
+        if (now >= d.ghostAt) {
+            d.ghostAt = now + DASH_GHOST_MS;
+            const ghost = s.add.sprite(this.x, this.y, this.sprite.texture.key, this.sprite.frame.name)
+                .setScale(SCALE).setOrigin(this.sprite.originX, this.sprite.originY)
+                .setTintFill(0xf2f0ff).setAlpha(0.45).setDepth(this.sprite.depth - 1);
+            s.tweens.add({ targets: ghost, alpha: 0, duration: 260, onComplete: () => ghost.destroy() });
+        }
+        if (Phaser.Math.Distance.Between(this.x, this.y + FEET, player.sprite.x, player.feetY) <= DASH_HIT_R) {
+            s.damagePlayer(DASH_DAMAGE);       // os i-frames da sala seguram o repique
+        }
+        const body = this.sprite.body;
+        const arrived = Phaser.Math.Distance.Between(this.x, this.y, d.tx, d.ty) <= DASH_SPEED * 0.03;
+        const blocked = body.blocked.left || body.blocked.right || body.blocked.up || body.blocked.down;
+        if (now >= d.until || arrived || blocked) {
+            this.endDash();
+        }
+    }
+
+    endDash() {
+        const d = this.dash;
+        this.dash = null;
+        this.sprite.body.setVelocity(0, 0);
+        this.sprite.anims.timeScale = 1;
+        Sfx.play(this.scene, "bump", 0.6);
+        this.scene.cameras.main.shake(90, 0.003);
+        if (this.enraged) {
+            this.launchWave(this.aim);
+        }
+        if (this.attackToken === d.token) {
+            this.state = "attack";
+            this.afterAttack();
         }
     }
 
@@ -899,7 +992,7 @@ export default class WitchBoss {
     takeMeleeHit() {
         const s = this.scene;
         const now = s.time.now;
-        if (["tired", "down", "battle", "step", "clock"].includes(this.state)) {
+        if (["tired", "down", "battle", "step", "clock", "dash"].includes(this.state)) {
             return;                           // cansada: agora é com o [R]
         }
         if (this.state !== "recover") {
@@ -981,6 +1074,7 @@ export default class WitchBoss {
             this.drawWallHands(0);
         }
         this.hasteUntil = 0;
+        this.dash = null;
         this.sprite.anims.timeScale = 1;
     }
 
