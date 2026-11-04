@@ -31,6 +31,12 @@ import { parseTemplateLine, runTests, formatValue } from "../utils/condicional";
 // console, como um compilador avisaria — um programa que nem roda não tem o que
 // mostrar no mapa.
 //
+// MODO PROGRAMA (`options.onProgram`): não há resposta certa. O jogador monta o
+// programa que quiser (as ROTINAS do Cache, na batalha); o console só confere
+// que ele RODA nos estados de amostra (`tests`, só com `given`, mostrados como
+// "AGORA") e entrega as linhas montadas em `onProgram(lines)`. Peça com espaço
+// no rótulo ("forca * 2") vira vários tokens na entrega.
+//
 // Use `createConsole` (abaixo) para abrir o console certo a partir do puzzle.
 
 const WIDTH = 1280;
@@ -94,6 +100,7 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         super(scene, puzzle, options);
         // Com onRun, o puzzle é de MUNDO (ver o topo do arquivo).
         this.onRun = options.onRun ?? null;
+        this.onProgram = options.onProgram ?? null;
     }
 
     buildModel() {
@@ -205,7 +212,7 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
             }).setOrigin(0, 0.5));
         });
 
-        if (this.onRun) {
+        if (this.onRun || this.onProgram) {
             this.buildWorldPanel();
         } else {
             this.buildTestsPanel();
@@ -219,6 +226,8 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         const footer = s.add.text(PANEL_X + PANEL_W / 2, PANEL_Y + PANEL_H - 12,
             this.singleAttempt
                 ? "monte com cuidado: uma única tentativa"
+                : this.onProgram
+                    ? "encaixe todos os blocos: o programa fica guardado e roda sozinho"
                 : this.onRun
                     ? "encaixe todos os blocos: o programa roda direto no mapa"
                     : "encaixe todos os blocos: o programa roda nos testes sozinho",
@@ -292,7 +301,7 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
     // cada objeto e as variáveis dele. SEM o "espera": o gabarito é o mapa.
     buildWorldPanel() {
         const s = this.scene;
-        this.container.add(s.add.text(TESTS_X, TESTS_Y, "NO MAPA", {
+        this.container.add(s.add.text(TESTS_X, TESTS_Y, this.onProgram ? "AGORA" : "NO MAPA", {
             fontFamily: "VCR", fontSize: "18px", color: COLOR.accent
         }));
 
@@ -308,8 +317,9 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
             y += WORLD_ROW_H;
         });
 
-        this.container.add(s.add.text(TESTS_X, y + 12,
-            "rode e olhe o mapa: cada objeto\nfaz o que o programa mandar.", {
+        this.container.add(s.add.text(TESTS_X, y + 12, this.onProgram
+            ? "a condição é conferida no\ncomeço de cada turno seu."
+            : "rode e olhe o mapa: cada objeto\nfaz o que o programa mandar.", {
                 fontFamily: "VCR", fontSize: "15px", color: COLOR.dim, lineSpacing: 4
             }));
         this.testCards = [];   // nada para pintar: resetCards vira no-op.
@@ -428,6 +438,11 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         if (this.running || this.slots.some((slot) => !slot.piece)) return;
         this.attempted = true;
 
+        if (this.onProgram) {
+            const program = splitPieces(this.programLines());
+            this.deliverProgram(program, runTests(program, this.puzzle.tests, this.puzzle.defaults));
+            return;
+        }
         const results = runTests(this.programLines(), this.puzzle.tests, this.puzzle.defaults);
         if (this.onRun) {
             this.runInWorld(results);
@@ -494,6 +509,21 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         });
     }
 
+    // Modo programa: só não pode dar erro; aí guarda e fecha.
+    deliverProgram(program, results) {
+        const error = results.find((r) => r.error)?.error;
+        if (error) {
+            this.countError();
+            Sfx.play(this.scene, "error");
+            this.setOutput(`o programa não roda: ${error}`, COLOR.error);
+            return;
+        }
+        Sfx.play(this.scene, "confirm");
+        this.solved = true;
+        this.onProgram(program);
+        this.close();
+    }
+
     // Diferente do console de variável, NÃO devolve peças: o jogador lê qual
     // caso falhou e ajusta o que achar que está errado (é depuração, não chute).
     handleTestFailure(results) {
@@ -526,6 +556,14 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         this.running = false;
         super.close(viaEsc);
     }
+}
+
+// Modo programa: peça com espaço no rótulo ("forca * 2") vira vários tokens.
+function splitPieces(lines) {
+    return lines.map((line) => ({
+        indent: line.indent,
+        tokens: line.tokens.flatMap((t) => String(t).split(/\s+/))
+    }));
 }
 
 // { porta: false, cracha: 3 } -> "porta = false, cracha = 3"

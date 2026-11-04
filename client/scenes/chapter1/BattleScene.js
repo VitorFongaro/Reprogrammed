@@ -6,7 +6,8 @@ import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import { createConsole } from "../../ui/ConditionalConsole";
 import projetilUrl from "../../assets/sprites/projetil/projetil.png";
 import { MAX_HP, getHp, setHp } from "../../state/vitals";
-import { addItem } from "../../state/inventory";
+import { addItem, hasItem, removeItem, ownedItems } from "../../state/inventory";
+import { run as runProgram } from "../../utils/condicional";
 import { itemDef } from "../../data/items";
 import { ENIAC_DEFENSES, resolvePuzzle } from "../../data/puzzleVariants";
 import Effects, { DEATH_SKULL } from "../../ui/Effects";
@@ -48,6 +49,22 @@ const BOSS_MAX_HP = 80;
 const PLAYER_MAX_HP = MAX_HP;       // HP global da Artemis (state/vitals).
 const BASE_DAMAGE = 5;              // ataque padrão, sem a variável forca.
 const FORCA_INICIAL = 10;           // criada no primeiro REPROGRAMAR.
+// ROTINAS DO CACHE. Com o Cache (a melhoria das condicionais, espólio do ENIAC)
+// o REPROGRAMAR ganha a opção ROTINA: o jogador monta `se <condição> : <ação>`
+// e a rotina fica guardada, conferida sozinha no COMEÇO de cada turno dele.
+// Quando a condição dá certo, o efeito acontece sem gastar o turno e a memória
+// fica livre de novo. Instalar custa o turno (é um REPROGRAMAR).
+//   condição: hp (Artemis), integridade (inimigo), dano (o que ela tomou no
+//             último turno do inimigo: `dano == 0` é o "desafio" de não
+//             apanhar) e forca;
+//   ação:     forca = ...  (conta no limite de reprogramações: não fura a
+//                           sobrecarga, só não gasta turno quando dispara),
+//             reparo = N   (cura até REPARO_MAX),
+//             usar = "item" (gasta o item do inventário; os efeitos novos de
+//                            item entram aqui sozinhos, via applyBattleEffect).
+const ROUTINE_REPAIR_MAX = 5;
+const ROUTINE_ITEM_PIECES = 2;       // itens do inventário que viram peça (o tabuleiro tem 16 lugares)
+
 const MAX_REPROGRAMS = 2;           // limite de reprogramações por embate: o núcleo
                                     // da Artemis sobrecarrega e trava (anti-snowball
                                     // da forca dobrando). Cresce nos próximos capítulos
@@ -174,10 +191,10 @@ const DEFAULT_CONFIG = {
         "É de 1946. Respeite os mais velhos... depois de desligar ele."
     ],
     // Espólio da vitória (id do catálogo de itens) ou null. Só o BOSS FINAL de
-    // cada capítulo larga alguma coisa: o chip de CACHE, que libera uma
-    // reprogramação extra por embate. É a peça mais forte do jogo, então a
-    // escassez é o balanceamento — um por capítulo, e ponto. Arena de treino e
-    // demais embates passam `reward: null`.
+    // cada capítulo larga alguma coisa, e é sempre uma MELHORIA permanente do
+    // capítulo: o ENIAC larga o CACHE (as rotinas condicionais no REPROGRAMAR),
+    // a WITCH o chip de repetições. Melhoria já instalada não cai de novo.
+    // Arena de treino e demais embates passam `reward: null`.
     reward: "cache",
     // Tema PRÓPRIO do embate (chave em ui/Music.js): entra no lugar da faixa do
     // capítulo enquanto dura o combate e devolve a anterior ao sair. Embate que
@@ -241,6 +258,10 @@ export default class BattleScene extends Phaser.Scene {
         this.dodgeActive = false;
         this.invulnUntil = 0;
         this.itemUsedThisTurn = false;
+        // Rotina do Cache guardada (ver ROTINAS DO CACHE) e o HP no começo do
+        // turno do inimigo, para saber o `dano` que ele causou.
+        this.routine = null;
+        this.turnStartHp = null;
         // Efeitos de item que valem por um turno (Overclock e Dissipador).
         this.ataqueDobrado = false;
         this.danoReduzido = false;
@@ -286,6 +307,21 @@ export default class BattleScene extends Phaser.Scene {
                 { id: "analisar", label: "ANALISAR" }
             ],
             onSelect: (id) => this.handleAction(id)
+        });
+        // Com o Cache, o REPROGRAMAR pergunta o quê: a força de sempre ou uma rotina.
+        this.reprogMenu = new BattleMenu(this, {
+            x: WIDTH / 2,
+            y: MENU_Y,
+            actions: [
+                { id: "forca", label: "FORÇA" },
+                { id: "rotina", label: "ROTINA" },
+                { id: "voltar", label: "VOLTAR" }
+            ],
+            onSelect: (id) => {
+                if (id === "forca") this.reprogramForca();
+                else if (id === "rotina") this.installRoutine();
+                else this.playerTurn();
+            }
         });
 
         this.keys = this.input.keyboard.addKeys({
@@ -463,6 +499,12 @@ export default class BattleScene extends Phaser.Scene {
             color: "#4ad6ff"
         }).setOrigin(1, 0.5).setDepth(HUD_DEPTH);
         this.updateForca();
+        // A rotina guardada no Cache, logo acima da força.
+        this.routineText = this.add.text(WIDTH - 70, 658, "", {
+            fontFamily: "VCR",
+            fontSize: "15px",
+            color: "#ffb347"
+        }).setOrigin(1, 0.5).setDepth(HUD_DEPTH);
 
         // Linha de status do combate.
         this.statusText = this.add.text(WIDTH / 2, STATUS_Y, "", {
@@ -670,6 +712,16 @@ export default class BattleScene extends Phaser.Scene {
     playerTurn() {
         // O Dissipador protege UM turno do boss; ao voltar a vez, já foi gasto.
         this.danoReduzido = false;
+        // Logo depois do turno do inimigo, a rotina do Cache é conferida.
+        if (this.turnStartHp !== null) {
+            const dano = Math.max(0, this.turnStartHp - this.hp);
+            this.turnStartHp = null;
+            const fired = this.runRoutine(dano);
+            if (fired) {
+                this.time.delayedCall(1500, () => this.playerTurn());
+                return;
+            }
+        }
         this.setBattleStatus("> SEU TURNO — ESCOLHA UMA AÇÃO", "#4ad6ff");
         this.menu.show();
     }
@@ -744,12 +796,6 @@ export default class BattleScene extends Phaser.Scene {
             return { ok: true, message: "dano reduzido no próximo turno" };
         }
 
-        if (item.battleEffect === "maisUmaReprogramacao") {
-            this.maxReprograms += 1;
-            this.updateForca();
-            return { ok: true, message: "+1 reprogramação neste embate" };
-        }
-
         return { ok: false, message: "sem efeito nesta batalha" };
     }
 
@@ -790,7 +836,146 @@ export default class BattleScene extends Phaser.Scene {
         }
     }
 
+    // Com o Cache, REPROGRAMAR abre a escolha entre a força e a rotina.
     reprogram() {
+        if (hasItem("cache")) {
+            this.setBattleStatus("> REPROGRAMAR: A FORÇA DE SEMPRE OU UMA ROTINA NO CACHE?", "#ffb347");
+            this.reprogMenu.show();
+            return;
+        }
+        this.reprogramForca();
+    }
+
+    // --- Rotinas do Cache ---------------------------------------------------
+
+    // Estado da batalha que as rotinas enxergam (também é o "AGORA" do console).
+    routineState(dano = 0) {
+        // Sem a variável criada, `forca` vale o ataque padrão: dobrar dá os 10
+        // de sempre.
+        return { hp: this.hp, integridade: this.bossHp, dano, forca: this.forca ?? BASE_DAMAGE };
+    }
+
+    installRoutine() {
+        const items = ownedItems()
+            .filter((it) => it.usableInBattle && it.consumable)
+            .slice(0, ROUTINE_ITEM_PIECES)
+            .map((it) => `"${it.id}"`);
+        const puzzle = {
+            title: "ROTINA // CACHE",
+            briefing: [
+                "Uma condição que a Artemis segue sozinha. No começo",
+                "de cada turno seu: se a condição der certo, a ação",
+                `acontece sem gastar o turno. reparo cura até ${ROUTINE_REPAIR_MAX}.`
+            ],
+            hint: "monte, por exemplo:  se dano == 0 :  forca = forca * 2  (não apanhe e o golpe dobra)",
+            lines: ["se [nome] [op] [valor] :", "    [nome] = [valor]"],
+            blocks: {
+                nome: ["hp", "integridade", "dano", "forca", "reparo", ...(items.length ? ["usar"] : [])],
+                op: ["<", ">", "==", "<="],
+                valor: ["0", "5", "40", "forca * 2", ...items]
+            },
+            // Só para conferir que o programa RODA: o estado de agora.
+            tests: [{ label: ">", given: this.routineState(0), expect: {} }],
+            defaults: { reparo: 0, usar: "" }
+        };
+        let saved = false;
+        this.console = createConsole(this, puzzle, {
+            onProgram: (lines) => {
+                saved = true;
+                const replaced = this.routine !== null;
+                this.routine = { lines, text: lines.map((l) => l.tokens.join(" ")).join("  ") };
+                this.updateRoutine();
+                this.setBattleStatus(replaced
+                    ? "> ROTINA NOVA NO CACHE (A ANTERIOR FOI APAGADA)"
+                    : "> ROTINA GUARDADA NO CACHE", "#ffb347");
+            },
+            onCancel: () => this.playerTurn(),
+            onClose: () => {
+                if (saved) {
+                    this.time.delayedCall(1000, () => this.bossTurn());
+                } else {
+                    this.playerTurn();             // não guardou nada: não perde o turno
+                }
+            }
+        });
+        this.console.open();
+    }
+
+    // Confere a rotina. Devolve true se ela disparou (e já aplicou o efeito).
+    runRoutine(dano) {
+        if (!this.routine) {
+            return false;
+        }
+        const before = { ...this.routineState(dano), reparo: 0, usar: "" };
+        let after;
+        try {
+            after = runProgram(this.routine.lines, before);
+        } catch (error) {
+            this.routine = null;
+            this.updateRoutine();
+            this.setBattleStatus(`> ROTINA TRAVOU E FOI APAGADA: ${error.message}`, "#ff4545");
+            return true;
+        }
+        const changed = Object.keys(after).filter((k) => after[k] !== before[k]);
+        if (!changed.length) {
+            return false;                          // condição falsa: continua guardada
+        }
+
+        const done = [];
+        if (changed.includes("forca") && typeof after.forca === "number") {
+            if (this.reprogramCount >= this.maxReprograms) {
+                done.push("força bloqueada (sobrecarga)");
+            } else if (after.forca > 0) {
+                // No máximo DOBRA, como o REPROGRAMAR comum: `forca = 40` numa
+                // rotina não pula etapas.
+                const cap = (this.forca ?? BASE_DAMAGE) * 2;
+                this.reprogramCount += 1;
+                this.forca = Math.min(Math.round(after.forca), cap);
+                this.updateForca();
+                done.push(`FORÇA = ${this.forca}`);
+            }
+        }
+        if (changed.includes("reparo") && typeof after.reparo === "number" && after.reparo > 0) {
+            const antes = this.hp;
+            this.hp = setHp(this.hp + Math.min(after.reparo, ROUTINE_REPAIR_MAX));
+            this.updateHpBar();
+            done.push(`+${this.hp - antes} HP`);
+        }
+        if (changed.includes("usar") && after.usar) {
+            done.push(this.routineUseItem(after.usar));
+        }
+
+        this.routine = null;
+        this.updateRoutine();
+        this.cameras.main.flash(200, 255, 179, 71, false);
+        this.setBattleStatus(`> ROTINA DISPAROU: ${done.length ? done.join(", ") : "sem efeito"}`, "#ffb347");
+        return true;
+    }
+
+    routineUseItem(id) {
+        const item = itemDef(id);
+        if (!item || !hasItem(id)) {
+            return `sem ${item?.name ?? id} no inventário`;
+        }
+        if (item.category === "cura") {
+            const antes = this.hp;
+            this.hp = setHp(this.hp + (item.heal ?? 0));
+            this.updateHpBar();
+            removeItem(id, 1);
+            return `${item.name}: +${this.hp - antes} HP`;
+        }
+        const efeito = this.applyBattleEffect(item);
+        if (efeito.ok) {
+            removeItem(id, 1);
+        }
+        return `${item.name}: ${efeito.message}`;
+    }
+
+    updateRoutine() {
+        this.routineText?.setText(this.routine ? `ROTINA: ${this.routine.text}` : "");
+    }
+
+    reprogramForca() {
         // Limite anti-sobrecarga: o núcleo da Artemis não aguenta reprogramar
         // indefinidamente. Bater no teto NÃO gasta o turno — volta ao menu.
         if (this.reprogramCount >= this.maxReprograms) {
@@ -843,6 +1028,9 @@ export default class BattleScene extends Phaser.Scene {
             : this.forca === null
                 ? "Dica: REPROGRAMAR cria a variável forca."
                 : "Dica: REPROGRAMAR dobra a força (forca = forca * 2).";
+        const routineLine = !hasItem("cache") ? null
+            : this.routine ? `Rotina no Cache: ${this.routine.text}`
+                : "Cache livre: REPROGRAMAR > ROTINA guarda uma condição.";
 
         const quips = this.config.analysisQuips ?? [];
         const quip = quips.length ? `COSMO: "${quips[this.analyzeCount % quips.length]}"` : null;
@@ -854,6 +1042,7 @@ export default class BattleScene extends Phaser.Scene {
             forcaLine,
             `REPROGRAMAÇÕES: ${this.reprogramCount}/${this.maxReprograms}`,
             hintLine,
+            routineLine,
             quip
         ].filter(Boolean).join("\n")).setVisible(true);
 
@@ -867,6 +1056,7 @@ export default class BattleScene extends Phaser.Scene {
     // de defesa com tempo. Os padrões de esquiva DOMINAM; a defesa é OCASIONAL —
     // nunca no 1º turno e nunca duas seguidas, para não virar "só o puzzle". ---
     bossTurn() {
+        this.turnStartHp = this.hp;               // para o `dano` da rotina do Cache
         const canDefend = this.config.defenseEnabled
             && this.bossAttackIndex > 0
             && !this.lastWasDefense;
@@ -1943,7 +2133,8 @@ export default class BattleScene extends Phaser.Scene {
     // a vitória segurar mais um pouco antes de voltar para a sala.
     dropReward() {
         const item = itemDef(this.config.reward);
-        if (!item) {
+        // Melhoria é permanente: refazer o boss não dá outra.
+        if (!item || (item.category === "upgrade" && hasItem(item.id))) {
             return false;
         }
 

@@ -17,7 +17,8 @@ import hallMap from "../../assets/maps/hall.json";
 //      [F] quando ela abre a guarda. Sem fôlego, fica tonta uns segundos: é a
 //      janela do [R].
 //   2. Reprogramada, vira o combate POR TURNOS da BattleScene com os padrões
-//      dela. A vitória larga o chip "cache" (boss de capítulo) e abre a porta.
+//      dela. A vitória larga o chip de repetições (melhoria do capítulo) e abre
+//      a porta.
 // Morrer em qualquer das duas fases reinicia a SALA, com ela de volta ao
 // começo da fase 1 (BaseRoomScene.restartRoom).
 //
@@ -34,7 +35,8 @@ const FLOOR_DIAL = { cx: 640, cy: 418, rx: 330, ry: 190 };
 
 // HP: com 3 REPROGRAMAR, forca 10 -> 20 -> 40; 3 turnos investindo + 4
 // ataques de 40 = 160 >= 150, então 7 turnos na rota mais rápida — um a mais
-// que a LEO, por ser a boss final. Com o chip de cache (forca 80): 4 + 2 = 6.
+// que a LEO, por ser a boss final. Rotinas do Cache que dobram a força ainda
+// contam no limite de 3: elas poupam turnos, não furam o teto.
 const WITCH_HP = 150;
 
 // O embate por turnos. A sala de teste usa o mesmo, com o próprio retorno e
@@ -62,7 +64,7 @@ export function witchBattle(overrides = {}) {
             "Quando o relógio dela volta, tudo que você fez com o tempo parado volta junto. Ande pouco.",
             "A outra alma é você também. Se ela apanha, quem sente é você."
         ],
-        reward: "cache",              // boss de capítulo
+        reward: "chip-repeticoes",    // boss de capítulo: a melhoria do cap. 2
         theme: "boss",
         combatants: [
             { ...WitchBoss.BATTLE_SPRITE, x: 640, y: 110, scale: 2.6 }

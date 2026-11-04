@@ -7,7 +7,7 @@ import Sfx from "../ui/Sfx";
 // A Artemis pega passando por cima; o item entra no inventário e o nome sobe
 // em cima dela (item que o jogador não vê entrar é item que ele nunca usa).
 //
-// Só cura: o chip "cache" é do boss de capítulo e os de combate ficam raros de
+// Só cura: melhoria (o Cache, os chips) é do boss de capítulo e os de combate ficam raros de
 // propósito. A tabela é por PESO; `DROP_CHANCE` é a chance de cair alguma coisa.
 // Não entra no save: drop deixado para trás some com a sala.
 

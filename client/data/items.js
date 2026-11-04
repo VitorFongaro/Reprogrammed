@@ -89,25 +89,19 @@ export const ITEMS = {
         usableInRoom: false,
         consumable: true
     },
+
+    // --- UPGRADES: o que a Artemis APRENDE, um por capítulo ---
+    // O Cache é a melhoria das CONDICIONAIS: cai do ENIAC (fim do cap. 1) e
+    // libera as ROTINAS no REPROGRAMAR da batalha (ver BattleScene, "Rotinas
+    // do Cache"). Antes era um consumível de +1 reprogramação; o antigo "Chip
+    // lógico :: condicionais" fazia o mesmo papel do Cache novo e saiu do
+    // catálogo (save que ainda o tenha simplesmente deixa de mostrá-lo).
     cache: {
         id: "cache",
         name: "Cache",
         icon: "cache",
-        category: "reprogramacao",
-        description: "Memória de acesso rápido que alivia a sobrecarga: libera MAIS UMA reprogramação neste embate. Só cai do guardião de cada andar.",
-        battleEffect: "maisUmaReprogramacao",
-        usableInBattle: true,
-        usableInRoom: false,
-        consumable: true
-    },
-
-    // --- UPGRADES: o que a Artemis APRENDE, um por capítulo ---
-    "chip-condicional": {
-        id: "chip-condicional",
-        name: "Chip lógico :: condicionais",
-        icon: "chip-condicional",
         category: "upgrade",
-        description: "Ensina a Artemis a decidir: se isto, então aquilo. Melhoria permanente do capítulo 2.",
+        description: "Memória de acesso rápido. Libera as ROTINAS no REPROGRAMAR: uma condicional que a Artemis segue sozinha durante o embate (se isto, então aquilo).",
         usableInBattle: false,
         usableInRoom: false,
         consumable: false

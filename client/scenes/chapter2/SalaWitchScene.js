@@ -25,8 +25,8 @@ import Effects from "../../ui/Effects";
 // não é preciso cansá-la de novo.
 //
 // Fora do fluxo do jogo: sem porta, `autoSave: false`, sem música na sala e
-// `reward: null` (no jogo de verdade, boss de capítulo larga o chip "cache" —
-// aqui, refazer para testar não pode virar farm). Acesso pelo painel do
+// `reward: null` (no jogo de verdade, a boss de capítulo larga a melhoria do
+// capítulo, o chip de repetições). Acesso pelo painel do
 // laboratório ou por  __game.scene.start("cap2-sala-witch").
 
 const WITCH_POS = { x: 640, y: 250 };
