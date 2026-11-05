@@ -4,11 +4,14 @@ import Effects from "../../ui/Effects";
 import Sfx from "../../ui/Sfx";
 import idleUrl from "../../assets/sprites/boss/ada/idle.png";
 import castUrl from "../../assets/sprites/boss/ada/cast.png";
+import hurtUrl from "../../assets/sprites/boss/ada/hurt.png";
+import defeatUrl from "../../assets/sprites/boss/ada/defeat.png";
 
 // Capítulo 3: sala de TESTE da ADA, a boss final do capítulo. Só para ver a
 // arte no jogo: ela fica parada respirando e, de tempos em tempos, levanta a
 // mão e solta um dos quatro ataques da ficha de personagem, em ciclo. Os
-// ataques são só visuais (não ferem): aqui ainda não há luta.
+// ataques são só visuais (não ferem): aqui ainda não há luta. [H] mostra o dano e
+// [J] a derrota (ela se curva, o halo estoura e ela some em glitch; volta sozinha).
 //
 //   JULGAMENTO — um círculo vermelho se fecha no chão sob a Artemis e cai um raio.
 //   HEXÁGONOS  — seis hexágonos de energia surgem em volta dela e estouram.
@@ -24,6 +27,9 @@ const SCALE = 2;
 const IDLE_FRAME = 80;
 const CAST_FRAME = 112;
 const ATTACK_EVERY_MS = 4200;
+const HURT_FRAME = 80;
+const DEFEAT_FRAME = 112;
+const REVIVE_MS = 2500;             // depois da derrota, ela volta para o teste continuar
 const CAST_HAND_FRAME = 4;          // quadro do cast com a mão erguida: é quando o ataque sai
 const RED = 0xff2a4a;
 const RED_DIM = 0x8a1020;
@@ -62,6 +68,12 @@ export default class SalaAdaScene extends BaseRoomScene {
         if (!this.textures.exists("ada-cast")) {
             this.load.spritesheet("ada-cast", castUrl, { frameWidth: CAST_FRAME, frameHeight: CAST_FRAME });
         }
+        if (!this.textures.exists("ada-hurt")) {
+            this.load.spritesheet("ada-hurt", hurtUrl, { frameWidth: HURT_FRAME, frameHeight: HURT_FRAME });
+        }
+        if (!this.textures.exists("ada-defeat")) {
+            this.load.spritesheet("ada-defeat", defeatUrl, { frameWidth: DEFEAT_FRAME, frameHeight: DEFEAT_FRAME });
+        }
     }
 
     onRoomCreate() {
@@ -69,7 +81,10 @@ export default class SalaAdaScene extends BaseRoomScene {
         if (!this.anims.exists("ada-idle-s")) {
             // idle.png: linhas norte, sul, leste, oeste (4 quadros cada).
             this.anims.create({ key: "ada-idle-s", frames: this.anims.generateFrameNumbers("ada-idle", { start: 4, end: 7 }), frameRate: 4, repeat: -1 });
+            // cast.png: linhas sul, leste, oeste (9 quadros cada).
             this.anims.create({ key: "ada-cast-s", frames: this.anims.generateFrameNumbers("ada-cast", { start: 0, end: 8 }), frameRate: 10, repeat: 0 });
+            this.anims.create({ key: "ada-hurt-s", frames: this.anims.generateFrameNumbers("ada-hurt", { start: 0, end: 5 }), frameRate: 12, repeat: 0 });
+            this.anims.create({ key: "ada-defeat-s", frames: this.anims.generateFrameNumbers("ada-defeat", { start: 0, end: 8 }), frameRate: 8, repeat: 0 });
         }
 
         this.attackIndex = 0;
@@ -79,7 +94,11 @@ export default class SalaAdaScene extends BaseRoomScene {
         this.ada = this.add.sprite(ADA_POS.x, ADA_POS.y, "ada-idle", 4).setScale(SCALE).setDepth(ADA_POS.y + 60);
         this.ada.play("ada-idle-s");
 
+        this.input.keyboard.on("keydown-H", () => this.hurt());
+        this.input.keyboard.on("keydown-J", () => this.defeat());
+
         this.playDialogue(ENTRY_SCRIPT, () => {
+            this.setStatus("> [H] DANO   [J] DERROTA", "#ff4565");
             this.attackTimer = this.time.addEvent({ delay: ATTACK_EVERY_MS, loop: true, callback: () => this.cast() });
             this.time.delayedCall(600, () => this.cast());
         });
@@ -87,7 +106,7 @@ export default class SalaAdaScene extends BaseRoomScene {
 
     // Levanta a mão (cast) e solta o próximo ataque do ciclo no quadro da mão erguida.
     cast() {
-        if (this.busy) return;
+        if (this.busy || this.down) return;
         this.busy = true;
         const kind = ATTACKS[this.attackIndex % ATTACKS.length];
         this.attackIndex += 1;
@@ -98,6 +117,58 @@ export default class SalaAdaScene extends BaseRoomScene {
             this.ada.play("ada-idle-s");
             this.busy = false;
         });
+    }
+
+    // DANO: recua piscando branco.
+    hurt() {
+        if (this.busy || this.down) return;
+        this.busy = true;
+        this.ada.play("ada-hurt-s").setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
+        this.time.delayedCall(90, () => this.ada.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
+        this.fx("fx-impact", ADA_POS.x, ADA_POS.y, { scale: 1.2 });
+        this.cameras.main.shake(120, 0.004);
+        Sfx.play(this, "bump", 0.7);
+        this.ada.once("animationcomplete", () => {
+            this.ada.play("ada-idle-s");
+            this.busy = false;
+        });
+    }
+
+    // DERROTA: ela se curva e o halo estoura (a animação); depois some em glitch
+    // (pisca e desloca de lado, com faíscas) e, no teste, volta sozinha.
+    defeat() {
+        if (this.down) return;
+        this.down = true;
+        this.busy = true;
+        this.tweens.killTweensOf(this.ada);
+        this.ada.off("animationcomplete");     // um cast pela metade não pode trazê-la de volta ao idle
+        this.setStatus("> ADA :: NÚCLEO DESLIGADO", "#ff4565");
+        this.ada.play("ada-defeat-s");
+        Sfx.play(this, "hack", 0.6);
+        this.ada.once("animationcomplete", () => {
+            const glitch = this.time.addEvent({
+                delay: 70, repeat: 14, callback: () => {
+                    this.ada.setX(ADA_POS.x + Phaser.Math.Between(-6, 6)).setAlpha(Math.random() < 0.5 ? 0.25 : 0.9);
+                    if (Math.random() < 0.4) this.fx("fx-spark", ADA_POS.x + Phaser.Math.Between(-30, 30), ADA_POS.y + Phaser.Math.Between(-50, 50), { scale: 0.6 });
+                }
+            });
+            this.time.delayedCall(70 * 15, () => {
+                glitch.remove();
+                this.ada.setVisible(false).setX(ADA_POS.x).setAlpha(1);
+                this.halo.setVisible(false);
+                this.time.delayedCall(REVIVE_MS, () => this.revive());
+            });
+        });
+    }
+
+    revive() {
+        this.ada.setVisible(true).setAlpha(0).play("ada-idle-s");
+        this.halo.setVisible(true);
+        this.fx("fx-arrive", ADA_POS.x, ADA_POS.y - 10, { scale: 1.3 });
+        this.tweens.add({ targets: this.ada, alpha: 1, duration: 500 });
+        this.setStatus("> [H] DANO   [J] DERROTA", "#ff4565");
+        this.down = false;
+        this.busy = false;
     }
 
     fx(key, x, y, opts = {}) {
