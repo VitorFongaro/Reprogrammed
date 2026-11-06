@@ -48,7 +48,7 @@ export const ITEMS = {
         name: "Pasta térmica",
         icon: "pasta-termica",
         category: "cura",
-        description: "Reassenta o dissipador do núcleo. Restaura 8 de HP, mas exige tempo parada — só fora de combate.",
+        description: "Reassenta o dissipador do núcleo. Restaura 8 de HP, mas exige tempo parada - só fora de combate.",
         heal: 8,
         usableInBattle: false,
         usableInRoom: true,

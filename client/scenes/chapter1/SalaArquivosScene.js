@@ -30,7 +30,7 @@ const ENTRY_SCRIPT = [
     { speaker: "COSMO", text: "Ela está atrás de uma barreira de laser. Chegar perto pra desativar? Nem pensar." },
     { speaker: "COSMO", text: "Mas você não precisa chegar perto. Aperte [R] para desacelerar o tempo." },
     { speaker: "COSMO", text: "No tempo lento, mire nela com o mouse e clique para reprogramar à distância." },
-    { speaker: "COSMO", text: "Ela vai revidar — desvie do ataque e desligue o sistema dela. Vai." }
+    { speaker: "COSMO", text: "Ela vai revidar - desvie do ataque e desligue o sistema dela. Vai." }
 ];
 
 export default class SalaArquivosScene extends BaseRoomScene {
@@ -150,7 +150,7 @@ export default class SalaArquivosScene extends BaseRoomScene {
                 onEnter: () => this.flashPlayer()
             },
             { speaker: "COSMO", text: '"Artemis". Foi como ela te chamou. Acho que é o seu nome.' },
-            { speaker: "COSMO", text: 'Um nome é só um valor de texto — guardado entre aspas: nome = "Artemis".' },
+            { speaker: "COSMO", text: 'Um nome é só um valor de texto - guardado entre aspas: nome = "Artemis".' },
             { speaker: "COSMO", text: "Vamos, Artemis. O controle ambiental fica adiante." }
         ];
     }

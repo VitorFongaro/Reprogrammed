@@ -16,7 +16,7 @@ const FLOOR_Y = 560;
 const SCRIPT = [
     { speaker: "COSMO", text: "O saguão da Elysium. Seu primeiro contato com o mundo lá de cima." },
     { speaker: "COSMO", text: "Limpo, silencioso, perfeito... É assim que a ADA gosta das coisas." },
-    { speaker: "COSMO", text: "A partir daqui, cada andar é território dela. Descanse os circuitos — o próximo desafio vem aí." }
+    { speaker: "COSMO", text: "A partir daqui, cada andar é território dela. Descanse os circuitos - o próximo desafio vem aí." }
 ];
 
 const SUMMARY_LINES = [
@@ -137,7 +137,7 @@ export default class SaguaoScene extends Phaser.Scene {
             color: "#f7f7f7"
         }).setOrigin(0.5));
 
-        overlay.add(this.add.text(WIDTH / 2, 240, "VARIÁVEIS — CONCLUÍDO", {
+        overlay.add(this.add.text(WIDTH / 2, 240, "VARIÁVEIS :: CONCLUÍDO", {
             fontFamily: "VCR",
             fontSize: "22px",
             color: "#51e36b"

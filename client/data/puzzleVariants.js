@@ -59,7 +59,7 @@ export function generatorPuzzle() {
             "Guarde na variável energia a carga certa",
             "para deixar a bateria cheia, sem sobrecarregar."
         ],
-        hint: "a estrutura é  energia = valor  — teste os valores e olhe a bateria.",
+        hint: "a estrutura é  energia = valor  - teste os valores e olhe a bateria.",
         variable: "energia",
         expected: max,
         gauge: { kind: "battery", label: "BATERIA", max },
@@ -85,7 +85,7 @@ export function thermostatPuzzle() {
             "Ajuste a variável temperatura até o",
             "termômetro bater no marcador seguro."
         ],
-        hint: "temperatura = número decimal (com ponto) — qual bate no marcador?",
+        hint: "temperatura = número decimal (com ponto) - qual bate no marcador?",
         variable: "temperatura",
         expected: target,
         gauge: { kind: "thermometer", label: "TERMOSTATO", min: 18, max: 25, target },
@@ -111,7 +111,7 @@ export function ventilationPuzzle() {
         briefing: [
             "A ventilação precisa do setor onde você",
             "está agora. Leia o mapa (o ponto azul) e",
-            "informe o código — é um texto (string)."
+            "informe o código - é um texto (string)."
         ],
         hint: 'setor = "código do mapa" (a linha e a coluna, entre aspas)',
         variable: "setor",

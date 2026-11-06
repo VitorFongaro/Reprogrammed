@@ -44,7 +44,7 @@ const ENTRY_SCRIPT = [
 ];
 
 const CLEARED_SCRIPT = [
-    { speaker: "COSMO", text: "Sala limpa. Adiante, uma arena de treino — hora de aprender a revidar." }
+    { speaker: "COSMO", text: "Sala limpa. Adiante, uma arena de treino - hora de aprender a revidar." }
 ];
 
 export default class TreinamentoScene extends BaseRoomScene {

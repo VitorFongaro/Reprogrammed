@@ -196,7 +196,7 @@ export default class ReprogramScene extends Phaser.Scene {
         if (this.finished) {
             return;
         }
-        this.setStatus("O ROBÔ REVIDA — DESVIE COM WASD!", "#ff4545");
+        this.setStatus("O ROBÔ REVIDA: DESVIE COM WASD!", "#ff4545");
 
         // Telegrafo: investida do retrato.
         this.tweens.add({
@@ -235,7 +235,7 @@ export default class ReprogramScene extends Phaser.Scene {
         if (this.finished) {
             return;
         }
-        this.setStatus("DESLIGUE O ROBÔ — MONTE A INSTRUÇÃO", "#4ad6ff");
+        this.setStatus("DESLIGUE O ROBÔ: MONTE A INSTRUÇÃO", "#4ad6ff");
         this.solvedThisRun = false;
 
         // Título mostra o progresso quando o robô tem vários estágios.
@@ -277,7 +277,7 @@ export default class ReprogramScene extends Phaser.Scene {
         this.portrait.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
         this.cameras.main.shake(160, 0.005);
         this.time.delayedCall(120, () => this.restorePortraitTint());
-        this.setStatus(`CAMADA ${this.enemyStage}/${this.enemyStages} QUEBRADA — ELE RESISTE`, "#ffb347");
+        this.setStatus(`CAMADA ${this.enemyStage}/${this.enemyStages} QUEBRADA: ELE RESISTE`, "#ffb347");
         this.time.delayedCall(1000, () => this.enemyAttack());
     }
 
@@ -292,7 +292,7 @@ export default class ReprogramScene extends Phaser.Scene {
     // (`defeat`, ver BaseRoomScene.restartRoom, que também cura).
     fail() {
         this.finished = true;
-        this.setStatus("REPROGRAMAÇÃO FALHOU — REINICIANDO A SALA", "#ff4545");
+        this.setStatus("REPROGRAMAÇÃO FALHOU: REINICIANDO A SALA", "#ff4545");
         this.cameras.main.flash(300, 255, 40, 40);
         this.time.delayedCall(1100, () => this.finish(false, { defeat: true }));
     }

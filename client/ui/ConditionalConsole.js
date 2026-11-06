@@ -103,6 +103,16 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         this.onProgram = options.onProgram ?? null;
     }
 
+    // Largura real de uma palavra fixa do programa. A fonte do jogo é
+    // proporcional (m6x11plus: o "i" tem um terço do "m"), então estimar por
+    // número de letras deixava vãos desiguais entre o texto e os encaixes.
+    measureFixed(text) {
+        const probe = this.scene.add.text(0, 0, text, { fontFamily: "VCR", fontSize: "22px" });
+        const width = probe.width;
+        probe.destroy();
+        return width;
+    }
+
     buildModel() {
         this.template = this.puzzle.lines.map(parseTemplateLine);
         this.slots = [];
@@ -113,7 +123,7 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
             const y = CODE_Y + row * LINE_H;
             line.tokens.forEach((token, col) => {
                 if (typeof token === "string") {
-                    const w = token.length * 13;   // VCR 22px ≈ 13px por caractere.
+                    const w = this.measureFixed(token);
                     this.fixedTokens.push({ text: token, x, y });
                     x += w + TOKEN_GAP;
                 } else {

@@ -722,7 +722,7 @@ export default class BattleScene extends Phaser.Scene {
                 return;
             }
         }
-        this.setBattleStatus("> SEU TURNO — ESCOLHA UMA AÇÃO", "#4ad6ff");
+        this.setBattleStatus("> SEU TURNO: ESCOLHA UMA AÇÃO", "#4ad6ff");
         this.menu.show();
     }
 
@@ -979,7 +979,7 @@ export default class BattleScene extends Phaser.Scene {
         // Limite anti-sobrecarga: o núcleo da Artemis não aguenta reprogramar
         // indefinidamente. Bater no teto NÃO gasta o turno — volta ao menu.
         if (this.reprogramCount >= this.maxReprograms) {
-            this.setBattleStatus("> NÚCLEO EM SOBRECARGA — REPROGRAMAÇÃO BLOQUEADA", "#ff4545");
+            this.setBattleStatus("> NÚCLEO EM SOBRECARGA: REPROGRAMAÇÃO BLOQUEADA", "#ff4545");
             this.time.delayedCall(1100, () => this.playerTurn());
             return;
         }
@@ -1008,7 +1008,7 @@ export default class BattleScene extends Phaser.Scene {
                         : "  (LIMITE: núcleo em sobrecarga)";
                     this.setBattleStatus(`> ATAQUE REPROGRAMADO: FORÇA = ${this.forca}${tail}`, "#51e36b");
                 } else {
-                    this.setBattleStatus("> REPROGRAMAÇÃO FALHOU — TURNO PERDIDO", "#ff4545");
+                    this.setBattleStatus("> REPROGRAMAÇÃO FALHOU: TURNO PERDIDO", "#ff4545");
                 }
                 this.time.delayedCall(1000, () => this.bossTurn());
             }
@@ -1076,7 +1076,7 @@ export default class BattleScene extends Phaser.Scene {
         this.dodgeIndex += 1;
         this.currentPattern = pattern;
 
-        this.setBattleStatus(`> TURNO DE ${this.config.name} — DESVIE COM WASD!`, "#ff4545");
+        this.setBattleStatus(`> TURNO DE ${this.config.name}: DESVIE COM WASD!`, "#ff4545");
         // Espiral, nova e ponteiros nascem no centro: começa a alma mais embaixo,
         // longe do foco.
         const fromCenter = ["spiral", "nova", "hands"].includes(pattern);
@@ -1762,7 +1762,7 @@ export default class BattleScene extends Phaser.Scene {
                 this.soul.setTint(TIME_TINT);
                 this.later(SOUL_HASTE_MS, () => this.soul.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
             }
-            this.setBattleStatus(`> TURNO DE ${this.config.name} — DESVIE COM WASD!`, "#ff4545");
+            this.setBattleStatus(`> TURNO DE ${this.config.name}: DESVIE COM WASD!`, "#ff4545");
         });
     }
 
@@ -2048,7 +2048,7 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     defenseTurn() {
-        this.setBattleStatus("> SEQUÊNCIA HOSTIL A CAMINHO — DEFENDA-SE!", "#ff4545");
+        this.setBattleStatus("> SEQUÊNCIA HOSTIL A CAMINHO: DEFENDA-SE!", "#ff4545");
         // Cada entrada pode ser uma função: gera números/temas novos a cada turno.
         const puzzle = resolvePuzzle(this.config.defensePuzzles ?? ENIAC_DEFENSES);
 
@@ -2105,7 +2105,7 @@ export default class BattleScene extends Phaser.Scene {
         this.stopDodge();
         this.menu.hide();
         this.cameras.main.flash(500, 255, 40, 40);
-        this.setBattleStatus("> UNIDADE NEUTRALIZADA — REINICIANDO A SALA...", "#ff4545");
+        this.setBattleStatus("> UNIDADE NEUTRALIZADA: REINICIANDO A SALA...", "#ff4545");
 
         this.time.delayedCall(2200, () => {
             this.scene.stop();

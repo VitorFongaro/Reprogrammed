@@ -18,14 +18,14 @@ const ENIAC_COLOR = "#ff4545";
 const ENTRY_SCRIPT = [
     { speaker: "ENIAC", color: ENIAC_COLOR, text: "UNIDADE NÃO AUTORIZADA DETECTADA." },
     { speaker: "ENIAC", color: ENIAC_COLOR, text: "ESTE SETOR ESTÁ SOB MINHA CUSTÓDIA DESDE 1946." },
-    { speaker: "COSMO", text: "Um ENIAC. Ele guarda a trava mestra do saguão — invada o núcleo e derrube-o por dentro." }
+    { speaker: "COSMO", text: "Um ENIAC. Ele guarda a trava mestra do saguão - invada o núcleo e derrube-o por dentro." }
 ];
 
 const VICTORY_SCRIPT = [
     { speaker: "ENIAC", color: ENIAC_COLOR, text: "CUSTÓDIA... ENCERRADA... ......" },
     { speaker: "COSMO", text: "Puxei um chip de cache do núcleo dele. Guarde bem: com ele você reprograma uma vez a mais dentro de um embate." },
     { speaker: "COSMO", text: "Só o guardião de cada andar carrega um desses. Não conte com o segundo tão cedo." },
-    { speaker: "COSMO", text: "Caminho livre. Espera... com o ENIAC fora, o bloqueio de sinal caiu — estou recebendo algo—" }
+    { speaker: "COSMO", text: "Caminho livre. Espera... com o ENIAC fora, o bloqueio de sinal caiu - estou recebendo algo..." }
 ];
 
 export default class SalaSegurancaScene extends BaseRoomScene {

@@ -26,8 +26,11 @@ export const LIMITS = {
     maxBriefingLines: 4,
     maxFillings: 200000,
     // Largura da área de código do ConditionalConsole (do número da linha até a
-    // coluna dos casos), medida como ele mede: 13 px por caractere de texto
-    // fixo, 122 px por encaixe, 10 px entre peças e 44 px por nível de recuo.
+    // coluna dos casos): 122 px por encaixe, 10 px entre peças, 44 px por nível
+    // de recuo e 13 px por caractere de texto fixo. O console mede o texto de
+    // verdade, mas aqui (Node, sem Phaser) os 13 px são um TETO: ficam acima da
+    // letra mais larga da fonte do jogo (m6x11plus, proporcional: 11 px), então
+    // uma linha aprovada aqui sempre cabe lá.
     maxLineWidth: 720
 };
 

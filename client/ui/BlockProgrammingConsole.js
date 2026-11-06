@@ -315,7 +315,7 @@ export default class BlockProgrammingConsole {
             SLOT_CENTER_X,
             PANEL_Y + PANEL_H - 22,
             this.singleAttempt
-                ? "monte com cuidado — uma única tentativa por turno"
+                ? "monte com cuidado: uma única tentativa por turno"
                 : "arraste os blocos para os encaixes",
             { fontFamily: "VCR", fontSize: "16px", color: COLOR.dim }
         ).setOrigin(0.5, 1);
@@ -873,7 +873,7 @@ export default class BlockProgrammingConsole {
         const vs = this.valueSlot();
         if (this.puzzle.gauge.kind === "battery" && vs && wrongSlots.includes(vs)) {
             const num = this.currentValue();
-            if (num === null) return "esse valor não carrega a bateria — confira o tipo";
+            if (num === null) return "esse valor não carrega a bateria: confira o tipo";
             if (num > (this.puzzle.gauge.max ?? 100)) return "sobrecarga: passou da capacidade da bateria";
             return "a bateria ainda não está cheia";
         }

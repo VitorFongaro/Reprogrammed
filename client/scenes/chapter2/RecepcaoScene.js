@@ -170,7 +170,7 @@ export default class RecepcaoScene extends BaseRoomScene {
             return { text: "> progresso gravado no nó de arquivo" };
         }
         return {
-            text: "> gravado só nesta máquina — nó de arquivo fora do ar",
+            text: "> gravado só nesta máquina: nó de arquivo fora do ar",
             color: "#ffb347"
         };
     }

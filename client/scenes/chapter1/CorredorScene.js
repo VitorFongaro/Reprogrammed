@@ -22,11 +22,11 @@ const LUA_COLOR = "#51e36b";
 const TRANSMISSION_SCRIPT = [
     { speaker: "SISTEMA", text: "> bloqueio de sinal: nível 3 de 4 removido" },
     { speaker: "LUA", color: LUA_COLOR, text: "...osmo? ...está me ouvindo? Conexão parcial restabelecida." },
-    { speaker: "LUA", color: LUA_COLOR, text: "Encontrou a unidade! Escute — não temos muito tempo." },
+    { speaker: "LUA", color: LUA_COLOR, text: "Encontrou a unidade! Escute - não temos muito tempo." },
     { speaker: "LUA", color: LUA_COLOR, text: "A ADA mente. Os chips neurais não apenas monitoram... eles reescrevem memórias." },
-    { speaker: "LUA", color: LUA_COLOR, text: "As pessoas lá em cima não lembram do que perderam. Suba, e você vai ent—" },
+    { speaker: "LUA", color: LUA_COLOR, text: "As pessoas lá em cima não lembram do que perderam. Suba, e você vai ent..." },
     { speaker: "SISTEMA", text: "> sinal perdido" },
-    { speaker: "COSMO", text: "É a colônia da Lua — foram eles que me enviaram. Cada sistema da ADA que cai, o sinal deles chega mais longe." },
+    { speaker: "COSMO", text: "É a colônia da Lua - foram eles que me enviaram. Cada sistema da ADA que cai, o sinal deles chega mais longe." },
     { speaker: "COSMO", text: "Reescrever memórias... Artemis, precisamos subir. O elevador está ali." }
 ];
 
@@ -69,7 +69,7 @@ export default class CorredorScene extends BaseRoomScene {
         }
 
         return {
-            text: "> gravado só nesta máquina — nó de arquivo fora do ar",
+            text: "> gravado só nesta máquina: nó de arquivo fora do ar",
             color: "#ffb347"
         };
     }

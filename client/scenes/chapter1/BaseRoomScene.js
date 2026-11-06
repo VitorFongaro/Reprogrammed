@@ -241,7 +241,7 @@ export default class BaseRoomScene extends Phaser.Scene {
     // checkpoint em que ele não confia — mas também não pode competir com o
     // diálogo de entrada da sala, então fica pequeno, fora do caminho e some.
     showCheckpointNotice() {
-        const notice = this.add.text(WIDTH - 28, 44, "◆ PROGRESSO GRAVADO", {
+        const notice = this.add.text(WIDTH - 28, 44, "> PROGRESSO GRAVADO", {
             fontFamily: "VCR",
             fontSize: "15px",
             color: "#4ad6ff"
@@ -536,7 +536,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.player.setTimeCompensation(1 / REPROGRAM_SLOW);
         this.buildReprogramOverlay();
         this.renderReprogramOverlay();
-        this.setStatus("> REPROGRAMAÇÃO REMOTA — TEMPO DESACELERADO", "#4ad6ff");
+        this.setStatus("> REPROGRAMAÇÃO REMOTA: TEMPO DESACELERADO", "#4ad6ff");
     }
 
     // Sai do modo; com `target`, abre o console dele (o tempo volta ao normal
@@ -867,7 +867,7 @@ export default class BaseRoomScene extends Phaser.Scene {
     onPlayerDowned() {
         this.player.setEnabled(false);
         this.cameras.main.flash(400, 255, 40, 40);
-        this.setStatus("> SISTEMAS CRÍTICOS — REINICIANDO A SALA", "#ff4545");
+        this.setStatus("> SISTEMAS CRÍTICOS: REINICIANDO A SALA", "#ff4545");
         this.time.delayedCall(900, () => this.restartRoom());
     }
 
