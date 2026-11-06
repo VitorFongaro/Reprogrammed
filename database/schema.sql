@@ -294,6 +294,22 @@ create table public.user_game_state (
 );
 
 -- =========================================================
+-- USER CHAPTER PROGRESS
+-- Capítulos que o jogador já TERMINOU (libera a seleção de capítulos no menu).
+-- MONOTÔNICO como o perfil de aprendizagem: só recebe inserção, então carregar
+-- um save antigo ou zerar o progresso nunca tranca um capítulo de novo. Por
+-- isso não mora no user_game_state (o save, reversível).
+-- =========================================================
+
+create table public.user_chapter_progress (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  chapter_id bigint not null references public.chapters(id) on delete cascade,
+  completed_at timestamp with time zone not null default now(),
+
+  primary key (user_id, chapter_id)
+);
+
+-- =========================================================
 -- USER SETTINGS
 -- Configurações do jogador
 -- =========================================================
@@ -747,6 +763,24 @@ on public.user_topic_performance
 for update
 to authenticated
 using (auth.uid() = user_id)
+with check (auth.uid() = user_id);
+
+-- =========================================================
+-- POLICIES: USER CHAPTER PROGRESS (só ler e inserir: é monotônico)
+-- =========================================================
+
+alter table public.user_chapter_progress enable row level security;
+
+create policy "Users can view their own chapter progress"
+on public.user_chapter_progress
+for select
+to authenticated
+using (auth.uid() = user_id);
+
+create policy "Users can insert their own chapter progress"
+on public.user_chapter_progress
+for insert
+to authenticated
 with check (auth.uid() = user_id);
 
 -- =========================================================

@@ -39,6 +39,17 @@ export function startNewGame() {
     resetInventory();
 }
 
+// Começar um CAPÍTULO pela seleção do menu: o save passa a ser o começo dele.
+// Zera como um jogo novo (puzzles, HP) e entra com o inventário de quem chega
+// ali (as melhorias dos capítulos anteriores, ver data/chapters.js). Quem
+// chama grava em seguida, para o CONTINUAR já apontar para cá.
+export function startFromChapter(sceneKey, inventory) {
+    currentScene = sceneKey;
+    solved = new Set();
+    resetVitals();
+    applyInventory(inventory);
+}
+
 export function enterScene(sceneKey) {
     if (sceneKey) {
         currentScene = sceneKey;
@@ -151,6 +162,12 @@ export async function load() {
 // jogador tenta continuar.
 export function hasLocalSave() {
     return Boolean(readLocalSave());
+}
+
+// Sala do save local, sem aplicar nada (o menu usa para deduzir capítulos já
+// vencidos por quem jogou antes da seleção de capítulos existir).
+export function localSaveScene() {
+    return readLocalSave()?.scene ?? null;
 }
 
 // CONTINUAR do menu: carrega SÍNCRONO do espelho local e aplica na sessão. O menu

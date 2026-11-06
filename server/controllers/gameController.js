@@ -1,5 +1,7 @@
 import {
   clearGameState,
+  completeChapter,
+  getCompletedChapters,
   getGameState,
   getPerformance,
   getUserSettings,
@@ -78,6 +80,25 @@ export const updateSettings = async (req, res, next) => {
       req.body
     );
     res.json({ settings });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Capítulos concluídos: liberam a seleção de capítulos no menu.
+export const getChapters = async (req, res, next) => {
+  try {
+    const chapters = await getCompletedChapters(req.user.id, req.accessToken);
+    res.json({ chapters });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const postChapter = async (req, res, next) => {
+  try {
+    const chapters = await completeChapter(req.user.id, req.accessToken, req.body?.chapter);
+    res.json({ chapters });
   } catch (error) {
     next(error);
   }

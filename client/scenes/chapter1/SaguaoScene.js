@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import PlayerCharacter from "../../characters/PlayerCharacter";
 import CosmoCompanion from "../../characters/CosmoCompanion";
 import DialogueBox from "../../ui/DialogueBox";
+import { markChapterCompleted } from "../../state/chapters";
 import saguaoBg from "../../assets/images/saguao/saguao_bg.png";
 
 // Capítulo 1, sala 6 — Saguão: cutscene de encerramento. As portas do elevador
@@ -124,6 +125,9 @@ export default class SaguaoScene extends Phaser.Scene {
     }
 
     showEndCard() {
+        // Fim de capítulo: libera o capítulo 1 na seleção do menu (monotônico,
+        // fora do save; ver state/chapters.js).
+        markChapterCompleted(1);
         const overlay = this.add.container(0, 0).setDepth(950).setAlpha(0);
 
         const backdrop = this.add.graphics();
@@ -158,6 +162,12 @@ export default class SaguaoScene extends Phaser.Scene {
                 delay: 600 + index * 350
             });
         });
+
+        overlay.add(this.add.text(WIDTH / 2, HEIGHT - 122, "> CAPÍTULO 1 LIBERADO NA SELEÇÃO DE CAPÍTULOS DO MENU", {
+            fontFamily: "VCR",
+            fontSize: "16px",
+            color: "#ffb347"
+        }).setOrigin(0.5));
 
         const hint = this.add.text(WIDTH / 2, HEIGHT - 80, "[ESPAÇO] CONTINUAR", {
             fontFamily: "VCR",

@@ -417,6 +417,29 @@ nesse caso o save guarda só a cena e deixa a fase nula.
   > INICIAR do menu (que some quando há save) passa a sumir logo na primeira sala de uma
   > partida nova — para recomeçar do zero, é o ZERAR PROGRESSO do painel do jogador.
 
+### Seleção de capítulos
+
+O card **CAPÍTULOS** do menu (`GameScene` + `ui/ChapterSelect.js`) aparece depois do primeiro
+capítulo concluído. Dá para escolher os capítulos CONCLUÍDOS e o seguinte ao último concluído (onde o
+jogador chegou: depois de um ZERAR PROGRESSO, volta direto para ele); os outros aparecem trancados.
+
+- **Escolher um capítulo SUBSTITUI o save** (decisão de design: é um "jogo novo a partir dali"), com
+  confirmação quando há save. `progress.startFromChapter` zera puzzles e HP e entra com o inventário
+  de quem chega ali — só as MELHORIAS dos capítulos anteriores (`startInventory`, a partir do
+  `reward` de cada um em `data/chapters.js`) —, e o menu grava na hora, para o CONTINUAR já apontar
+  para o começo do capítulo.
+- **Capítulo concluído é MONOTÔNICO**, como o perfil de aprendizagem, e por isso NÃO mora no save:
+  tabela `user_chapter_progress` (só leitura e inserção; migração `0008`), rotas `GET/POST
+  /game/chapters` (o cliente fala em número de capítulo = `chapters.order_index`) e
+  `state/chapters.js`, com espelho local POR CONTA (`reprogrammed.chapters.<id>`) que é reenviado
+  ao servidor na sincronização — compartilhado, passaria os capítulos de um jogador para outro no
+  mesmo navegador. Carregar save antigo ou ZERAR PROGRESSO não tranca nada.
+- **Onde um capítulo é concluído:** o cap. 1 no card final do `cap1-saguao`; o cap. 2, por ora, na
+  vitória sobre a WITCH no `cap2-hall` (o fim definitivo do térreo ainda não existe). Quem jogou
+  antes da seleção existir ganha o registro deduzido do save (`backfillFromScene`: save no
+  capítulo N = anteriores vencidos).
+- Capítulo novo entra em `data/chapters.js` só quando tiver começo e fim no fluxo do jogo.
+
 > **`onRestore` NÃO cai para `onSolved`, de propósito.** O `onSolved` das salas com mais de um
 > painel lê os outros painéis, que ainda não existem quando o primeiro é construído — cair no
 > `onSolved` daria crash ao carregar um save. Sala com vários dispositivos reaplica o estado

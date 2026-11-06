@@ -3,6 +3,7 @@ import WitchBoss from "../../characters/WitchBoss";
 // Defesas do turno dela: condicionais no tema do relógio, sorteadas a cada turno.
 import { WITCH_DEFENSES } from "../../data/puzzleVariants";
 import Effects from "../../ui/Effects";
+import { markChapterCompleted } from "../../state/chapters";
 import hallBg from "../../assets/images/hall/hall_bg.png";
 import hallMap from "../../assets/maps/hall.json";
 
@@ -172,6 +173,9 @@ export default class HallScene extends BaseRoomScene {
             return;
         }
         this.witch.defeat();
+        // A boss final do térreo: o capítulo 2 conta como concluído e entra na
+        // seleção de capítulos do menu (ver state/chapters.js).
+        markChapterCompleted(2);
         this.time.delayedCall(600, () => this.playDialogue([...WITCH_VICTORY_SCRIPT, ...DOOR_SCRIPT], () => this.unlockDoor()));
     }
 

@@ -2,10 +2,12 @@ import { Router } from 'express';
 import {
   deleteProgress,
   gameStatus,
+  getChapters,
   getPlayerPanel,
   getProgress,
   getSettings,
   postAttempt,
+  postChapter,
   saveProgress,
   updateSettings
 } from '../controllers/gameController.js';
@@ -21,5 +23,7 @@ router.post('/attempts', requireAuth, postAttempt);
 router.get('/performance', requireAuth, getPlayerPanel);
 router.get('/settings', requireAuth, getSettings);
 router.patch('/settings', requireAuth, updateSettings);
+router.get('/chapters', requireAuth, getChapters);
+router.post('/chapters', requireAuth, postChapter);
 
 export default router;

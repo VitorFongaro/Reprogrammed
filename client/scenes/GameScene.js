@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 import wordmark from "../assets/images/reprogrammed-wordmark.png";
-import { hasLocalSave, loadLocal, startNewGame, FIRST_SCENE } from "../state/progress";
+import { hasLocalSave, loadLocal, localSaveScene, startNewGame, startFromChapter, save as saveProgress, FIRST_SCENE } from "../state/progress";
+import { backfillFromScene, completedChapters, syncChapters } from "../state/chapters";
+import { startInventory } from "../data/chapters";
+import ChapterSelect from "../ui/ChapterSelect";
 import Sfx from "../ui/Sfx";
 import Music from "../ui/Music";
 
@@ -39,6 +42,15 @@ const MENU_ITEMS = [
         requiresNoSave: true
     },
     {
+        // Só aparece depois do primeiro capítulo concluído (state/chapters.js).
+        id: "chapters",
+        label: "CAPÍTULOS",
+        icon: "list",
+        accent: 0xffb347,
+        executeText: "LENDO CAPÍTULOS...",
+        requiresChapters: true
+    },
+    {
         id: "options",
         label: "OPÇÕES",
         icon: "gear",
@@ -72,12 +84,26 @@ export default class GameScene extends Phaser.Scene {
 
         this.cards = [];
         this.activeCard = null;
+        this.chapterSelect = null;     // a instância da cena volta a cada ida ao menu
+        backfillFromScene(localSaveScene());
 
         this.drawBackground();
         this.drawDropZone();
         this.drawMenuCards();
         this.drawStatusPanel();
         this.registerDragEvents();
+
+        // Os capítulos concluídos vêm do espelho local na hora; o servidor pode
+        // saber de mais algum (outro computador). Se o card CAPÍTULOS precisar
+        // aparecer, a fileira é redesenhada.
+        const before = completedChapters().length;
+        syncChapters().then((list) => {
+            if (this.sys.isActive() && !this.chapterSelect && (list.length > 0) !== (before > 0)) {
+                this.cards.forEach((card) => card.destroy());
+                this.cards = [];
+                this.drawMenuCards();
+            }
+        });
     }
 
     drawBackground() {
@@ -135,8 +161,10 @@ export default class GameScene extends Phaser.Scene {
 
     drawMenuCards() {
         const temSave = hasLocalSave();
+        const temCapitulo = completedChapters().length > 0;
         const items = MENU_ITEMS.filter((item) => (
             (!item.requiresSave || temSave) && (!item.requiresNoSave || !temSave)
+            && (!item.requiresChapters || temCapitulo)
         ));
         const spacing = 228;
         // Centraliza a fileira: o número de cards muda com a existência de save.
@@ -217,6 +245,14 @@ export default class GameScene extends Phaser.Scene {
             icon.strokeRect(-8, -46, 12, 18);
             icon.lineStyle(6, item.accent, 1);
             icon.strokeRect(-26, -4, 52, 30);
+        }
+
+        if (item.icon === "list") {
+            // Lista de capítulos: três linhas com o marcador na frente.
+            [-40, -14, 12].forEach((y) => {
+                icon.fillRect(-38, y - 6, 12, 12);
+                icon.fillRect(-16, y - 4, 54, 8);
+            });
         }
 
         if (item.icon === "exit") {
@@ -332,6 +368,11 @@ export default class GameScene extends Phaser.Scene {
             return;
         }
 
+        if (card.item.id === "chapters") {
+            this.openChapterSelect(card);
+            return;
+        }
+
         if (card.item.id === "options") {
             this.statusText.setText("ABRINDO CONFIGURAÇÕES");
             this.time.delayedCall(350, () => {
@@ -368,6 +409,31 @@ export default class GameScene extends Phaser.Scene {
         const target = this.scene.get(progress.scene) ? progress.scene : FIRST_SCENE;
         this.statusText.setText("SAVE CARREGADO");
         this.time.delayedCall(350, () => this.scene.start(target));
+    }
+
+    // CAPÍTULOS: escolher um capítulo SUBSTITUI o save, como um jogo novo a
+    // partir dele (a seleção pede confirmação quando há save). O registro dos
+    // concluídos não é tocado: ele é monotônico e fica fora do save.
+    openChapterSelect(card) {
+        this.statusText.setText("ESCOLHA UM CAPÍTULO");
+        this.chapterSelect = new ChapterSelect(this, {
+            completed: completedChapters(),
+            hasSave: hasLocalSave(),
+            onClose: () => {
+                this.chapterSelect = null;
+                this.returnCard(card);
+            },
+            onChoose: (chapter) => {
+                this.chapterSelect = null;
+                Sfx.play(this, "crunch");
+                this.statusText.setText(`CAPÍTULO ${chapter.number} :: ${chapter.title}`);
+                startFromChapter(chapter.start, startInventory(chapter.number));
+                // Grava já: o CONTINUAR passa a apontar para o começo do capítulo
+                // mesmo se o jogador sair antes da primeira sala.
+                saveProgress().catch(() => {});
+                this.time.delayedCall(450, () => this.scene.start(chapter.intro ?? chapter.start));
+            }
+        });
     }
 
     flashDropZone(color) {

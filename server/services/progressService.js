@@ -411,3 +411,55 @@ export const recordAttempt = async (userId, accessToken, payload = {}) => {
     accuracy: Number(performance?.accuracy ?? 0)
   };
 };
+
+// --- Capítulos concluídos (seleção de capítulos do menu) ---------------------
+// Monotônico: só lê e insere (ver user_chapter_progress no schema). O cliente
+// fala em número de capítulo, que é o chapters.order_index.
+
+export const getCompletedChapters = async (userId, accessToken) => {
+  const client = createUserSupabaseClient(accessToken);
+  const { data, error } = await client
+    .from('user_chapter_progress')
+    .select('chapters(order_index)')
+    .eq('user_id', userId);
+
+  if (error) {
+    throw mapProgressError(error, 'Nao foi possivel carregar os capitulos.');
+  }
+
+  return (data ?? []).map((row) => row.chapters?.order_index).filter(Number.isInteger).sort((a, b) => a - b);
+};
+
+export const completeChapter = async (userId, accessToken, chapterNumber) => {
+  const number = Number(chapterNumber);
+
+  if (!Number.isInteger(number) || number < 1) {
+    const error = new Error('Informe o numero do capitulo.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const client = createUserSupabaseClient(accessToken);
+  const { data: chapter, error: chapterError } = await client
+    .from('chapters')
+    .select('id')
+    .eq('order_index', number)
+    .maybeSingle();
+
+  if (chapterError || !chapter) {
+    const error = new Error(chapterError?.message || 'Capitulo nao encontrado.');
+    error.statusCode = chapterError ? 400 : 404;
+    throw error;
+  }
+
+  // Concluir de novo não é erro: o registro já existe e fica como está.
+  const { error } = await client
+    .from('user_chapter_progress')
+    .upsert({ user_id: userId, chapter_id: chapter.id }, { onConflict: 'user_id,chapter_id', ignoreDuplicates: true });
+
+  if (error) {
+    throw mapProgressError(error, 'Nao foi possivel registrar o capitulo.');
+  }
+
+  return getCompletedChapters(userId, accessToken);
+};
