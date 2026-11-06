@@ -38,8 +38,13 @@ const BATTLE_CONFIG = {
     dodgeDuration: 6000,
     projectileInterval: 300,
     projectileSpeed: { min: 150, max: 210 },
-    analysisLine: "DUPLA DE SENTINELAS — UNIDADES DE TREINO DA ELYSIUM.",
-    reward: null,                    // chip de cache é espólio de BOSS FINAL; aqui é treino.
+    analysisLine: "SENTINELAS :: UNIDADES DE TREINO DA ELYSIUM.",
+    analysisQuips: [
+        "Duas sentinelas de treino. Uma bate, a outra torce.",
+        "Elas treinam juntas há anos. Não pergunte qual é a mais forte, dá briga.",
+        "Cores diferentes, mesmo péssimo gosto para receber visitas."
+    ],
+    reward: null,                    // espólio (a melhoria do capítulo) é só do boss final; aqui é treino.
     theme: null,                     // só o boss tem tema próprio; aqui a faixa do capítulo segue.
     combatants: [
         { key: "sentTeal", walkUrl: tealWalk, disabledUrl: tealDisabled, x: WIDTH / 2 - 95, y: 150, scale: 2.6 },
