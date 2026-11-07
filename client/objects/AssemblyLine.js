@@ -55,7 +55,6 @@ export default class AssemblyLine {
         head.lineStyle(2, 0x0a0b10, 1).strokeRect(-30, -14, 60, 22);
         this.pressLight = s.add.circle(0, -3, 3, COLORS.red);
         this.pressHead.add([head, this.pressLight]);
-        this.pressRestY = y - 100;
     }
 
     createMold(test, x) {

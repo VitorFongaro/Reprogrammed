@@ -301,8 +301,8 @@ parede com letreiro e quadro de rotas, escotilha e esteira, faixas de segurança
 
 **Linha de montagem (cap. 3).** O fundo (`client/assets/images/montagem/montagem_bg.png`: piso de
 chapa de aço com rebites, a esteira, o fosso que corta a sala e o letreiro em vermelho) sai de
-`tools/montagem_bg.py`; prensa, moldes e ponte são desenhados no código
-(`client/objects/AssemblyLine.js`). Arte nossa, feita por script escrito por um agente de IA —
+`tools/montagem_bg.py`; o terminal `painel_prensa` sai de `tools/montagem_props.lua` (Aseprite);
+a prensa, os moldes e a ponte são desenhados no código (`client/objects/AssemblyLine.js`). Arte nossa, feita por script escrito por um agente de IA —
 declarar no TCC.
 
 **Hall do relógio (cap. 2).** O fundo (`client/assets/images/hall/hall_bg.png`: a parede e as
@@ -350,7 +350,7 @@ a data ficaram registrados em `client/assets/sprites/metadata.json`. As imagens 
 As **músicas** (`client/assets/audio/music/`) também são geradas por IA, todas da mesma origem:
 `menu.mp3` (entregue como `The_Solitude_of_Iron.mp3`) no menu principal, `cap1_subsolo.mp3`
 (`Sector_Siege.mp3`) em loop pelo capítulo 1, e `boss.mp3` (`Fango_d_Argento.mp3`) no embate com o
-boss de capítulo, e `cap2_terreo.mp3` (`Terminal_Lockdown.mp3`) no térreo, o capítulo 2. Ver `ui/Music.js`. Se ainda der para recuperar a ferramenta e os prompts usados,
+boss de capítulo, `cap2_terreo.mp3` (`Terminal_Lockdown.mp3`) no térreo, o capítulo 2, e `cap3_nucleo.mp3` (`Overseer_of_the_Spire.mp3`, gerada no Gemini) no núcleo, o capítulo 3. Ver `ui/Music.js`. Se ainda der para recuperar a ferramenta e os prompts usados,
 vale anotar aqui: a declaração no TCC fica mais forte com a origem específica do que com um "gerado
 por IA" genérico.
 

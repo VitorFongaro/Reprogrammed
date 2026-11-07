@@ -26,7 +26,8 @@ import montagemBg from "../../assets/images/montagem/montagem_bg.png";
 // responder. A esteira e o fosso são fixos, então a Artemis pode andar enquanto
 // a IA responde: só o terminal espera.
 //
-// Arte: fundo por tools/montagem_bg.py; prensa, moldes e ponte no código.
+// Arte: fundo por tools/montagem_bg.py; terminal por tools/montagem_props.lua
+// (Aseprite); prensa, moldes e ponte desenhados no código.
 
 const PUZZLE_ID = "montagem-prensa";
 
@@ -34,7 +35,7 @@ const DOOR = { x: 1152, y: 98 };
 const SPAWN = { x: 128, y: 200 };
 
 // Esteira e fosso pintados no fundo (BELT/CHASM do montagem_bg.py, tela = mapa + 8).
-const BELT = { x0: 240, x1: 820, y: 300 };
+const BELT = { x0: 240, x1: 848, y: 300 };   // vai até a borda do fosso
 const CHASM = { x0: 860, x1: 980 };
 const BRIDGE = { x: 860, y: 380, w: 120, h: 84 };
 const PRESS = { x: 320, y: 300 };
@@ -73,7 +74,7 @@ export default class LinhaMontagemScene extends BaseRoomScene {
             ySort: true,
             bg: montagemBg,
             combat: false,
-            music: "cap2"
+            music: "cap3"
         });
     }
 
@@ -164,9 +165,14 @@ export default class LinhaMontagemScene extends BaseRoomScene {
         this.line = new AssemblyLine(this, { press: PRESS, slots, beltY: BELT.y, tests: puzzle.tests, field: "placas" });
         if (!restored) this.cameras.main.flash(260, 255, 42, 74, false);
 
+        // Terminal com arte própria (painel_prensa, tools/montagem_props.lua).
+        const bottom = TERMINAL.y + TERMINAL.h / 2;
+        this.add.image(TERMINAL.x, bottom, "prop-painel_prensa").setOrigin(0.5, 1).setDepth(bottom);
+        this.addColliders([{ x: TERMINAL.x - 30, y: bottom - 26, w: 60, h: 24 }]);
         new PuzzleDevice(this, {
             id: PUZZLE_ID,
             ...TERMINAL,
+            drawBody: false,
             label: "PRENSA",
             puzzle,
             onRun: (results, done) => this.line.play(results, done),

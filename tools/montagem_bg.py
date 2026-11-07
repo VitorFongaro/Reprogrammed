@@ -40,7 +40,7 @@ SEED = 303
 DOOR_IN_X = 128
 DOOR_X = 1152
 # Esteira e fosso em coordenadas do MAPA (tela = mapa + 8 no y).
-BELT = (240, 820, 272, 312)         # x0, x1, y0, y1
+BELT = (240, 848, 272, 312)         # x0, x1, y0, y1 (vai até a faixa do fosso)
 CHASM = (860, 980)                  # x0, x1 (de cima a baixo do piso)
 SIGN_CX = 520
 SIGN_TOP = 30
@@ -86,7 +86,7 @@ def belt(px):
                     c = (16, 16, 19)
             px[x, y] = c + (255,)
     # faixa de perigo em volta da esteira
-    for x in range(x0 - 6, x1 + 6):
+    for x in range(x0 - 6, x1):         # à direita, encosta na faixa do fosso
         for y in list(range(y0 - 8, y0 - 2)) + list(range(y1 + 2, y1 + 8)):
             px[x, y] = ((200, 36, 60) if ((x + y) // 6) % 2 == 0 else (20, 16, 18)) + (255,)
 
