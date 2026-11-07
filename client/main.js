@@ -18,6 +18,8 @@ import RecepcaoScene from './scenes/chapter2/RecepcaoScene';
 import JardimScene from './scenes/chapter2/JardimScene';
 import ExpedicaoScene from './scenes/chapter2/ExpedicaoScene';
 import HallScene from './scenes/chapter2/HallScene';
+import CorredorTerreoScene from './scenes/chapter2/CorredorTerreoScene';
+import ElevadorScene from './scenes/chapter2/ElevadorScene';
 import LaboratorioScene from './scenes/chapter2/LaboratorioScene';
 import SalaLeoScene from './scenes/chapter2/SalaLeoScene';
 import DepositoScene from './scenes/chapter2/DepositoScene';
@@ -67,6 +69,8 @@ const config = {
         JardimScene,
         ExpedicaoScene,
         HallScene,
+        CorredorTerreoScene,
+        ElevadorScene,
         LaboratorioScene,
         SalaLeoScene,
         DepositoScene,

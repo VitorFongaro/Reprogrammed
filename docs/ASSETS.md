@@ -305,6 +305,11 @@ chapa de aço com rebites, a esteira, o fosso que corta a sala e o letreiro em v
 a prensa, os moldes e a ponte são desenhados no código (`client/objects/AssemblyLine.js`). Arte nossa, feita por script escrito por um agente de IA —
 declarar no TCC.
 
+**Corredor do térreo (cap. 2).** O fundo (`client/assets/images/corredor_terreo/corredor_terreo_bg.png`:
+só a faixa do corredor, com a pedra e as janelas da recepção e o elevador no fim) sai de
+`tools/corredor_terreo_bg.py`. A cabine do elevador (`ElevadorScene`) é desenhada no código. Arte
+nossa, feita por script escrito por um agente de IA — declarar no TCC.
+
 **Hall do relógio (cap. 2).** O fundo (`client/assets/images/hall/hall_bg.png`: a parede e as
 janelas da recepção, o relógio grande na parede e o mostrador de mosaico no chão) sai de
 `tools/hall_bg.py`; os móveis são os props da recepção. Arte nossa, feita por script escrito por

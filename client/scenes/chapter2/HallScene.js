@@ -117,8 +117,8 @@ const DOOR_SCRIPT = [
 export default class HallScene extends BaseRoomScene {
     constructor() {
         super("cap2-hall", {
-            // Até as salas depois do boss existirem, a porta leva ao laboratório.
-            nextScene: "cap2-laboratorio",
+            // Depois da WITCH: o corredor do térreo e o elevador para o núcleo.
+            nextScene: "cap2-corredor",
             title: null,                  // o topo é da barra de fôlego dela
             spawn: SPAWN,
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
