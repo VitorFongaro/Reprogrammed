@@ -4,6 +4,7 @@ import Effects from "../../ui/Effects";
 import Sfx from "../../ui/Sfx";
 import idleUrl from "../../assets/sprites/boss/ada/idle.png";
 import castUrl from "../../assets/sprites/boss/ada/cast.png";
+import ultimateUrl from "../../assets/sprites/boss/ada/ultimate.png";
 import hurtUrl from "../../assets/sprites/boss/ada/hurt.png";
 import defeatUrl from "../../assets/sprites/boss/ada/defeat.png";
 
@@ -27,10 +28,13 @@ const SCALE = 2;
 const IDLE_FRAME = 80;
 const CAST_FRAME = 112;
 const ATTACK_EVERY_MS = 4200;
-const HURT_FRAME = 80;
+const HURT_FRAME = 112;
 const DEFEAT_FRAME = 112;
 const REVIVE_MS = 2500;             // depois da derrota, ela volta para o teste continuar
 const CAST_HAND_FRAME = 4;          // quadro do cast com a mão erguida: é quando o ataque sai
+const ULTIMATE_HAND_FRAME = 5;      // quadro do especial com os dois braços no alto
+// Os golpes grandes usam o especial (dois braços); os outros, a magia de uma mão.
+const ULTIMATE = new Set(["julgamento", "pilares"]);
 const RED = 0xff2a4a;
 const RED_DIM = 0x8a1020;
 
@@ -65,6 +69,9 @@ export default class SalaAdaScene extends BaseRoomScene {
         if (!this.textures.exists("ada-idle")) {
             this.load.spritesheet("ada-idle", idleUrl, { frameWidth: IDLE_FRAME, frameHeight: IDLE_FRAME });
         }
+        if (!this.textures.exists("ada-ultimate")) {
+            this.load.spritesheet("ada-ultimate", ultimateUrl, { frameWidth: CAST_FRAME, frameHeight: CAST_FRAME });
+        }
         if (!this.textures.exists("ada-cast")) {
             this.load.spritesheet("ada-cast", castUrl, { frameWidth: CAST_FRAME, frameHeight: CAST_FRAME });
         }
@@ -83,7 +90,8 @@ export default class SalaAdaScene extends BaseRoomScene {
             this.anims.create({ key: "ada-idle-s", frames: this.anims.generateFrameNumbers("ada-idle", { start: 4, end: 7 }), frameRate: 4, repeat: -1 });
             // cast.png: linhas sul, leste, oeste (9 quadros cada).
             this.anims.create({ key: "ada-cast-s", frames: this.anims.generateFrameNumbers("ada-cast", { start: 0, end: 8 }), frameRate: 10, repeat: 0 });
-            this.anims.create({ key: "ada-hurt-s", frames: this.anims.generateFrameNumbers("ada-hurt", { start: 0, end: 5 }), frameRate: 12, repeat: 0 });
+            this.anims.create({ key: "ada-ultimate-s", frames: this.anims.generateFrameNumbers("ada-ultimate", { start: 0, end: 8 }), frameRate: 9, repeat: 0 });
+            this.anims.create({ key: "ada-hurt-s", frames: this.anims.generateFrameNumbers("ada-hurt", { start: 0, end: 6 }), frameRate: 12, repeat: 0 });
             this.anims.create({ key: "ada-defeat-s", frames: this.anims.generateFrameNumbers("ada-defeat", { start: 0, end: 8 }), frameRate: 8, repeat: 0 });
         }
 
@@ -111,8 +119,9 @@ export default class SalaAdaScene extends BaseRoomScene {
         const kind = ATTACKS[this.attackIndex % ATTACKS.length];
         this.attackIndex += 1;
         this.setStatus(LABELS[kind], "#ff4565");
-        this.ada.play("ada-cast-s");
-        this.time.delayedCall((CAST_HAND_FRAME / 10) * 1000, () => this[kind]());
+        const big = ULTIMATE.has(kind);
+        this.ada.play(big ? "ada-ultimate-s" : "ada-cast-s");
+        this.time.delayedCall(big ? (ULTIMATE_HAND_FRAME / 9) * 1000 : (CAST_HAND_FRAME / 10) * 1000, () => this[kind]());
         this.ada.once("animationcomplete", () => {
             this.ada.play("ada-idle-s");
             this.busy = false;

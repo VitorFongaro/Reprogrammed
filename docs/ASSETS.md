@@ -333,7 +333,7 @@ A **ADA** (boss final do cap. 3, `client/assets/sprites/boss/ada/`) foi gerada n
 de imagem): personagem no modo *pro* com a ilustração de corpo inteiro da ficha como arte
 conceitual, 80×80, 8 direções. `parada_*.png` são as direções sul, leste e norte; `idle.png` é a
 respiração (4 quadros de 80×80, linhas norte, sul, leste e oeste — o oeste é o leste espelhado); 
-`cast.png` é a magia (9 quadros de 112×112, animação personalizada; linhas sul, leste e oeste — o oeste é o leste espelhado), `hurt.png` o dano (6 quadros de 80×80) e `defeat.png` a derrota (9 quadros de 112×112, personalizada: ela se curva e o halo estoura), os dois virados para o sul. Os ataques
+`cast.png` é a magia (9 quadros de 112×112, animação personalizada; linhas sul, leste e oeste — o oeste é o leste espelhado), `ultimate.png` o golpe especial com os dois braços erguidos (9 quadros de 112×112, personalizado, virado para o sul), `hurt.png` o dano (7 quadros de 112×112, personalizado: ela recua sem o cabelo se desfazer) e `defeat.png` a derrota (9 quadros de 112×112, personalizada: ela se curva e o halo estoura), os dois virados para o sul. Os ataques
 da ficha (círculo no chão, hexágonos, foice de energia, pilares) ficam para o código.
 
 A **Artemis** (`client/assets/sprites/A_cute_android_maid_with/`, 8 direções + animações) foi
