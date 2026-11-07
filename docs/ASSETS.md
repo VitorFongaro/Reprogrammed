@@ -299,6 +299,12 @@ carrinho, balança, mesa de embalagem, gaiola de correio e cone_triagem) saem de
 parede com letreiro e quadro de rotas, escotilha e esteira, faixas de segurança, concreto) sai de
 `tools/expedicao_bg.py`. Arte nossa, feita por script escrito por um agente de IA — declarar no TCC.
 
+**Linha de montagem (cap. 3).** O fundo (`client/assets/images/montagem/montagem_bg.png`: piso de
+chapa de aço com rebites, a esteira, o fosso que corta a sala e o letreiro em vermelho) sai de
+`tools/montagem_bg.py`; prensa, moldes e ponte são desenhados no código
+(`client/objects/AssemblyLine.js`). Arte nossa, feita por script escrito por um agente de IA —
+declarar no TCC.
+
 **Hall do relógio (cap. 2).** O fundo (`client/assets/images/hall/hall_bg.png`: a parede e as
 janelas da recepção, o relógio grande na parede e o mostrador de mosaico no chão) sai de
 `tools/hall_bg.py`; os móveis são os props da recepção. Arte nossa, feita por script escrito por

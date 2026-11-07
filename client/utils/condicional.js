@@ -8,6 +8,9 @@
 //   se <condição> :          senão se <condição> :          senão :
 //       <nome> = <expressão>     (corpo indentado, 4 espaços = 1 nível)
 //
+//   repita <expressão> vezes :   (capítulo 3: o corpo roda N vezes; N tem de
+//       <corpo>                    ser um inteiro de 0 a MAX_REPEAT)
+//
 // Condição/expressão: números, true/false, "texto", nomes de variável,
 // + - * /, comparações (== != > < >= <=) e os conectivos `e` / `ou` / `não`.
 //
@@ -23,6 +26,9 @@
 export class CondError extends Error {}
 
 const INDENT = 4;
+// Teto de voltas de um `repita`: um número errado (ou um laço dentro de laço)
+// não pode travar o jogo, e o jogador recebe o motivo em vez de esperar.
+export const MAX_REPEAT = 50;
 const COMPARISON = ["==", "!=", ">", "<", ">=", "<="];
 const STRING_RE = /^"[^"]*"$|^'[^']*'$/;
 const NUMBER_RE = /^-?\d+(\.\d+)?$/;
@@ -63,7 +69,9 @@ function structure(lines) {
             j += 1;
         }
         const kind = headerKind(line.tokens);
-        if (kind === "if") {
+        if (kind === "repeat") {
+            out.push({ type: "repeat", count: repeatTokens(line.tokens), body: structure(body) });
+        } else if (kind === "if") {
             out.push({ type: "if", branches: [{ cond: conditionTokens(line.tokens, 1), body: structure(body) }] });
         } else if (kind === "elif" || kind === "else") {
             const prev = out[out.length - 1];
@@ -77,7 +85,7 @@ function structure(lines) {
             if (kind === "else") prev.closed = true;
         } else {
             if (body.length) {
-                throw new CondError("só o que está dentro de um se/senão fica recuado");
+                throw new CondError("só o que está dentro de um se/senão ou de um repita fica recuado");
             }
             out.push({ type: "assign", tokens: line.tokens });
         }
@@ -87,6 +95,7 @@ function structure(lines) {
 }
 
 function headerKind(tokens) {
+    if (tokens[0] === "repita") return "repeat";
     if (tokens[0] === "se") return "if";
     if (tokens[0] === "senão" && tokens[1] === "se") return "elif";
     if (tokens[0] === "senão") return "else";
@@ -101,10 +110,32 @@ function conditionTokens(tokens, skip) {
     return rest;
 }
 
+// "repita <expressão> vezes :" -> os tokens da expressão.
+function repeatTokens(tokens) {
+    const rest = tokens.slice(1);
+    if (rest[rest.length - 1] === ":") rest.pop();
+    if (rest[rest.length - 1] !== "vezes") {
+        throw new CondError(`o repita tem a forma  repita N vezes :  (está "${tokens.join(" ")}")`);
+    }
+    rest.pop();
+    if (!rest.length) throw new CondError("falta quantas vezes repetir");
+    return rest;
+}
+
 function execBlock(statements, scope) {
     statements.forEach((st) => {
         if (st.type === "assign") {
             assign(st.tokens, scope);
+            return;
+        }
+        if (st.type === "repeat") {
+            const n = evaluate(st.count, scope);
+            if (typeof n !== "number" || !Number.isInteger(n)) {
+                throw new CondError("repita precisa de um número inteiro de vezes");
+            }
+            if (n < 0) throw new CondError("não dá para repetir um número negativo de vezes");
+            if (n > MAX_REPEAT) throw new CondError(`repetir ${n} vezes passa do limite da máquina (${MAX_REPEAT})`);
+            for (let k = 0; k < n; k += 1) execBlock(st.body, scope);
             return;
         }
         for (const branch of st.branches) {

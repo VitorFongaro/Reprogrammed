@@ -748,6 +748,41 @@ export default class BaseRoomScene extends Phaser.Scene {
         this.events.once("shutdown", () => this.events.off("resume", this.onSceneResume));
     }
 
+    // Card de abertura do capítulo ("CAPÍTULO 2 :: TÉRREO"), no mesmo estilo do
+    // "CAPÍTULO 1 :: SUBSOLO" da IntroScene. Fica acima do diálogo (900) e dos consoles (1000).
+    showChapterCard(number, name, onComplete) {
+        const W = this.scale.width;
+        const H = this.scale.height;
+        const card = this.add.container(0, 0).setDepth(1100).setAlpha(0);
+        const shade = this.add.rectangle(W / 2, H / 2, W, H, 0x050505, 0.82);
+        const chapter = this.add.text(W / 2, H / 2 - 46, `C A P Í T U L O   ${number}`, {
+            fontFamily: "VCR", fontSize: "20px", color: "#6a7186"
+        }).setOrigin(0.5);
+        const title = this.add.text(W / 2, H / 2 + 6, name.split("").join(" "), {
+            fontFamily: "VCR", fontSize: "54px", color: "#f7f7f7"
+        }).setOrigin(0.5);
+        const rule = this.add.graphics();
+        rule.lineStyle(2, 0x4ad6ff, 0.9);
+        rule.lineBetween(W / 2 - 150, H / 2 + 46, W / 2 + 150, H / 2 + 46);
+        card.add([shade, chapter, title, rule]);
+
+        // A Artemis não anda por baixo do card.
+        this.player.setEnabled(false);
+        this.tweens.add({
+            targets: card,
+            alpha: 1,
+            duration: 700,
+            ease: "Sine.easeOut",
+            hold: 1800,
+            yoyo: true,
+            onComplete: () => {
+                card.destroy(true);
+                this.player.setEnabled(true);
+                onComplete?.();
+            }
+        });
+    }
+
     // Chamado pelo Enemy ao ser neutralizado (reprogramação ou melee).
     onEnemyDisabled(enemy) {
         const id = this.itemDrops ? rollDrop() : null;

@@ -7,8 +7,8 @@
 -- resolveu, então NÃO renomeie um slug sem migrar os saves existentes.
 --
 -- O capítulo 1 tem todas as fases; do capítulo 2, só as salas do mapa
--- definitivo que já existem (as salas de teste provisórias ficam de fora). Os
--- capítulos 3 e 4 ficam cadastrados como roteiro, sem fases inventadas.
+-- definitivo que já existem (as salas de teste provisórias ficam de fora); do
+-- capítulo 3, as salas que já existem. O capítulo 4 fica só como roteiro.
 -- =========================================================
 
 insert into public.chapters (
@@ -91,6 +91,16 @@ cross join (values
 ) as v(slug, title, description, base_difficulty, main_topic, order_index)
 where c.order_index = 2;
 
+-- LEVELS — capítulo 3 (o núcleo, andar da ADA).
+insert into public.levels (chapter_id, slug, title, description, base_difficulty, main_topic, order_index)
+select c.id, v.slug, v.title, v.description,
+       v.base_difficulty::public.difficulty_level, v.main_topic::public.programming_topic, v.order_index
+from public.chapters c
+cross join (values
+  ('cap3-montagem', 'Linha de Montagem', 'A prensa enche os moldes da ponte: o primeiro repita do capítulo, com os moldes gerados pela IA.', 'easy', 'loops', 1)
+) as v(slug, title, description, base_difficulty, main_topic, order_index)
+where c.order_index = 3;
+
 -- =========================================================
 -- PUZZLES — os consoles que existem no jogo (variável e condicional)
 -- expected_output usa a mesma sintaxe do console (`nome = valor`). Nos
@@ -131,6 +141,7 @@ join (values
   ('cap2-jardim', 'jardim-irrigacao', 'Irrigação // Estufa', 'A irrigação da estufa rega todos os canteiros do mesmo jeito.', 'conditionals', 'Reescreva a regra para regar só os canteiros que precisam de água.', 'se umidade < 40 : regar = true / senão : regar = false', 'easy', 1),
   ('cap2-expedicao', 'expedicao-triagem', 'Triagem // Expedição', 'A triagem manda todo pacote para o fim da esteira e a pilha entupiu a passarela.', 'conditionals', 'Mande cada pacote para a rampa certa: carga, expresso ou normal.', 'se peso >= 25 : rampa = "carga" / senão se urgente == true : rampa = "expresso" / senão : rampa = "normal"', 'medium', 1),
   ('cap2-deposito', 'deposito-corredor', 'Corredor // Estantes', 'Caixas travam o corredor entre as estantes do depósito.', 'conditionals', 'Mande as caixas leves para a prateleira de cima e as pesadas para a de baixo.', 'se peso <= 50 : lado = "cima" / senão : lado = "baixo"', 'medium', 1),
+  ('cap3-montagem', 'montagem-prensa', 'Prensa // Moldes', 'Os moldes da ponte passam pela prensa, que bate uma placa por vez.', 'loops', 'Repita a batida uma vez por coluna, somando as fileiras de cada molde.', 'repita vao vezes : placas = placas + faixas', 'easy', 1),
   ('cap2-deposito', 'deposito-ponte', 'Ponte // Guindaste', 'Um fosso corta o depósito; o guindaste monta a ponte com as caixas da esteira.', 'conditionals', 'Mande para a ponte só as caixas que aguentam a Artemis.', 'se material == "aco" ou cheia : destino = "ponte" / senão : destino = "descarte"', 'medium', 2)
 ) as v(level_slug, slug, title, description, topic, objective, expected_output, base_difficulty, order_index)
   on l.slug = v.level_slug;

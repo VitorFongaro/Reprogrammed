@@ -748,3 +748,36 @@ export function pontePuzzle() {
         successMessage: "PONTE MONTADA"
     };
 }
+
+// CAPÍTULO 3 :: LINHA DE MONTAGEM (reserva local da ficha montagem-prensa). A
+// prensa bate uma vez por coluna e põe uma placa por fileira: repita vao vezes,
+// somando as faixas. Os moldes têm tamanhos diferentes, então um número fixo de
+// repetições não serve; e há sempre um molde de mais de uma fileira, senão
+// somar 1 passaria.
+export function montagemPuzzle() {
+    const count = between(3, 4);
+    const vaos = shuffle([2, 3, 4, 5, 6]).slice(0, count);
+    const faixas = vaos.map(() => between(1, 3));
+    if (faixas.every((f) => f === 1)) faixas[between(0, count - 1)] = between(2, 3);
+    return {
+        title: "LINHA DE MONTAGEM",
+        briefing: [
+            "Cada molde vira um pedaço da ponte sobre o fosso.",
+            "A prensa bate uma vez em cada coluna e cada batida",
+            "estampa uma placa por fileira. Sem faltar, sem sobrar."
+        ],
+        hint: "monte:  repita vao vezes :  /  placas = placas + faixas",
+        lines: [
+            "repita [nome] vezes :",
+            "    placas = placas + [nome]"
+        ],
+        blocks: { nome: ["vao", "faixas", "placas"], op: [], valor: [] },
+        defaults: { placas: 0 },
+        tests: vaos.map((vao, i) => ({
+            label: LETTERS[i],
+            given: { vao, faixas: faixas[i] },
+            expect: { placas: vao * faixas[i] }
+        })),
+        successMessage: "MOLDES CHEIOS"
+    };
+}

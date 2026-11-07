@@ -3,7 +3,8 @@ import { createUserSupabaseClient } from '../config/supabase.js';
 // mesmos arquivos no gerador local de reserva. O Render clona o repositório
 // inteiro, então o caminho relativo existe lá também.
 import { AI_SPECS } from '../../client/data/aiSpecs.js';
-import { buildFromSolution, checkPuzzle, LIMITS } from '../../client/utils/puzzleCheck.js';
+import { buildFromSolution, checkPuzzle, LIMITS, specDefaults } from '../../client/utils/puzzleCheck.js';
+import { MAX_REPEAT } from '../../client/utils/condicional.js';
 
 // =========================================================
 // GERADOR DE PUZZLES POR IA (Gemini)
@@ -199,8 +200,26 @@ const describeInputs = (inputs) => Object.entries(inputs).map(([name, def]) => {
 }).join('\n');
 
 const describeOutputs = (outputs) => Object.entries(outputs)
-  .map(([name, values]) => `- ${name}: ${values.map((v) => JSON.stringify(v)).join(' ou ')}`)
+  .map(([name, def]) => (Array.isArray(def)
+    ? `- ${name}: ${def.map((v) => JSON.stringify(v)).join(' ou ')}`
+    : `- ${name}: inteiro de ${def.min} a ${def.max}`))
   .join('\n');
+
+const TOPIC_LABELS = { conditionals: 'condicionais', loops: 'repetições' };
+
+// A parte da linguagem que só aparece quando a ficha pede repetição (cap. 3).
+const loopLanguage = (spec) => (spec.requires?.includes('repita')
+  ? `- Repetição: "repita <n> vezes :", com o corpo 4 espaços mais recuado; n é um inteiro de 0 a ${MAX_REPEAT}
+  (um número ou o nome de uma entrada). Dentro do corpo dá para acumular: "placas = placas + 1".
+- Contas: + - * / entre números.\n`
+  : '');
+
+const describeDefaults = (spec) => {
+  const d = specDefaults(spec);
+  return Object.keys(d).length
+    ? `Antes de rodar, a sala já começa com: ${Object.entries(d).map(([k, v]) => `${k} = ${JSON.stringify(v)}`).join(', ')}. Não escreva essa linha na solution.`
+    : '';
+};
 
 const buildPrompt = (spec, difficulty, profile, feedback, variety) => `
 Você gera puzzles de lógica de programação para o Reprogrammed, um jogo educacional em português
@@ -212,6 +231,7 @@ e o jogo EXECUTA o programa contra casos de teste. Qualquer montagem que acerte 
 - Atribuição no corpo: "<nome> = <valor>".
 - Comparações: == != > < >= <=. Conectivos: e, ou, não.
 - Valores: inteiros (40), decimais (21.5), texto entre aspas duplas ("cacto"), true, false.
+${loopLanguage(spec)}
 - "3" == 3 é false (tipos diferentes). Comparar texto com número usando < ou > é ERRO.
 
 ## Formato do programa
@@ -241,13 +261,13 @@ ${describeOutputs(spec.outputs)}
 ${spec.requires?.length ? `O programa precisa usar: ${spec.requires.join(', ')}.` : ''}
 ${spec.forbids?.length ? `O programa NÃO pode usar: ${spec.forbids.join(', ')}.` : ''}
 Casos de teste: de ${spec.tests[0]} a ${spec.tests[1]}.
-${spec.defaults === false ? 'Não use "defaults": as saídas têm de ser escritas pelo programa nos dois caminhos.' : ''}
+${spec.defaults === false ? 'Não use "defaults": as saídas têm de ser escritas pelo programa nos dois caminhos.' : describeDefaults(spec)}
 
 ## O jogador
 Dificuldade pedida: ${difficulty}.
 ${profile.attempts
-    ? `Histórico em condicionais: ${profile.attempts} tentativas, ${profile.accuracy}% de acerto.`
-    : 'Primeira vez com condicionais.'}
+    ? `Histórico em ${TOPIC_LABELS[spec.topic] ?? spec.topic}: ${profile.attempts} tentativas, ${profile.accuracy}% de acerto.`
+    : `Primeira vez com ${TOPIC_LABELS[spec.topic] ?? spec.topic}.`}
 ${profile.recentCount
     ? `Neste puzzle: ${profile.recentCount} tentativas recentes, média de ${profile.avgErrors} erros e ${profile.avgSeconds} s por tentativa.`
     : ''}
@@ -525,6 +545,7 @@ export const runGeneration = async (spec, difficulty, profile) => {
       continue;
     }
     Object.assign(puzzle, { lines: built.lines, blocks: built.blocks, tests: built.tests, hint: built.hint });
+    if (Object.keys(specDefaults(spec)).length) puzzle.defaults = { ...specDefaults(spec) };
     const check = checkPuzzle(puzzle, spec);
     last = { problems: check.problems, error: null, puzzle, model };
     trace.push(`${model}: ${check.ok ? 'aceito' : check.problems.join('; ')}`);

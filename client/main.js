@@ -22,6 +22,7 @@ import LaboratorioScene from './scenes/chapter2/LaboratorioScene';
 import SalaLeoScene from './scenes/chapter2/SalaLeoScene';
 import DepositoScene from './scenes/chapter2/DepositoScene';
 import SalaWitchScene from './scenes/chapter2/SalaWitchScene';
+import LinhaMontagemScene from './scenes/chapter3/LinhaMontagemScene';
 import SalaAdaScene from './scenes/chapter3/SalaAdaScene';
 import InventoryScene from './scenes/InventoryScene';
 import { loadInventory } from './state/inventory.js';
@@ -70,6 +71,7 @@ const config = {
         SalaLeoScene,
         DepositoScene,
         SalaWitchScene,
+        LinhaMontagemScene,
         SalaAdaScene,
         // Overlays por último: renderizam por cima das salas (ver bringToTop).
         PauseMenuScene,

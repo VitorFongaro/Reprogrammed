@@ -18,10 +18,11 @@
 //   concept    o que o programa tem de ensinar, em palavras (vai para o prompt)
 //   setting    a sala e a máquina, para o texto sair diegético
 //   inputs     { nome: { type: int|float|bool|text, min?, max?, values?, unit?, required? } }
-//   outputs    { nome: [valores possíveis] }
+//   outputs    { nome: [valores possíveis] } ou { nome: { type: "int", min, max } }
 //   requires   palavras que o programa TEM de usar; forbids: que não pode
 //   tests      [mínimo, máximo] de casos (cada caso é um objeto no mapa)
-//   defaults   false = o puzzle não pode ter `defaults` (força o `senão`)
+//   defaults   false = o puzzle não pode ter `defaults` (força o `senão`);
+//              objeto = estado com que a sala começa (o contador zerado do cap. 3)
 //   rules      o que precisa fazer SENTIDO no mundo (a IA erra isso fácil:
 //              "regar a terra encharcada" passa no interpretador e é absurdo)
 //   sanity     (tests) => problema | null: a mesma regra de "sentido" em código,
@@ -184,6 +185,42 @@ export const AI_SPECS = {
             "só papelão precisa estar cheio: aço e madeira aguentam até vazios (use !=)",
             "uma esteira com os três materiais",
             "texto do briefing na voz do manual de operação do guindaste"
+        ]
+    },
+    // CAPÍTULO 3 :: LINHA DE MONTAGEM (objects/AssemblyLine.js): cada caso é um
+    // MOLDE de ponte na esteira, com `vao` colunas e `faixas` fileiras de
+    // encaixes. A prensa bate uma vez por coluna e cada batida estampa uma placa
+    // por fileira; o programa conta as placas. Molde cheio na medida vira um
+    // pedaço da ponte; faltou placa fica buraco, sobrou trava a prensa.
+    "montagem-prensa": {
+        topic: "loops",
+        concept: "repita N vezes: o mesmo passo repetido, e a quantidade de vezes vindo de uma entrada (não de um número fixo).",
+        setting: "Linha de montagem no último andar da Elysium. Uma prensa estampa placas de metal em MOLDES que passam pela esteira; os moldes cheios viram os pedaços de uma ponte sobre o fosso. Cada molde tem o número de colunas (vao) e de fileiras (faixas) escrito nele. A prensa bate uma vez em cada coluna, e cada batida estampa uma placa em cada fileira daquela coluna. O programa diz quantas placas vão no molde: placa a menos deixa buraco na ponte, placa a mais trava a prensa.",
+        inputs: {
+            vao: { type: "int", min: 2, max: 6, unit: "colunas", required: true },
+            faixas: { type: "int", min: 1, max: 3, unit: "fileiras", required: true }
+        },
+        outputs: { placas: { type: "int", min: 0, max: 18 } },
+        requires: ["repita"],
+        forbids: ["se", "senão"],
+        tests: [3, 4],
+        defaults: { placas: 0 },
+        rules: [
+            "Cada molde precisa de exatamente vao x faixas placas: a prensa repete a batida uma vez por coluna, e cada batida põe uma placa por fileira.",
+            "Os moldes têm tamanhos diferentes entre si (vao variado), para um número fixo de repetições não servir em todos.",
+            "Na dificuldade fácil todos os moldes têm faixas = 1 e o corpo soma 1; nas outras, pelo menos um molde tem mais de uma fileira e o corpo soma as faixas."
+        ],
+        sanity: (tests) => {
+            const wrong = tests.find((t) => t.expect.placas !== t.given.vao * t.given.faixas);
+            if (wrong) return `o molde de ${wrong.given.vao} colunas e ${wrong.given.faixas} fileiras precisa de ${wrong.given.vao * wrong.given.faixas} placas, não ${wrong.expect.placas}: repita uma vez por coluna e some as fileiras em cada volta`;
+            if (new Set(tests.map((t) => t.given.vao)).size < 2) return "varie o vao entre os moldes: com todos iguais, um número fixo de repetições passaria";
+            return null;
+        },
+        variety: [
+            "moldes pequenos e grandes misturados",
+            "um molde de uma fileira só no meio de moldes de várias",
+            "texto do briefing na voz da ordem de serviço da linha de montagem",
+            "texto do briefing na voz da própria ADA, fria e precisa"
         ]
     }
 };

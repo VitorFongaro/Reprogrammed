@@ -39,7 +39,8 @@ const lineWidth = (line) => line.indent * 44 + line.tokens.reduce(
 
 const COMPARISONS = ["==", "!=", ">", "<", ">=", "<="];
 const CONNECTIVES = ["e", "ou", "não"];
-const FIXED_WORDS = ["se", "senão", ":", "=", ...CONNECTIVES];
+// `repita`/`vezes` e a aritmética do corpo (placas = placas + 1) são do cap. 3.
+const FIXED_WORDS = ["se", "senão", ":", "=", "repita", "vezes", "+", "-", "*", "/", ...CONNECTIVES];
 const LITERAL_RE = /^(-?\d+(\.\d+)?|"[^"]*"|true|false)$/;
 const NAME_RE = /^[a-z_][a-z0-9_]*$/;
 const BOUNDARY_PAIRS = { ">": ">=", ">=": ">", "<": "<=", "<=": "<" };
@@ -47,6 +48,10 @@ const BOUNDARY_PAIRS = { ">": ">=", ">=": ">", "<": "<=", "<=": "<" };
 const usesWord = (text, word) => new RegExp(`(^|\\s)${word}(\\s|$)`, "m").test(text);
 
 const literalOf = (value) => (typeof value === "string" ? `"${value}"` : String(value));
+
+// Saída da ficha: lista de valores ("rampa": ["carga", ...]) ou faixa numérica
+// ({ type: "int", min, max }, como as placas da linha de montagem).
+const fitsOutput = (value, def) => (Array.isArray(def) ? def.includes(value) : Boolean(def) && fitsInput(value, def));
 
 // Valor de um `given`/`expect` cabe no tipo declarado pela ficha?
 function fitsInput(value, def) {
@@ -156,7 +161,7 @@ export function checkShape(puzzle, spec) {
     need(Object.keys(blocks).every((c) => ["nome", "op", "valor"].includes(c)), "blocks só aceita nome/op/valor");
     need(pieces.length <= LIMITS.maxPieces, `no máximo ${LIMITS.maxPieces} peças`);
     (blocks.nome ?? []).forEach((n) => need(typeof n === "string" && NAME_RE.test(n), `nome inválido: ${n}`));
-    (blocks.op ?? []).forEach((o) => need([...COMPARISONS, ...CONNECTIVES].includes(o), `operador inválido: ${o}`));
+    (blocks.op ?? []).forEach((o) => need([...COMPARISONS, ...CONNECTIVES, "+", "-", "*", "/"].includes(o), `operador inválido: ${o}`));
     (blocks.valor ?? []).forEach((v) => need(typeof v === "string" && LITERAL_RE.test(v), `valor inválido: ${v}`));
 
     // Casos: só variáveis da ficha, valores dentro da faixa.
@@ -171,7 +176,7 @@ export function checkShape(puzzle, spec) {
             need(k in t.given, `${tag}: falta a entrada ${k}`);
         });
         Object.entries(t.expect).forEach(([k, v]) => {
-            need(outputs[k] && outputs[k].includes(v), `${tag}: saída ${k} = ${literalOf(v)} fora da ficha`);
+            need(fitsOutput(v, outputs[k]), `${tag}: saída ${k} = ${literalOf(v)} fora da ficha`);
         });
         need(Object.keys(t.expect).length >= 1, `${tag} sem saída esperada`);
     });
@@ -184,7 +189,7 @@ export function checkShape(puzzle, spec) {
     need(spec.defaults !== false || Object.keys(puzzle.defaults ?? {}).length === 0,
         "este puzzle não pode ter defaults: as duas saídas têm de vir do programa");
     Object.entries(puzzle.defaults ?? {}).forEach(([k, v]) => {
-        need(outputs[k] && outputs[k].includes(v), `defaults: ${k} fora da ficha`);
+        need(fitsOutput(v, outputs[k]), `defaults: ${k} fora da ficha`);
     });
     return problems;
 }
@@ -225,7 +230,7 @@ export function checkSolvable(puzzle, { mustUse = [] } = {}) {
         });
     }
     if (solutions === 0) problems.push("nenhuma montagem das peças passa em todos os casos");
-    if (solutions === total) problems.push("qualquer montagem passa: não há o que pensar");
+    if (solutions === total) problems.push("qualquer montagem passa: não há o que pensar. Ponha em decoys peças que errem algum caso (outro número, outra entrada)");
     if (boundaryLeak) problems.push(`o limite não está em nenhum caso: ${boundaryLeak} passam os dois`);
     if (skipped) problems.push(`dá para resolver sem usar "${skipped}": inclua um caso em que só uma das condições é verdade`);
     // O número da regra tem de estar no briefing: o jogador não tem de onde
@@ -285,6 +290,9 @@ function slotKind(token, i, tokens, names) {
     return null;
 }
 
+// `defaults` da ficha: objeto = estado inicial da sala (placas = 0); false/omitido = nenhum.
+export const specDefaults = (spec) => (spec.defaults && typeof spec.defaults === "object" ? spec.defaults : {});
+
 export function buildFromSolution(solution, decoys, tests, spec) {
     if (!Array.isArray(solution) || solution.length < 2) {
         return { problems: ["solution tem de ser o programa certo, uma linha de código por item"] };
@@ -294,11 +302,14 @@ export function buildFromSolution(solution, decoys, tests, spec) {
     const values = [];
     const plain = [];
     const lines = solution.map((raw) => {
-        const text = String(raw).replace(/\s+$/, "").replace(/	/g, "    ");
+        // "vezes:" e "senão:" grudados viram "vezes :", como o template espera.
+        const text = String(raw).replace(/\s+$/, "").replace(/	/g, "    ").replace(/([^\s:]):$/, "$1 :");
+        // "repita vao :" sem o "vezes" (o modelo esquece): completa, a intenção é clara.
+        const fixed = /^\s*repita\s/.test(text) && !/\svezes\s*:$/.test(text) ? text.replace(/\s*:$/, " vezes :") : text;
         const indent = text.length - text.trimStart().length;
         // `cheia == true` vira só `cheia`: é o mesmo teste e economiza dois
         // encaixes, que fazem falta numa linha com duas condições.
-        const tokens = text.trim().split(/\s+/).reduce((out, t, i, all) => {
+        const tokens = fixed.trim().split(/\s+/).reduce((out, t, i, all) => {
             if (t === "==" && all[i + 1] === "true" && names.has(all[i - 1])) return out;
             if (t === "true" && all[i - 1] === "==" && names.has(all[i - 2])) return out;
             return [...out, t];
@@ -335,6 +346,17 @@ export function buildFromSolution(solution, decoys, tests, spec) {
             if (!blocks[c].includes(piece)) blocks[c].push(piece);
         });
     });
+    // Encaixe de nome com uma peça só não tem o que escolher: as outras entradas
+    // da sala entram de isca (é o "repita vao" contra o "repita faixas").
+    if (blocks.nome.length === 1) {
+        names.forEach((n) => { if (!blocks.nome.includes(n)) blocks.nome.push(n); });
+    }
+    // Nos laços, as peças são usadas uma vez cada e "vao x faixas" dá o mesmo
+    // trocando a ordem: com só as duas, toda montagem passaria. O contador
+    // (placas) entra de isca: repetir "placas" vezes, com ele em zero, não enche.
+    if (spec.requires?.includes("repita") && blocks.nome.length && blocks.nome.length < 3) {
+        Object.keys(spec.outputs).forEach((n) => { if (!blocks.nome.includes(n)) blocks.nome.push(n); });
+    }
 
     const parsed = lines.map(parseTemplateLine);
     const program = fill(parsed, values);
@@ -343,7 +365,8 @@ export function buildFromSolution(solution, decoys, tests, spec) {
     for (const test of tests ?? []) {
         let scope;
         try {
-            scope = run(program, { ...test.given });
+            // Ficha com `defaults` (o contador que começa em zero) entra antes do caso.
+            scope = run(program, { ...specDefaults(spec), ...test.given });
         } catch (error) {
             return { problems: [`a solução dá erro no caso ${test.label}: ${error.message}`] };
         }
