@@ -18,7 +18,7 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
 - `main.js` — config do Phaser (1280×720, `pixelArt`, physics `arcade`) e registro das cenas.
 - `scenes/` — cenas do Phaser:
   - `GameScene` (`"game-scene"`) — menu principal, cards arrastáveis (drag-and-drop para executar).
-  - `OptionsScene` (`"options-scene"`) — opções (Tela, Áudio, Controles, Legenda); sliders de volume integrados à API.
+  - `OptionsScene` (`"options-scene"`) — opções (Tela, Áudio, Controles, Legenda); sliders de volume integrados à API. A aba LEGENDA ajusta a VELOCIDADE (lenta/normal/rápida/instantânea) e o TAMANHO (pequeno/médio/grande) das falas, com prévia ao vivo; fica só no navegador (`state/subtitles.js`, `reprogrammed.subtitles`), e a `DialogueBox` lê a cada roteiro novo (a caixa cresce para cima no tamanho grande).
   - `IntroScene` (`"intro-scene"`) — cena de abertura no porão; diálogo com efeito máquina de escrever; a androide acorda e segue para o capítulo 1.
   - `SpritTestScene` (`"sprit-test-scene"`) — sala de teste jogável (WASD; ESC volta ao menu), usada como sandbox de dev.
   - `PauseMenuScene` (`"pause-menu"`) — overlay de ESC (continuar / configurações / sair, com aviso de progresso não salvo). Aberta pelo `BaseRoomScene` via `launch` + `pause`; só enquanto o jogador anda (`canPause()` barra durante diálogo, console e transição).

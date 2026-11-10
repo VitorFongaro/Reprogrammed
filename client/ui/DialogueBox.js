@@ -1,5 +1,9 @@
 // Caixa de diálogo reutilizável com efeito máquina de escrever (mesma estética da
 // IntroScene). Cada passo do roteiro: { speaker, text, color?, onEnter? }.
+// Velocidade e tamanho vêm das opções de LEGENDA (state/subtitles.js), lidas a
+// cada roteiro: mudar nas opções vale já na próxima fala.
+
+import { getSubtitleSpeed, getSubtitleSize } from "../state/subtitles";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -9,11 +13,8 @@ const HEIGHT = 720;
 const SKIP_ENABLED = true;
 
 const BOX_X = 140;
-const BOX_Y = 596;
+const BOX_BOTTOM = 692;              // a caixa cresce para cima com o tamanho da legenda
 const BOX_W = WIDTH - 280;
-const BOX_H = 96;
-
-const TYPE_DELAY = 32;
 const DEFAULT_DEPTH = 900;
 const DEFAULT_SPEAKER_COLOR = "#4ad6ff";
 
@@ -21,7 +22,7 @@ export default class DialogueBox {
     constructor(scene, options = {}) {
         this.scene = scene;
         this.depth = options.depth ?? DEFAULT_DEPTH;
-        this.typeDelay = options.typeDelay ?? TYPE_DELAY;
+        this.typeDelayOverride = options.typeDelay ?? null;
         this.isOpen = false;
 
         scene.events.once("shutdown", () => this.teardown());
@@ -37,6 +38,7 @@ export default class DialogueBox {
         this.stepIndex = -1;
         this.onComplete = onComplete;
         this.typing = false;
+        this.typeDelay = this.typeDelayOverride ?? getSubtitleSpeed().delay;
 
         this.build();
 
@@ -61,6 +63,9 @@ export default class DialogueBox {
 
     build() {
         this.container = this.scene.add.container(0, 0).setDepth(this.depth);
+        const size = getSubtitleSize();
+        const BOX_H = size.boxH;
+        const BOX_Y = BOX_BOTTOM - BOX_H;
 
         const box = this.scene.add.graphics();
         box.fillStyle(0x05060a, 0.92);
@@ -68,15 +73,15 @@ export default class DialogueBox {
         box.lineStyle(2, 0x4ad6ff, 0.8);
         box.strokeRect(BOX_X, BOX_Y, BOX_W, BOX_H);
 
-        this.speakerText = this.scene.add.text(BOX_X + 22, BOX_Y - 36, "", {
+        this.speakerText = this.scene.add.text(BOX_X + 22, BOX_Y - 16 - size.speaker, "", {
             fontFamily: "VCR",
-            fontSize: "20px",
+            fontSize: `${size.speaker}px`,
             color: DEFAULT_SPEAKER_COLOR
         });
 
-        this.bodyText = this.scene.add.text(BOX_X + 22, BOX_Y + 24, "", {
+        this.bodyText = this.scene.add.text(BOX_X + 22, BOX_Y + 22, "", {
             fontFamily: "VCR",
-            fontSize: "22px",
+            fontSize: `${size.body}px`,
             color: "#e7e9f2",
             wordWrap: { width: BOX_W - 44 }
         });
@@ -136,6 +141,13 @@ export default class DialogueBox {
 
     typeLine(line) {
         this.currentLine = line;
+        // Legenda INSTANTÂNEA: a fala inteira de uma vez.
+        if (this.typeDelay <= 0 || !line.length) {
+            this.bodyText.setText(line);
+            this.typing = false;
+            this.hintText.setVisible(true);
+            return;
+        }
         this.bodyText.setText("");
         this.typing = true;
         this.hintText.setVisible(false);

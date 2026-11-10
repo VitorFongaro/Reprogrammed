@@ -3,6 +3,10 @@ import { API_BASE_URL } from "../config";
 import { setSfxVolume, setMusicVolume } from "../state/audio";
 import Sfx from "../ui/Sfx";
 import Music from "../ui/Music";
+import {
+    SUBTITLE_SPEEDS, SUBTITLE_SIZES,
+    getSubtitleSpeed, getSubtitleSize, setSubtitleSpeed, setSubtitleSize
+} from "../state/subtitles";
 import keyboardLetters from "../assets/icons/keys/keyboard-letters.png";
 import keyboardExtras from "../assets/icons/keys/keyboard-extras.png";
 
@@ -39,6 +43,7 @@ const POINTER_CURSOR = "url('../assets/cursors/pointer.png'), pointer";
 const DEFAULT_CURSOR = "url('../assets/cursors/default.png'), auto";
 const VOLUME_TRACK_X = 92;
 const VOLUME_TRACK_WIDTH = 366;
+const SUBTITLE_PREVIEW = "Assim vão aparecer as falas. Ajuste até ficar confortável de ler.";
 
 export default class OptionsScene extends Phaser.Scene {
     constructor() {
@@ -210,6 +215,8 @@ export default class OptionsScene extends Phaser.Scene {
     }
 
     renderTabContent() {
+        this.previewTimer?.remove();
+        this.previewTimer = null;
         this.panelContent.removeAll(true);
 
         if (this.activeTab === "Tela") {
@@ -227,11 +234,98 @@ export default class OptionsScene extends Phaser.Scene {
             return;
         }
 
-        this.panelContent.add(this.add.text(0, 0, "EM BREVE", {
+        if (this.activeTab === "Legenda") {
+            this.renderSubtitleTab();
+        }
+    }
+
+    // Velocidade e tamanho das falas (DialogueBox), salvos no navegador
+    // (state/subtitles.js). A prévia embaixo digita uma fala com o ajuste atual.
+    renderSubtitleTab() {
+        this.renderChoiceRow("VELOCIDADE", -122, SUBTITLE_SPEEDS, getSubtitleSpeed().id, (id) => {
+            setSubtitleSpeed(id);
+            this.renderTabContent();
+        });
+        this.renderChoiceRow("TAMANHO", -30, SUBTITLE_SIZES, getSubtitleSize().id, (id) => {
+            setSubtitleSize(id);
+            this.renderTabContent();
+        });
+        this.renderSubtitlePreview();
+    }
+
+    renderChoiceRow(labelText, y, options, selectedId, onPick) {
+        this.panelContent.add(this.add.text(-350, y - 26, labelText, {
             fontFamily: "VCR",
-            fontSize: "28px",
-            color: "#7a7a7a"
-        }).setOrigin(0.5));
+            fontSize: "18px",
+            color: "#d9d9d9"
+        }).setOrigin(0, 0.5));
+
+        const gap = 12;
+        const width = (700 - gap * (options.length - 1)) / options.length;
+        options.forEach((option, index) => {
+            const x = -350 + width / 2 + index * (width + gap);
+            const selected = option.id === selectedId;
+            const box = this.add.rectangle(x, y + 14, width, 44, selected ? 0xf7f7f7 : 0x111111, 1)
+                .setStrokeStyle(2, selected ? 0xf7f7f7 : 0x7a7a7a, 1);
+            const label = this.add.text(x, y + 15, option.label, {
+                fontFamily: "VCR",
+                fontSize: "18px",
+                color: selected ? "#111111" : "#f7f7f7"
+            }).setOrigin(0.5);
+            const hitArea = this.add.rectangle(x, y + 14, width, 44, 0xffffff, 0.001)
+                .setInteractive({ cursor: POINTER_CURSOR });
+            if (!selected) {
+                hitArea.on("pointerover", () => box.setFillStyle(0x2a2a2a, 1));
+                hitArea.on("pointerout", () => box.setFillStyle(0x111111, 1));
+            }
+            hitArea.on("pointerdown", () => {
+                Sfx.play(this, "select");
+                onPick(option.id);
+            });
+            this.panelContent.add([box, label, hitArea]);
+        });
+    }
+
+    renderSubtitlePreview() {
+        const size = getSubtitleSize();
+        const delay = getSubtitleSpeed().delay;
+        const top = 46;
+        const height = 112;
+
+        const box = this.add.graphics();
+        box.fillStyle(0x05060a, 0.92).fillRect(-350, top, 700, height);
+        box.lineStyle(2, 0x4ad6ff, 0.8).strokeRect(-350, top, 700, height);
+        const speaker = this.add.text(-334, top + 8, "COSMO", {
+            fontFamily: "VCR",
+            fontSize: `${size.speaker}px`,
+            color: "#4ad6ff"
+        });
+        const body = this.add.text(-334, top + 14 + size.speaker, "", {
+            fontFamily: "VCR",
+            fontSize: `${size.body}px`,
+            color: "#e7e9f2",
+            wordWrap: { width: 668 }
+        });
+        this.panelContent.add([box, speaker, body]);
+
+        if (delay <= 0) {
+            body.setText(SUBTITLE_PREVIEW);
+            return;
+        }
+        // Digita a prévia e recomeça depois de uma pausa, para dar tempo de comparar.
+        let i = 0;
+        const pauseTicks = Math.ceil(1400 / delay);
+        this.previewTimer = this.time.addEvent({
+            delay,
+            loop: true,
+            callback: () => {
+                i += 1;
+                if (i > SUBTITLE_PREVIEW.length + pauseTicks) {
+                    i = 0;
+                }
+                body.setText(SUBTITLE_PREVIEW.slice(0, i));
+            }
+        });
     }
 
     renderDisplayTab() {
