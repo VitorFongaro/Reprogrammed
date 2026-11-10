@@ -233,10 +233,18 @@ export function checkSolvable(puzzle, { mustUse = [] } = {}) {
     if (solutions === total) problems.push("qualquer montagem passa: não há o que pensar. Ponha em decoys peças que errem algum caso (outro número, outra entrada)");
     if (boundaryLeak) problems.push(`o limite não está em nenhum caso: ${boundaryLeak} passam os dois`);
     if (skipped) problems.push(`dá para resolver sem usar "${skipped}": inclua um caso em que só uma das condições é verdade`);
-    // O número da regra tem de estar no briefing: o jogador não tem de onde
-    // adivinhar que o limite é 35.
+    // O número da REGRA tem de estar no briefing: o jogador não tem de onde
+    // adivinhar que o limite é 35. Conta só o número que decide alguma coisa,
+    // na condição de um se/senão se ou na contagem de um repita. O passo de uma
+    // conta ("placas = placas + 1") não: exigir um "1" escrito no briefing fazia
+    // a dificuldade fácil do cap. 3 ser recusada quase sempre.
     const briefing = (puzzle.briefing ?? []).join(" ");
-    (firstSolution ?? []).filter((v) => /^-?\d+(\.\d+)?$/.test(v)).forEach((n) => {
+    const ruleNumbers = firstSolution
+        ? fill(parsed, firstSolution)
+            .filter((line) => ["se", "senão", "repita"].includes(line.tokens[0]))
+            .flatMap((line) => line.tokens)
+        : [];
+    [...new Set(ruleNumbers)].filter((v) => /^-?\d+(\.\d+)?$/.test(v)).forEach((n) => {
         const escaped = n.replace(".", "\\.");
         if (!new RegExp(`(^|[^\\d.])${escaped}([^\\d]|$)`).test(briefing)) {
             problems.push(`o briefing não diz o número ${n}, que a solução usa`);

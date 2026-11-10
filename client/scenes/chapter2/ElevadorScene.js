@@ -96,7 +96,7 @@ export default class ElevadorScene extends Phaser.Scene {
     }
 
     showEndCard() {
-        // A WITCH já marcou o capítulo como concluído; marcar de novo não muda nada.
+        // Fim do capítulo 2: libera o capítulo na seleção do menu.
         markChapterCompleted(2);
         const overlay = this.add.container(0, 0).setDepth(950).setAlpha(0);
         const backdrop = this.add.graphics();

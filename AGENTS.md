@@ -78,7 +78,8 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
   - `utils/puzzleCheck.js` — o conferidor: forma contra a ficha, cabe no console (6 linhas, 4
     encaixes por linha, 14 peças, briefing de até 4 linhas), executa TODAS as montagens das peças (alguma passa, nem todas
     passam), recusa limite fora dos casos (`<` e `<=` passando juntos), briefing que não diz o
-    número da regra, `hint` cujos operadores e números não são os de uma montagem que passa e
+    número da regra (só os que DECIDEM: condição de `se` e contagem de `repita`; o passo de uma
+    conta, como o `+ 1`, não precisa estar escrito), `hint` cujos operadores e números não são os de uma montagem que passa e
     linha mais larga que a área de código do console (`maxLineWidth`: 3 encaixes já enchem uma linha
     com dois nomes escritos). Conectivo de `requires` pode vir como PEÇA em vez de texto fixo; aí
     TODA solução tem de usá-lo (é o caso do `ou` da ponte). As mensagens de recusa voltam para o modelo como correção, então escreva-as
@@ -438,8 +439,8 @@ jogador chegou: depois de um ZERAR PROGRESSO, volta direto para ele); os outros 
   `state/chapters.js`, com espelho local POR CONTA (`reprogrammed.chapters.<id>`) que é reenviado
   ao servidor na sincronização — compartilhado, passaria os capítulos de um jogador para outro no
   mesmo navegador. Carregar save antigo ou ZERAR PROGRESSO não tranca nada.
-- **Onde um capítulo é concluído:** o cap. 1 no card final do `cap1-saguao`; o cap. 2, por ora, na
-  vitória sobre a WITCH no `cap2-hall` (o fim definitivo do térreo ainda não existe). Quem jogou
+- **Onde um capítulo é concluído:** no card de fim de cada um: o cap. 1 no `cap1-saguao`, o cap. 2
+  no `cap2-elevador`. Quem jogou
   antes da seleção existir ganha o registro deduzido do save (`backfillFromScene`: save no
   capítulo N = anteriores vencidos).
 - Capítulo novo entra em `data/chapters.js` só quando tiver começo e fim no fluxo do jogo.

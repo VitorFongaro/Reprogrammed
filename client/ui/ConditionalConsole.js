@@ -87,7 +87,7 @@ const COLOR = {
 };
 // Contorno do encaixe na cor da categoria: dica visual de que peça vai ali.
 const SLOT_TINT = { nome: 0x4ad6ff, op: 0xffb347, valor: 0x6f8cff };
-const KEYWORDS = ["se", "senão", "e", "ou", "não"];
+const KEYWORDS = ["se", "senão", "e", "ou", "não", "repita", "vezes"];
 
 export function createConsole(scene, puzzle, options) {
     return puzzle?.lines
