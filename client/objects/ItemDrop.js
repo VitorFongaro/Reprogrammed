@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { itemDef } from "../data/items";
 import { addItem } from "../state/inventory";
 import Sfx from "../ui/Sfx";
+import { hudPx } from "../state/hud";
 
 // DROP de inimigo: robô neutralizado às vezes larga uma peça de CURA no chão.
 // A Artemis pega passando por cima; o item entra no inventário e o nome sobe
@@ -85,7 +86,7 @@ export default class ItemDrop {
         Sfx.play(s, "select", 0.6);
 
         const label = s.add.text(s.player.sprite.x, s.player.sprite.y - 40, `+ ${this.item.name.toUpperCase()}`, {
-            fontFamily: "VCR", fontSize: "16px", color: "#51e36b",
+            fontFamily: "VCR", fontSize: hudPx(16), color: "#51e36b",
             backgroundColor: "#050505", padding: { x: 4, y: 2 }
         }).setOrigin(0.5).setDepth(820);
         s.tweens.add({ targets: label, y: label.y - 26, alpha: 0, delay: 700, duration: 700, onComplete: () => label.destroy() });

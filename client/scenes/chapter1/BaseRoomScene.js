@@ -9,6 +9,7 @@ import { getHp, getMaxHp, damage as damageVitals, heal as healVitals, fullHeal, 
 import fxHealUrl from "../../assets/sprites/effects/fx_heal.png";
 import { PROP_EXAMINE, ENEMY_EXAMINE } from "../../data/examine";
 import ItemDrop, { preloadItemDrops, rollDrop } from "../../objects/ItemDrop";
+import { hudPx, hudScale } from "../../state/hud";
 
 // Cena-base das salas do capítulo 1: desenha a sala (mapa em imagem ou grade),
 // cria jogador/Cosmo/diálogo, gerencia interagíveis ([E] no mais próximo), a
@@ -243,7 +244,7 @@ export default class BaseRoomScene extends Phaser.Scene {
     showCheckpointNotice() {
         const notice = this.add.text(WIDTH - 28, 44, "> PROGRESSO GRAVADO", {
             fontFamily: "VCR",
-            fontSize: "15px",
+            fontSize: hudPx(15),
             color: "#4ad6ff"
         }).setOrigin(1, 0.5).setDepth(900).setAlpha(0);
 
@@ -604,13 +605,16 @@ export default class BaseRoomScene extends Phaser.Scene {
             WIDTH / 2,
             HEIGHT - 56,
             "WASD mover   MOUSE mira o alvo   CLIQUE/[E] reprogramar   [R] cancelar",
-            { fontFamily: "VCR", fontSize: "18px", color: "#e7e9f2" }
+            {
+                fontFamily: "VCR", fontSize: hudPx(18), color: "#e7e9f2",
+                align: "center", wordWrap: { width: WIDTH - 80 }
+            }
         ).setOrigin(0.5);
 
         // Contagem regressiva da duração do modo (atualizada no update).
         this.reprogramTimerText = this.add.text(WIDTH / 2, 116, "", {
             fontFamily: "VCR",
-            fontSize: "22px",
+            fontSize: hudPx(22),
             color: "#4ad6ff"
         }).setOrigin(0.5);
 
@@ -682,7 +686,7 @@ export default class BaseRoomScene extends Phaser.Scene {
 
             const label = this.add.text(tx, top - 12, target.label, {
                 fontFamily: "VCR",
-                fontSize: selected ? "17px" : "14px",
+                fontSize: selected ? hudPx(17) : hudPx(14),
                 color: selected ? "#ffffff" : "#4ad6ff"
             }).setOrigin(0.5, 1);
             this.reprogramContainer.add(label);
@@ -907,11 +911,15 @@ export default class BaseRoomScene extends Phaser.Scene {
     }
 
     drawHpBar() {
-        this.add.text(HP_BAR.x, HP_BAR.y - 12, "ARTEMIS :: HP", {
-            fontFamily: "VCR", fontSize: "14px", color: "#7a8099"
+        // A barra cresce junto com o tamanho do HUD (opções), ancorada no canto.
+        const k = hudScale();
+        this.hpBar = { x: HP_BAR.x, y: HP_BAR.y, w: Math.round(HP_BAR.w * k), h: Math.round(HP_BAR.h * k) };
+        const bar = this.hpBar;
+        this.add.text(bar.x, bar.y - Math.round(12 * k), "ARTEMIS :: HP", {
+            fontFamily: "VCR", fontSize: hudPx(14), color: "#7a8099"
         }).setOrigin(0, 0.5).setDepth(900);
-        this.hpText = this.add.text(HP_BAR.x + HP_BAR.w + 12, HP_BAR.y + HP_BAR.h / 2, "", {
-            fontFamily: "VCR", fontSize: "16px", color: "#e7e9f2"
+        this.hpText = this.add.text(bar.x + bar.w + 12, bar.y + bar.h / 2, "", {
+            fontFamily: "VCR", fontSize: hudPx(16), color: "#e7e9f2"
         }).setOrigin(0, 0.5).setDepth(900);
         this.hpBarGraphics = this.add.graphics().setDepth(900);
         this.updateHpBar();
@@ -972,9 +980,10 @@ export default class BaseRoomScene extends Phaser.Scene {
         const color = ratio > 0.5 ? 0x51e36b : ratio > 0.25 ? 0xffb347 : 0xff4545;
         this.hpBarGraphics.clear();
         this.hpBarGraphics.lineStyle(1, 0x4ad6ff, 0.6);
-        this.hpBarGraphics.strokeRect(HP_BAR.x, HP_BAR.y, HP_BAR.w, HP_BAR.h);
+        const bar = this.hpBar;
+        this.hpBarGraphics.strokeRect(bar.x, bar.y, bar.w, bar.h);
         this.hpBarGraphics.fillStyle(color, 0.9);
-        this.hpBarGraphics.fillRect(HP_BAR.x + 1, HP_BAR.y + 1, (HP_BAR.w - 2) * ratio, HP_BAR.h - 2);
+        this.hpBarGraphics.fillRect(bar.x + 1, bar.y + 1, (bar.w - 2) * ratio, bar.h - 2);
         this.hpText.setText(`${this.hp}/${this.maxHp}`);
     }
 
@@ -1135,7 +1144,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         const promptY = this.doorPos ? this.doorY + 54 : this.doorY - DOOR_H / 2 - 28;
         this.doorPrompt = this.add.text(promptX, promptY, this.doorLabel, {
             fontFamily: "VCR",
-            fontSize: "18px",
+            fontSize: hudPx(18),
             color: "#4ad6ff"
         }).setOrigin(0.5).setDepth(800).setVisible(false);
 
@@ -1248,7 +1257,7 @@ export default class BaseRoomScene extends Phaser.Scene {
 
         this.statusText = this.add.text(WIDTH / 2, 78, "", {
             fontFamily: "VCR",
-            fontSize: "18px",
+            fontSize: hudPx(18),
             color: "#7a8099",
             align: "center"
         }).setOrigin(0.5);
@@ -1256,7 +1265,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         // Dica do modo remoto — visível quando há alvo disponível (ver update).
         this.reprogramHint = this.add.text(WIDTH - 28, HEIGHT - 28, "[R] reprogramação remota", {
             fontFamily: "VCR",
-            fontSize: "16px",
+            fontSize: hudPx(16),
             color: "#5b6178"
         }).setOrigin(1, 0.5).setDepth(900).setVisible(false);
     }

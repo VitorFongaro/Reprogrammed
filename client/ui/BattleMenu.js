@@ -1,3 +1,4 @@
+import { hudPx } from "../state/hud";
 // Menu de ações do combate por turnos (estilo Undertale): botões horizontais
 // selecionáveis por teclado (A/D ou setas + E/Enter para confirmar) ou pelo
 // mouse (hover seleciona, clique confirma). `onSelect(id)` recebe o id da ação
@@ -39,9 +40,13 @@ export default class BattleMenu {
             const graphics = this.scene.add.graphics();
             const label = this.scene.add.text(bx, this.y, action.label, {
                 fontFamily: "VCR",
-                fontSize: "24px",
+                fontSize: hudPx(24),
                 color: COLOR.dim
             }).setOrigin(0.5);
+            // HUD grande: o rótulo mais comprido (REPROGRAMAR) não pode vazar do botão.
+            while (label.width > BUTTON_W - 14 && parseInt(label.style.fontSize, 10) > 16) {
+                label.setFontSize(parseInt(label.style.fontSize, 10) - 1);
+            }
 
             const hit = this.scene.add.rectangle(bx, this.y, BUTTON_W, BUTTON_H, 0xffffff, 0.001)
                 .setInteractive({ useHandCursor: true });
@@ -57,7 +62,7 @@ export default class BattleMenu {
 
         this.hint = this.scene.add.text(this.x, this.y + BUTTON_H / 2 + 20, "[A]/[D] selecionar   [E] confirmar", {
             fontFamily: "VCR",
-            fontSize: "14px",
+            fontSize: hudPx(14),
             color: COLOR.dim
         }).setOrigin(0.5);
         this.container.add(this.hint);

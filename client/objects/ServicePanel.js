@@ -1,3 +1,5 @@
+import { hudPx } from "../state/hud";
+
 // Painel de SERVIÇO das salas de teste do cap. 2 (reiniciar a sala, ir para a
 // outra sala de teste...): caixa escura com uma luz, o rótulo embaixo e um
 // prompt [E]. Não é peça de jogo — some junto com as salas de teste quando o
@@ -10,7 +12,7 @@ export function addServicePanel(scene, { x, y, prompt, label, color, onInteract 
     scene.add.text(x, y + 56, label, { fontFamily: "VCR", fontSize: "15px", color: "#7a8099" }).setOrigin(0.5);
 
     const promptObj = scene.add.text(x, y - 70, prompt, {
-        fontFamily: "VCR", fontSize: "18px", color: "#4ad6ff"
+        fontFamily: "VCR", fontSize: hudPx(18), color: "#4ad6ff"
     }).setOrigin(0.5).setDepth(800).setVisible(false);
 
     scene.registerInteractable({ x, y, radius: 110, promptObj, isAvailable: () => true, onInteract });

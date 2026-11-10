@@ -11,6 +11,7 @@ import { run as runProgram } from "../../utils/condicional";
 import { itemDef } from "../../data/items";
 import { ENIAC_DEFENSES, resolvePuzzle } from "../../data/puzzleVariants";
 import Effects, { DEATH_SKULL } from "../../ui/Effects";
+import { hudPx, hudScale } from "../../state/hud";
 
 // Tela de COMBATE POR TURNOS contra o ENIAC (estilo Undertale), aberta pela
 // SalaSegurancaScene via scene.launch + pause. Layout: boss no topo (com barra
@@ -464,29 +465,35 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     drawHud() {
+        // Tamanho do HUD (opções): fontes e a barra de HP da Artemis escalam; a
+        // barra fica com a base no mesmo lugar e cresce para cima e para a direita.
+        const k = hudScale();
+        this.hpBar = { x: 70, w: Math.round(200 * k), h: Math.round(10 * k) };
+        this.hpBar.y = 692 - this.hpBar.h;
+
         // HP do boss (topo).
         this.add.text(WIDTH / 2, 36, this.config.name, {
             fontFamily: "VCR",
-            fontSize: "20px",
+            fontSize: hudPx(20),
             color: "#ff4545"
         }).setOrigin(0.5).setDepth(HUD_DEPTH);
         this.bossHpText = this.add.text(WIDTH / 2 + 170, 58, "", {
             fontFamily: "VCR",
-            fontSize: "16px",
+            fontSize: hudPx(16),
             color: "#e7e9f2"
         }).setOrigin(0, 0.5).setDepth(HUD_DEPTH);
         this.bossHpGraphics = this.add.graphics().setDepth(HUD_DEPTH);
         this.updateBossHp();
 
         // HP da Artemis (rodapé, esquerda).
-        this.add.text(70, 666, "ARTEMIS :: HP", {
+        this.add.text(70, this.hpBar.y - Math.round(14 * k), "ARTEMIS :: HP", {
             fontFamily: "VCR",
-            fontSize: "14px",
+            fontSize: hudPx(14),
             color: "#7a8099"
         }).setOrigin(0, 0.5).setDepth(HUD_DEPTH);
-        this.hpText = this.add.text(282, 687, "", {
+        this.hpText = this.add.text(this.hpBar.x + this.hpBar.w + 12, this.hpBar.y + this.hpBar.h / 2, "", {
             fontFamily: "VCR",
-            fontSize: "16px",
+            fontSize: hudPx(16),
             color: "#e7e9f2"
         }).setOrigin(0, 0.5).setDepth(HUD_DEPTH);
         this.hpGraphics = this.add.graphics().setDepth(HUD_DEPTH);
@@ -495,21 +502,21 @@ export default class BattleScene extends Phaser.Scene {
         // Estado da variável de ataque (rodapé, direita).
         this.forcaText = this.add.text(WIDTH - 70, 682, "", {
             fontFamily: "VCR",
-            fontSize: "18px",
+            fontSize: hudPx(18),
             color: "#4ad6ff"
         }).setOrigin(1, 0.5).setDepth(HUD_DEPTH);
         this.updateForca();
         // A rotina guardada no Cache, logo acima da força.
-        this.routineText = this.add.text(WIDTH - 70, 658, "", {
+        this.routineText = this.add.text(WIDTH - 70, 682 - Math.round(24 * k), "", {
             fontFamily: "VCR",
-            fontSize: "15px",
+            fontSize: hudPx(15),
             color: "#ffb347"
         }).setOrigin(1, 0.5).setDepth(HUD_DEPTH);
 
         // Linha de status do combate.
         this.statusText = this.add.text(WIDTH / 2, STATUS_Y, "", {
             fontFamily: "VCR",
-            fontSize: "17px",
+            fontSize: hudPx(17),
             color: "#7a8099"
         }).setOrigin(0.5).setDepth(HUD_DEPTH);
     }
@@ -528,7 +535,7 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     updateHpBar() {
-        const bar = { x: 70, y: 682, w: 200, h: 10 };
+        const bar = this.hpBar;
         const ratio = this.hp / PLAYER_MAX_HP;
         const color = ratio > 0.5 ? 0x51e36b : ratio > 0.25 ? 0xffb347 : 0xff4545;
 

@@ -1,6 +1,7 @@
 import ProgrammingConsole from "../ui/ProgrammingConsole";
 import { createConsole } from "../ui/ConditionalConsole";
 import { isSolved, markSolved } from "../state/progress";
+import { hudPx } from "../state/hud";
 
 // Máquina interagível que abre o console de puzzle de variável. Desenha o corpo,
 // a luz indicadora (vermelha = desligada, verde = ativa) e o prompt "[E] PROGRAMAR",
@@ -158,7 +159,7 @@ export default class PuzzleDevice {
         const promptY = this.promptY ?? top - 44;
         this.prompt = this.scene.add.text(this.x, promptY, "[E] PROGRAMAR", {
             fontFamily: "VCR",
-            fontSize: "18px",
+            fontSize: hudPx(18),
             color: "#4ad6ff"
         }).setOrigin(0.5).setDepth(800).setVisible(false);
 

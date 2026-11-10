@@ -7,6 +7,7 @@ import {
     SUBTITLE_SPEEDS, SUBTITLE_SIZES,
     getSubtitleSpeed, getSubtitleSize, setSubtitleSpeed, setSubtitleSize
 } from "../state/subtitles";
+import { HUD_SIZES, getHudSize, setHudSize } from "../state/hud";
 import keyboardLetters from "../assets/icons/keys/keyboard-letters.png";
 import keyboardExtras from "../assets/icons/keys/keyboard-extras.png";
 
@@ -329,14 +330,14 @@ export default class OptionsScene extends Phaser.Scene {
     }
 
     renderDisplayTab() {
-        this.panelContent.add(this.add.text(0, -52, "MODO DE EXIBIÇÃO", {
+        this.panelContent.add(this.add.text(0, -128, "MODO DE EXIBIÇÃO", {
             fontFamily: "VCR",
             fontSize: "20px",
             color: "#d9d9d9"
         }).setOrigin(0.5));
 
         const isFullscreen = this.scale.isFullscreen;
-        const fullscreenButton = this.add.container(0, 35);
+        const fullscreenButton = this.add.container(0, -66);
         const box = this.add.rectangle(0, 0, 330, 70, isFullscreen ? 0xf7f7f7 : 0x111111, 1)
             .setStrokeStyle(3, 0xf7f7f7, 0.95);
         const label = this.add.text(0, 1, "TELA CHEIA", {
@@ -354,6 +355,18 @@ export default class OptionsScene extends Phaser.Scene {
         hitArea.on("pointerdown", () => this.toggleFullscreen());
 
         this.panelContent.add(fullscreenButton);
+
+        // HP, avisos, prompts [E] e o HUD da batalha (state/hud.js). As falas
+        // têm o próprio tamanho, na aba LEGENDA.
+        this.renderChoiceRow("TAMANHO DO HUD", 58, HUD_SIZES, getHudSize().id, (id) => {
+            setHudSize(id);
+            this.renderTabContent();
+        });
+        this.panelContent.add(this.add.text(0, 132, "vale a partir da próxima sala ou batalha", {
+            fontFamily: "VCR",
+            fontSize: "15px",
+            color: "#7a8099"
+        }).setOrigin(0.5));
     }
 
     renderControlsTab() {

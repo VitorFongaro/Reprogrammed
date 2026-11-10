@@ -1,5 +1,6 @@
 import SaveConsole from "../ui/SaveConsole";
 import computadorUrl from "../assets/sprites/computador/computador.png";
+import { hudPx } from "../state/hud";
 
 // Estação de SALVAMENTO da sala — o equivalente à máquina de escrever do
 // Resident Evil: um computador com o LED piscando que o jogador acha pelo
@@ -71,7 +72,7 @@ export default class SaveComputer {
 
         this.prompt = scene.add.text(this.x, this.y - height - PROMPT_OFFSET_Y, "[E] SALVAR", {
             fontFamily: "VCR",
-            fontSize: "18px",
+            fontSize: hudPx(18),
             color: "#4ad6ff"
         }).setOrigin(0.5).setDepth(800).setVisible(false);
 
