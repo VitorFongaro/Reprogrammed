@@ -781,3 +781,48 @@ export function montagemPuzzle() {
         successMessage: "MOLDES CHEIOS"
     };
 }
+
+// Refrigeração (cap. 3, `enquanto`): cada caso é um RACK com a temperatura e a
+// potência do resfriador. O laço baixa `passo` graus por volta ENQUANTO o rack
+// estiver acima do limite. Sempre tem um rack que já começa frio (zero voltas),
+// um que cai exatamente no limite (separa > de >=) e um bem quente.
+export function refrigeracaoPuzzle() {
+    const limite = [35, 40, 45][between(0, 2)];
+    const passos = shuffle([3, 4, 5, 6, 7, 8, 9, 10]);
+    const racks = [
+        // já frio: o laço não roda
+        { temp: limite - between(0, 8), passo: passos[0] },
+        // cai exatamente no limite
+        { temp: limite + passos[1] * between(2, 4), passo: passos[1] },
+        // bem quente, termina abaixo do limite
+        { temp: Math.min(95, limite + passos[2] * between(3, 5) + between(1, passos[2] - 1)), passo: passos[2] }
+    ];
+    if (between(0, 1)) {
+        racks.push({ temp: limite + between(1, 12), passo: passos[3] });
+    }
+    const cool = ({ temp, passo }) => {
+        let t = temp;
+        while (t > limite) t -= passo;
+        return t;
+    };
+    return {
+        title: "REFRIGERAÇÃO // RACKS",
+        briefing: [
+            `Os racks precisam baixar até ${limite} graus ou menos.`,
+            "Cada ciclo do resfriador tira o passo do rack.",
+            "Desligue no ponto: ciclo a mais congela o rack."
+        ],
+        hint: `monte:  enquanto temp > ${limite} :  /  temp = temp - passo`,
+        lines: [
+            "enquanto [nome] [op] [valor] :",
+            "    temp = temp - [nome]"
+        ],
+        blocks: { nome: ["temp", "passo"], op: [">", ">=", "<"], valor: [String(limite), String(limite - 5)] },
+        tests: shuffle(racks).map((rack, i) => ({
+            label: LETTERS[i],
+            given: rack,
+            expect: { temp: cool(rack) }
+        })),
+        successMessage: "RACKS ESTÁVEIS"
+    };
+}

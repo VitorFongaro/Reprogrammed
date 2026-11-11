@@ -39,8 +39,8 @@ const lineWidth = (line) => line.indent * 44 + line.tokens.reduce(
 
 const COMPARISONS = ["==", "!=", ">", "<", ">=", "<="];
 const CONNECTIVES = ["e", "ou", "não"];
-// `repita`/`vezes` e a aritmética do corpo (placas = placas + 1) são do cap. 3.
-const FIXED_WORDS = ["se", "senão", ":", "=", "repita", "vezes", "+", "-", "*", "/", ...CONNECTIVES];
+// `repita`/`vezes`/`enquanto` e a aritmética do corpo (placas = placas + 1) são do cap. 3.
+const FIXED_WORDS = ["se", "senão", ":", "=", "repita", "vezes", "enquanto", "+", "-", "*", "/", ...CONNECTIVES];
 const LITERAL_RE = /^(-?\d+(\.\d+)?|"[^"]*"|true|false)$/;
 const NAME_RE = /^[a-z_][a-z0-9_]*$/;
 const BOUNDARY_PAIRS = { ">": ">=", ">=": ">", "<": "<=", "<=": "<" };
@@ -241,7 +241,7 @@ export function checkSolvable(puzzle, { mustUse = [] } = {}) {
     const briefing = (puzzle.briefing ?? []).join(" ");
     const ruleNumbers = firstSolution
         ? fill(parsed, firstSolution)
-            .filter((line) => ["se", "senão", "repita"].includes(line.tokens[0]))
+            .filter((line) => ["se", "senão", "repita", "enquanto"].includes(line.tokens[0]))
             .flatMap((line) => line.tokens)
         : [];
     [...new Set(ruleNumbers)].filter((v) => /^-?\d+(\.\d+)?$/.test(v)).forEach((n) => {

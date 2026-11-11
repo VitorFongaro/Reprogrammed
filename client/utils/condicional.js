@@ -11,6 +11,10 @@
 //   repita <expressão> vezes :   (capítulo 3: o corpo roda N vezes; N tem de
 //       <corpo>                    ser um inteiro de 0 a MAX_REPEAT)
 //
+//   enquanto <condição> :        (capítulo 3: o corpo roda enquanto a condição
+//       <corpo>                    der true; mais de MAX_REPEAT voltas = laço
+//                                  que não termina, com o motivo explicado)
+//
 // Condição/expressão: números, true/false, "texto", nomes de variável,
 // + - * /, comparações (== != > < >= <=) e os conectivos `e` / `ou` / `não`.
 //
@@ -26,8 +30,9 @@
 export class CondError extends Error {}
 
 const INDENT = 4;
-// Teto de voltas de um `repita`: um número errado (ou um laço dentro de laço)
-// não pode travar o jogo, e o jogador recebe o motivo em vez de esperar.
+// Teto de voltas de um `repita` ou `enquanto`: um número errado (ou uma
+// condição que nunca fica falsa) não pode travar o jogo, e o jogador recebe o
+// motivo em vez de esperar.
 export const MAX_REPEAT = 50;
 const COMPARISON = ["==", "!=", ">", "<", ">=", "<="];
 const STRING_RE = /^"[^"]*"$|^'[^']*'$/;
@@ -71,6 +76,8 @@ function structure(lines) {
         const kind = headerKind(line.tokens);
         if (kind === "repeat") {
             out.push({ type: "repeat", count: repeatTokens(line.tokens), body: structure(body) });
+        } else if (kind === "while") {
+            out.push({ type: "while", cond: conditionTokens(line.tokens, 1, "enquanto"), body: structure(body) });
         } else if (kind === "if") {
             out.push({ type: "if", branches: [{ cond: conditionTokens(line.tokens, 1), body: structure(body) }] });
         } else if (kind === "elif" || kind === "else") {
@@ -85,7 +92,7 @@ function structure(lines) {
             if (kind === "else") prev.closed = true;
         } else {
             if (body.length) {
-                throw new CondError("só o que está dentro de um se/senão ou de um repita fica recuado");
+                throw new CondError("só o que está dentro de um se/senão ou de um laço (repita, enquanto) fica recuado");
             }
             out.push({ type: "assign", tokens: line.tokens });
         }
@@ -96,6 +103,7 @@ function structure(lines) {
 
 function headerKind(tokens) {
     if (tokens[0] === "repita") return "repeat";
+    if (tokens[0] === "enquanto") return "while";
     if (tokens[0] === "se") return "if";
     if (tokens[0] === "senão" && tokens[1] === "se") return "elif";
     if (tokens[0] === "senão") return "else";
@@ -103,10 +111,10 @@ function headerKind(tokens) {
 }
 
 // Tira a palavra-chave do começo e os ":" do fim.
-function conditionTokens(tokens, skip) {
+function conditionTokens(tokens, skip, keyword = "se") {
     const rest = tokens.slice(skip);
     if (rest[rest.length - 1] === ":") rest.pop();
-    if (!rest.length) throw new CondError("falta a condição do se");
+    if (!rest.length) throw new CondError(`falta a condição do ${keyword}`);
     return rest;
 }
 
@@ -137,6 +145,21 @@ function execBlock(statements, scope) {
             if (n > MAX_REPEAT) throw new CondError(`repetir ${n} vezes passa do limite da máquina (${MAX_REPEAT})`);
             for (let k = 0; k < n; k += 1) execBlock(st.body, scope);
             return;
+        }
+        if (st.type === "while") {
+            let turns = 0;
+            for (;;) {
+                const value = evaluate(st.cond, scope);
+                if (typeof value !== "boolean") {
+                    throw new CondError("a condição do enquanto precisa dar true ou false");
+                }
+                if (!value) return;
+                turns += 1;
+                if (turns > MAX_REPEAT) {
+                    throw new CondError(`o enquanto deu mais de ${MAX_REPEAT} voltas sem a condição ficar falsa: o corpo precisa mudar a variável que a condição testa, na direção certa`);
+                }
+                execBlock(st.body, scope);
+            }
         }
         for (const branch of st.branches) {
             if (branch.cond === null) {

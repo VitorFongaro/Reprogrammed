@@ -222,5 +222,40 @@ export const AI_SPECS = {
             "texto do briefing na voz da ordem de serviço da linha de montagem",
             "texto do briefing na voz da própria ADA, fria e precisa"
         ]
+    },
+
+    "refrigeracao-racks": {
+        topic: "loops",
+        concept: "enquanto: repetir o passo ENQUANTO a condição for verdadeira, sem saber antes quantas voltas vão ser (pode ser nenhuma).",
+        setting: "Sala de refrigeração no núcleo da Elysium. Racks de servidores da ADA estão superaquecidos e o calor sai pela grade do piso como vapor, bloqueando a passagem. Cada rack tem a temperatura atual (temp) e a potência do resfriador dele (passo: quantos graus ele tira por ciclo) escritas no painel. O programa liga o resfriador em ciclos: cada ciclo baixa passo graus, e o resfriador tem de DESLIGAR assim que o rack chega no limite seguro (a primeira leitura igual ou abaixo do limite). Ciclo a menos deixa o rack quente; ciclo a mais congela o rack.",
+        inputs: {
+            temp: { type: "int", min: 20, max: 95, unit: "graus", required: true },
+            passo: { type: "int", min: 3, max: 10, unit: "graus por ciclo", required: true }
+        },
+        outputs: { temp: { type: "int", min: 0, max: 95 } },
+        requires: ["enquanto"],
+        forbids: ["se", "senão", "repita"],
+        tests: [3, 4],
+        rules: [
+            "O limite seguro é um número só, o mesmo para todos os racks, e aparece escrito no briefing.",
+            "O corpo do laço baixa a temperatura pela potência do próprio rack: temp = temp - passo.",
+            "Pelo menos um rack já começa no limite ou abaixo dele: o laço não roda nenhuma vez e ele fica como está.",
+            "Pelo menos um rack precisa de várias voltas, e pelo menos um cai EXATAMENTE no limite durante o resfriamento (é o que separa > de >=).",
+            "Os racks têm temperaturas e potências diferentes entre si, para o número de voltas mudar de um para outro."
+        ],
+        sanity: (tests) => {
+            const off = tests.find((t) => (t.given.temp - t.expect.temp) % t.given.passo !== 0);
+            if (off) return `o rack ${off.label ?? ""} terminou em ${off.expect.temp}, que não sai de ${off.given.temp} tirando ${off.given.passo} por volta: o corpo tem de ser temp = temp - passo`;
+            if (!tests.some((t) => t.expect.temp === t.given.temp)) return "inclua um rack que já começa no limite ou abaixo: o enquanto não roda nenhuma vez nele";
+            if (!tests.some((t) => t.given.temp - t.expect.temp >= 2 * t.given.passo)) return "inclua um rack bem quente, que precise de pelo menos duas voltas do laço";
+            if (new Set(tests.map((t) => t.given.passo)).size < 2) return "varie o passo entre os racks";
+            return null;
+        },
+        variety: [
+            "um rack quase no limite e outro muito quente",
+            "resfriadores fracos (passo pequeno) e fortes misturados",
+            "texto do briefing na voz do alarme térmico da sala",
+            "texto do briefing na voz da própria ADA, fria e precisa"
+        ]
     }
 };

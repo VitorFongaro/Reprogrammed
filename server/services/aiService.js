@@ -208,11 +208,20 @@ const describeOutputs = (outputs) => Object.entries(outputs)
 const TOPIC_LABELS = { conditionals: 'condicionais', loops: 'repetições' };
 
 // A parte da linguagem que só aparece quando a ficha pede repetição (cap. 3).
-const loopLanguage = (spec) => (spec.requires?.includes('repita')
-  ? `- Repetição: "repita <n> vezes :", com o corpo 4 espaços mais recuado; n é um inteiro de 0 a ${MAX_REPEAT}
+const loopLanguage = (spec) => {
+  if (spec.requires?.includes('repita')) {
+    return `- Repetição: "repita <n> vezes :", com o corpo 4 espaços mais recuado; n é um inteiro de 0 a ${MAX_REPEAT}
   (um número ou o nome de uma entrada). Dentro do corpo dá para acumular: "placas = placas + 1".
-- Contas: + - * / entre números.\n`
-  : '');
+- Contas: + - * / entre números.\n`;
+  }
+  if (spec.requires?.includes('enquanto')) {
+    return `- Repetição com condição: "enquanto <condição> :", com o corpo 4 espaços mais recuado. O corpo roda
+  de novo enquanto a condição der true, e pode não rodar nenhuma vez. O corpo TEM de mudar a variável da
+  condição ("temp = temp - passo"); mais de ${MAX_REPEAT} voltas é erro (laço que não termina).
+- Contas: + - * / entre números.\n`;
+  }
+  return '';
+};
 
 const describeDefaults = (spec) => {
   const d = specDefaults(spec);

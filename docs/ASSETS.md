@@ -305,6 +305,12 @@ chapa de aço com rebites, a esteira, o fosso que corta a sala e o letreiro em v
 a prensa, os moldes e a ponte são desenhados no código (`client/objects/AssemblyLine.js`). Arte nossa, feita por script escrito por um agente de IA —
 declarar no TCC.
 
+**Refrigeração (cap. 3).** O fundo (`client/assets/images/refrigeracao/refrigeracao_bg.png`: a mesma
+chapa de aço da linha de montagem, o cano de refrigerante na parede, o letreiro RESFRIAMENTO e a grade
+de exaustão que corta a sala) sai de `tools/refrigeracao_bg.py`; os racks e o vapor são desenhados no
+código (`client/objects/CoolingRacks.js`) e o terminal reusa o `painel_prensa`. Arte nossa, feita por
+script escrito por um agente de IA — declarar no TCC.
+
 **Corredor do térreo (cap. 2).** O fundo (`client/assets/images/corredor_terreo/corredor_terreo_bg.png`:
 só a faixa do corredor, com a pedra e as janelas da recepção e o elevador no fim) sai de
 `tools/corredor_terreo_bg.py`. A cabine do elevador (`ElevadorScene`) é desenhada no código. Arte
