@@ -1,3 +1,4 @@
+import { checkSolvable } from "../utils/puzzleCheck.js";
 // VARIAÇÕES DE PUZZLE — cada abertura sorteia números, temas e iscas novos.
 //
 // Antes todo puzzle era uma constante: a bateria enchia sempre com 100, o
@@ -824,5 +825,65 @@ export function refrigeracaoPuzzle() {
             expect: { temp: cool(rack) }
         })),
         successMessage: "RACKS ESTÁVEIS"
+    };
+}
+
+// Data center (cap. 3, contador com `se` dentro do laço): cada caso é uma
+// ESTAÇÃO DE BACKUP com o espaço livre do drive e uma fila de arquivos iguais.
+// O laço passa por cada arquivo e só copia (e conta) se ainda cabe. Sempre tem
+// uma estação onde tudo cabe, uma que fica sem espaço no meio da fila e uma em
+// que os arquivos enchem o drive na medida (separa >= de >).
+export function datacenterPuzzle() {
+    // Sorteia até sair uma combinação boa: salvos diferentes entre as estações
+    // e nenhuma montagem errada passando (confere no mesmo interpretador).
+    for (let tries = 0; tries < 30; tries += 1) {
+        const puzzle = datacenterDraw();
+        const outcomes = new Set(puzzle.tests.map((t) => t.expect.salvos));
+        if (outcomes.size >= 2 && checkSolvable(puzzle).problems.length === 0) return puzzle;
+    }
+    return datacenterDraw();
+}
+
+function datacenterDraw() {
+    const sobra = () => {                    // tudo cabe, com folga
+        const tamanho = between(1, 3);
+        const arquivos = between(2, 5);
+        return { arquivos, tamanho, espaco: Math.min(20, arquivos * tamanho + between(1, 4)) };
+    };
+    const falta = () => {                    // acaba o espaço no meio, com resto
+        const tamanho = between(2, 5);
+        const cabem = between(1, 3);
+        return { arquivos: cabem + between(2, 4), tamanho, espaco: cabem * tamanho + between(1, tamanho - 1) };
+    };
+    const exato = () => {                    // enche o drive na medida
+        const tamanho = between(2, 4);
+        const cabem = between(2, 4);
+        return { arquivos: cabem + between(0, 2), tamanho, espaco: cabem * tamanho };
+    };
+    const estacoes = [sobra(), falta(), exato()];
+    if (between(0, 1)) estacoes.push(falta());
+    const salvos = ({ arquivos, tamanho, espaco }) => Math.min(arquivos, Math.floor(espaco / tamanho));
+    return {
+        title: "DATA CENTER // BACKUP",
+        briefing: [
+            "A ADA vai apagar as memórias deste arquivo.",
+            "Copie para cada drive só o que ainda cabe nele",
+            "e conte quantos arquivos foram salvos."
+        ],
+        hint: "monte:  repita arquivos vezes :  /  se espaco >= tamanho :  /  espaco = espaco - tamanho  /  salvos = salvos + 1",
+        lines: [
+            "repita [nome] vezes :",
+            "    se espaco [op] [nome] :",
+            "        espaco = espaco - [nome]",
+            "        salvos = salvos + [valor]"
+        ],
+        blocks: { nome: ["arquivos", "tamanho", "tamanho", "espaco"], op: [">=", ">", "<"], valor: ["1", "0"] },
+        defaults: { salvos: 0 },
+        tests: shuffle(estacoes).map((given, i) => ({
+            label: LETTERS[i],
+            given,
+            expect: { salvos: salvos(given) }
+        })),
+        successMessage: "MEMÓRIAS SALVAS"
     };
 }

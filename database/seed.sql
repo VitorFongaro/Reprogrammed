@@ -98,7 +98,8 @@ select c.id, v.slug, v.title, v.description,
 from public.chapters c
 cross join (values
   ('cap3-montagem', 'Linha de Montagem', 'A prensa enche os moldes da ponte: o primeiro repita do capítulo, com os moldes gerados pela IA.', 'easy', 'loops', 1),
-  ('cap3-refrigeracao', 'Refrigeração', 'Os racks da ADA fervem e o vapor bloqueia a sala: o enquanto resfria cada um até o ponto, com os racks gerados pela IA.', 'medium', 'loops', 2)
+  ('cap3-refrigeracao', 'Refrigeração', 'Os racks da ADA fervem e o vapor bloqueia a sala: o enquanto resfria cada um até o ponto, com os racks gerados pela IA.', 'medium', 'loops', 2),
+  ('cap3-datacenter', 'Data Center', 'A ADA vai apagar as memórias: o backup copia arquivo por arquivo só o que cabe, contando os salvos, com as estações geradas pela IA.', 'medium', 'loops', 3)
 ) as v(slug, title, description, base_difficulty, main_topic, order_index)
 where c.order_index = 3;
 
@@ -144,6 +145,7 @@ join (values
   ('cap2-deposito', 'deposito-corredor', 'Corredor // Estantes', 'Caixas travam o corredor entre as estantes do depósito.', 'conditionals', 'Mande as caixas leves para a prateleira de cima e as pesadas para a de baixo.', 'se peso <= 50 : lado = "cima" / senão : lado = "baixo"', 'medium', 1),
   ('cap3-montagem', 'montagem-prensa', 'Prensa // Moldes', 'Os moldes da ponte passam pela prensa, que bate uma placa por vez.', 'loops', 'Repita a batida uma vez por coluna, somando as fileiras de cada molde.', 'repita vao vezes : placas = placas + faixas', 'easy', 1),
   ('cap3-refrigeracao', 'refrigeracao-racks', 'Refrigeração // Racks', 'Racks superaquecidos jogam vapor pela grade do piso e bloqueiam a passagem.', 'loops', 'Resfrie cada rack enquanto ele estiver acima do limite, sem passar do ponto.', 'enquanto temp > 40 : temp = temp - passo', 'medium', 1),
+  ('cap3-datacenter', 'datacenter-backup', 'Data Center // Backup', 'Estações de backup com drives de espaço limitado e filas de arquivos iguais.', 'loops', 'Copie cada arquivo só se ainda couber no drive e conte quantos foram salvos.', 'repita arquivos vezes : se espaco >= tamanho : espaco = espaco - tamanho / salvos = salvos + 1', 'medium', 1),
   ('cap2-deposito', 'deposito-ponte', 'Ponte // Guindaste', 'Um fosso corta o depósito; o guindaste monta a ponte com as caixas da esteira.', 'conditionals', 'Mande para a ponte só as caixas que aguentam a Artemis.', 'se material == "aco" ou cheia : destino = "ponte" / senão : destino = "descarte"', 'medium', 2)
 ) as v(level_slug, slug, title, description, topic, objective, expected_output, base_difficulty, order_index)
   on l.slug = v.level_slug;

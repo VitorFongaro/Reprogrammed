@@ -311,6 +311,12 @@ de exaustão que corta a sala) sai de `tools/refrigeracao_bg.py`; os racks e o v
 código (`client/objects/CoolingRacks.js`) e o terminal reusa o `painel_prensa`. Arte nossa, feita por
 script escrito por um agente de IA — declarar no TCC.
 
+**Data center (cap. 3).** O fundo (`client/assets/images/datacenter/datacenter_bg.png`: a chapa de aço
+do capítulo, armários de servidor com LEDs na parede, placas de ventilação e a calha de cabos) sai de
+`tools/datacenter_bg.py`; as estações de backup e a blindagem da porta são desenhadas no código
+(`client/objects/BackupStations.js`, `DataCenterScene`) e o terminal reusa o `painel_prensa`. Arte
+nossa, feita por script escrito por um agente de IA — declarar no TCC.
+
 **Corredor do térreo (cap. 2).** O fundo (`client/assets/images/corredor_terreo/corredor_terreo_bg.png`:
 só a faixa do corredor, com a pedra e as janelas da recepção e o elevador no fim) sai de
 `tools/corredor_terreo_bg.py`. A cabine do elevador (`ElevadorScene`) é desenhada no código. Arte

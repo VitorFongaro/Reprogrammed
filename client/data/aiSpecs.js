@@ -257,5 +257,43 @@ export const AI_SPECS = {
             "texto do briefing na voz do alarme térmico da sala",
             "texto do briefing na voz da própria ADA, fria e precisa"
         ]
+    },
+
+    "datacenter-backup": {
+        topic: "loops",
+        concept: "contador dentro do laço com um se: repetir para cada arquivo, mas só copiar (e contar) quando ainda cabe no drive.",
+        setting: "Data center no núcleo da Elysium. A ADA vai apagar o arquivo de memórias das pessoas ligadas aos chips. Cada estação de backup tem um DRIVE com espaço livre (espaco, em GB) e uma fila de arquivos iguais (arquivos = quantos, tamanho = GB de cada um). O programa passa pelos arquivos um por um: se o arquivo ainda cabe no espaço que sobrou, copia (o espaço diminui) e conta mais um salvo. Copiar sem caber estoura o drive; deixar de copiar um que cabia perde uma memória.",
+        inputs: {
+            arquivos: { type: "int", min: 1, max: 8, unit: "arquivos", required: true },
+            tamanho: { type: "int", min: 1, max: 5, unit: "GB cada", required: true },
+            espaco: { type: "int", min: 2, max: 20, unit: "GB livres", required: true }
+        },
+        outputs: { salvos: { type: "int", min: 0, max: 8 } },
+        requires: ["repita", "se"],
+        forbids: ["senão", "enquanto"],
+        tests: [3, 4],
+        defaults: { salvos: 0 },
+        rules: [
+            "O laço passa uma vez por arquivo (repita arquivos vezes); dentro dele, um se testa se o arquivo cabe no espaço que sobrou (espaco >= tamanho).",
+            "Dentro do se: o espaço diminui do tamanho do arquivo e o contador salvos aumenta 1.",
+            "Pelo menos uma estação tem espaço de sobra para todos os arquivos, e pelo menos uma fica sem espaço antes do fim da fila (é ela que mostra por que o se precisa estar DENTRO do laço).",
+            "Pelo menos uma estação tem o espaço exatamente igual a um múltiplo do tamanho e arquivos suficientes para enchê-lo até o fim (é o que separa >= de >).",
+            "O briefing diz o objetivo (salvar o que cabe e contar), mas NÃO diz qual comparação usar (nada de \"maior ou igual\"): descobrir isso é o puzzle."
+        ],
+        sanity: (tests) => {
+            const fits = (t) => Math.min(t.given.arquivos, Math.floor(t.given.espaco / t.given.tamanho));
+            const wrong = tests.find((t) => t.expect.salvos !== fits(t));
+            if (wrong) return `a estação ${wrong.label ?? ""} salva ${fits(wrong)} arquivos (cabem ${Math.floor(wrong.given.espaco / wrong.given.tamanho)} de ${wrong.given.tamanho} GB em ${wrong.given.espaco} GB), não ${wrong.expect.salvos}: copie só enquanto espaco >= tamanho e some 1 em salvos`;
+            if (!tests.some((t) => t.given.arquivos * t.given.tamanho <= t.given.espaco)) return "inclua uma estação em que todos os arquivos cabem";
+            if (!tests.some((t) => t.given.arquivos * t.given.tamanho > t.given.espaco)) return "inclua uma estação que fica sem espaço antes do fim da fila";
+            if (!tests.some((t) => t.given.espaco % t.given.tamanho === 0 && t.given.arquivos >= t.given.espaco / t.given.tamanho)) return "inclua uma estação em que os arquivos enchem o drive exatamente (espaco múltiplo do tamanho), para >= e > darem resultados diferentes";
+            return null;
+        },
+        variety: [
+            "drives grandes e pequenos misturados",
+            "uma fila longa de arquivos pequenos e uma curta de arquivos grandes",
+            "texto do briefing na voz da Lua, pedindo para salvar as memórias",
+            "texto do briefing na voz do sistema de backup, seco e técnico"
+        ]
     }
 };
