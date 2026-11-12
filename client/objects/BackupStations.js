@@ -12,6 +12,11 @@ import Effects from "../ui/Effects";
 // = os GB que passaram da barra ficam vermelhos (ESTOUROU); deixou para trás um
 // que cabia = COUBE MAIS. Errou um, todos esvaziam para a próxima tentativa.
 //
+// O console entrega só o valor final de `salvos` de cada caso, não o passo a
+// passo do programa: a estação mostra os primeiros `salvos` arquivos indo para
+// o drive (é o que o laço faz, em ordem). Basta, porque a conferência também é
+// só pelo `salvos`; contar mais do que a fila tem aparece no contador.
+//
 // As estações ficam em linhas FIXAS (`rows`), criadas já na entrada como
 // OFFLINE (o colisor da bancada existe antes de a IA responder); `activate`
 // liga as que o puzzle usa.
@@ -110,6 +115,9 @@ export default class BackupStations {
         let count = 0;
         const step = (k) => {
             if (k >= row.files.length) {
+                // O contador mostra o que o PROGRAMA contou, não o que a fila
+                // animou: contar mais do que a fila tem tem de aparecer.
+                row.counter.setText(`SALVOS: ${salvos}`);
                 this.judge(row, salvos, used);
                 s.time.delayedCall(260, next);
                 return;

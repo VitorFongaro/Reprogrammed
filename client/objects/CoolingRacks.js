@@ -27,7 +27,7 @@ const RESULT_HOLD_MS = 1400;
 const MAX_CYCLES = 14;            // ciclos mostrados antes de pular para o fim
 const COLORS = {
     body: 0x1b1d24, bodyLight: 0x3a3f4c, edge: 0x0a0b10,
-    screen: 0x07080c, led: 0xff2a4a, ledOff: 0x3a1218,
+    screen: 0x07080c, led: 0xff2a4a, ledOff: 0x3a1218, ledOk: 0x51e36b,
     hot: "#ff4545", ok: "#51e36b", cold: "#9fe3ff", idle: "#5b6178"
 };
 
@@ -86,10 +86,6 @@ export default class CoolingRacks {
             rack.test = test;
             rack.tag.setText(`${test.label ?? ""}  -${test.given.passo}/ciclo`).setColor("#e6ebf5");
             this.setHot(rack, test.given.temp);
-            rack.leds.forEach((led, k) => this.scene.tweens.add({
-                targets: led, alpha: 0.3, duration: 260 + k * 90, yoyo: true, repeat: -1
-            }));
-            rack.leds.forEach((led) => led.setFillStyle(COLORS.led));
         });
     }
 
@@ -101,7 +97,20 @@ export default class CoolingRacks {
     setHot(rack, temp) {
         rack.display.setText(`${temp}°`).setColor(COLORS.hot);
         rack.frost.setFillStyle(0xbfe9ff, 0).setStrokeStyle(2, 0xe6f7ff, 0);
+        this.setLeds(rack, true);
         this.startSteam(rack);
+    }
+
+    // LEDs do rack: vermelhos piscando enquanto ele ferve, verdes e acesos no
+    // ponto (antes o rack resolvido, inclusive o carregado do save, seguia em alarme).
+    setLeds(rack, hot) {
+        rack.leds.forEach((led, k) => {
+            this.scene.tweens.killTweensOf(led);
+            led.setAlpha(1).setFillStyle(hot ? COLORS.led : COLORS.ledOk);
+            if (hot) {
+                this.scene.tweens.add({ targets: led, alpha: 0.3, duration: 260 + k * 90, yoyo: true, repeat: -1 });
+            }
+        });
     }
 
     startSteam(rack) {
@@ -181,6 +190,7 @@ export default class CoolingRacks {
         const expect = rack.test.expect.temp;
         if (rack.right) {
             rack.display.setColor(COLORS.ok);
+            this.setLeds(rack, false);
             this.stopSteam(rack);
             Sfx.play(s, "confirm", 0.4);
             return;
@@ -228,6 +238,7 @@ export default class CoolingRacks {
     showSolved() {
         this.active.forEach((r) => {
             r.display.setText(`${r.test.expect.temp}°`).setColor(COLORS.ok);
+            this.setLeds(r, false);
             this.stopSteam(r);
         });
     }
