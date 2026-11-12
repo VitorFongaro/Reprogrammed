@@ -893,3 +893,39 @@ function datacenterDraw() {
         successMessage: "MEMÓRIAS SALVAS"
     };
 }
+
+// Ponte de luz (cap. 3, `para cada`): cada caso é uma FAIXA da ponte, uma lista
+// com a energia de cada placa. O laço passa por cada placa e soma a energia dela.
+// As faixas têm tamanhos diferentes e placas acima de 1, para que contar as
+// placas (+ 1) ou usar a lista inteira não sirva.
+export function ponteLuzPuzzle() {
+    const faixa = (len) => Array.from({ length: len }, () => between(1, 5));
+    const tamanhos = shuffle([2, 3, 4, 5, 6]).slice(0, between(3, 4));
+    const faixas = tamanhos.map((len) => {
+        let f = faixa(len);
+        while (f.every((v) => v === 1)) f = faixa(len);
+        return f;
+    });
+    const soma = (f) => f.reduce((a, b) => a + b, 0);
+    return {
+        title: "PONTE DE LUZ // GERADOR",
+        briefing: [
+            "Cada faixa da ponte só firma com a energia exata.",
+            "Cada placa pede a sua: mande a soma de todas",
+            "as placas da faixa, sem faltar nem sobrar."
+        ],
+        hint: "monte:  para cada placa em placas :  /  energia = energia + placa",
+        lines: [
+            "para cada placa em [nome] :",
+            "    energia = energia [op] [nome]"
+        ],
+        blocks: { nome: ["placas", "placa", "energia"], op: ["+", "-", "*"], valor: [] },
+        defaults: { energia: 0 },
+        tests: faixas.map((placas, i) => ({
+            label: LETTERS[i],
+            given: { placas },
+            expect: { energia: soma(placas) }
+        })),
+        successMessage: "PONTE FIRME"
+    };
+}

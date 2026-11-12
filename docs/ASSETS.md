@@ -317,6 +317,12 @@ do capítulo, armários de servidor com LEDs na parede, placas de ventilação e
 (`client/objects/BackupStations.js`, `DataCenterScene`) e o terminal reusa o `painel_prensa`. Arte
 nossa, feita por script escrito por um agente de IA — declarar no TCC.
 
+**Ponte de luz (cap. 3).** O fundo (`client/assets/images/ponte/ponte_bg.png`: a chapa de aço do
+capítulo, o abismo com poeira de luz e o brilho vermelho lá embaixo, e o letreiro ABISMO) sai de
+`tools/ponte_bg.py`; a ponte, os emissores e os pulsos são desenhados no código
+(`client/objects/LightBridge.js`) e o terminal reusa o `painel_prensa`. Arte nossa, feita por script
+escrito por um agente de IA — declarar no TCC.
+
 **Corredor do térreo (cap. 2).** O fundo (`client/assets/images/corredor_terreo/corredor_terreo_bg.png`:
 só a faixa do corredor, com a pedra e as janelas da recepção e o elevador no fim) sai de
 `tools/corredor_terreo_bg.py`. A cabine do elevador (`ElevadorScene`) é desenhada no código. Arte

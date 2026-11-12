@@ -40,14 +40,21 @@ const lineWidth = (line) => line.indent * 44 + line.tokens.reduce(
 const COMPARISONS = ["==", "!=", ">", "<", ">=", "<="];
 const CONNECTIVES = ["e", "ou", "não"];
 // `repita`/`vezes`/`enquanto` e a aritmética do corpo (placas = placas + 1) são do cap. 3.
-const FIXED_WORDS = ["se", "senão", ":", "=", "repita", "vezes", "enquanto", "+", "-", "*", "/", ...CONNECTIVES];
+const FIXED_WORDS = ["se", "senão", ":", "=", "repita", "vezes", "enquanto", "para", "cada", "em", "+", "-", "*", "/", ...CONNECTIVES];
 const LITERAL_RE = /^(-?\d+(\.\d+)?|"[^"]*"|true|false)$/;
 const NAME_RE = /^[a-z_][a-z0-9_]*$/;
 const BOUNDARY_PAIRS = { ">": ">=", ">=": ">", "<": "<=", "<=": "<" };
 
 const usesWord = (text, word) => new RegExp(`(^|\\s)${word}(\\s|$)`, "m").test(text);
 
-const literalOf = (value) => (typeof value === "string" ? `"${value}"` : String(value));
+const literalOf = (value) => (typeof value === "string" ? `"${value}"` : Array.isArray(value) ? `[${value.join(", ")}]` : String(value));
+
+// Nomes que o programa declara como item de um "para cada <nome> em ..." (a
+// variável que recebe cada item): valem como palavra conhecida no molde.
+const loopItems = (lines) => lines
+    .map((l) => String(l).trim().split(/\s+/))
+    .filter((t) => t[0] === "para" && t[1] === "cada" && t[2])
+    .map((t) => t[2]);
 
 // Saída da ficha: lista de valores ("rampa": ["carga", ...]) ou faixa numérica
 // ({ type: "int", min, max }, como as placas da linha de montagem).
@@ -59,6 +66,11 @@ function fitsInput(value, def) {
     if (def.type === "float") return typeof value === "number" && value >= def.min && value <= def.max;
     if (def.type === "bool") return typeof value === "boolean";
     if (def.type === "text") return def.values.includes(value);
+    // lista de inteiros (cap. 3, para cada): tamanho e cada item dentro da faixa
+    if (def.type === "list") {
+        return Array.isArray(value) && value.length >= def.minLen && value.length <= def.maxLen
+            && value.every((v) => Number.isInteger(v) && v >= def.min && v <= def.max);
+    }
     return false;
 }
 
@@ -135,7 +147,7 @@ export function checkShape(puzzle, spec) {
 
     // Linhas: só encaixes e palavras conhecidas (nada de literal fixo no texto,
     // senão a resposta vem escrita no programa).
-    const known = new Set([...FIXED_WORDS, ...Object.keys(outputs), ...Object.keys(inputs)]);
+    const known = new Set([...FIXED_WORDS, ...Object.keys(outputs), ...Object.keys(inputs), ...loopItems(puzzle.lines)]);
     const parsed = puzzle.lines.map((line) => (typeof line === "string" ? parseTemplateLine(line) : null));
     need(parsed.every(Boolean), "cada linha deve ser texto");
     if (problems.length) return problems;
@@ -247,7 +259,7 @@ export function checkSolvable(puzzle, { mustUse = [] } = {}) {
     const briefing = (puzzle.briefing ?? []).join(" ");
     const ruleNumbers = firstSolution
         ? fill(parsed, firstSolution)
-            .filter((line) => ["se", "senão", "repita", "enquanto"].includes(line.tokens[0]))
+            .filter((line) => ["se", "senão", "repita", "enquanto", "para"].includes(line.tokens[0]))
             .flatMap((line) => line.tokens)
         : [];
     [...new Set(ruleNumbers)].filter((v) => /^-?\d+(\.\d+)?$/.test(v)).forEach((n) => {
@@ -295,8 +307,12 @@ export function checkPuzzle(puzzle, spec) {
 // Devolve { problems, lines, blocks, tests, hint }.
 const SLOT_PRIORITY = { valor: 0, op: 1, conectivo: 2, nome: 3 };
 
-function slotKind(token, i, tokens, names) {
+function slotKind(token, i, tokens, names, arithmetic = false) {
+    // o nome DECLARADO no "para cada <nome> em" é fixo; o que vem depois do "em" vira encaixe
+    if (tokens[0] === "para" && i <= 3) return null;
     if (LITERAL_RE.test(token)) return "valor";
+    // conta do corpo como encaixe (só nas fichas que pedem: "energia = energia [+] placa")
+    if (arithmetic && ["+", "-", "*", "/"].includes(token) && tokens[1] === "=") return "op";
     if (COMPARISONS.includes(token)) return "op";
     if (token === "e" || token === "ou") return "conectivo";
     // nome numa condição (não o alvo de uma atribuição, que é fixo)
@@ -311,7 +327,10 @@ export function buildFromSolution(solution, decoys, tests, spec) {
     if (!Array.isArray(solution) || solution.length < 2) {
         return { problems: ["solution tem de ser o programa certo, uma linha de código por item"] };
     }
-    const names = new Set(Object.keys(spec.inputs));
+    // Entradas e o item do "para cada" (no corpo, "placa" é encaixe: é a peça
+    // que o jogador tem de escolher contra a lista inteira, "placas").
+    const names = new Set([...Object.keys(spec.inputs), ...loopItems(solution)]);
+    const inputNames = new Set(Object.keys(spec.inputs));
     const blocks = { nome: [], op: [], valor: [] };
     const values = [];
     const plain = [];
@@ -329,7 +348,7 @@ export function buildFromSolution(solution, decoys, tests, spec) {
             return [...out, t];
         }, []);
         plain.push(tokens.join(" "));
-        const kinds = tokens.map((t, i) => slotKind(t, i, tokens, names));
+        const kinds = tokens.map((t, i) => slotKind(t, i, tokens, names, Boolean(spec.arithmeticSlot)));
         // Até 4 encaixes, pelos mais importantes primeiro.
         const chosen = new Set(kinds.map((k, i) => [k, i]).filter(([k]) => k)
             .sort((a, b) => SLOT_PRIORITY[a[0]] - SLOT_PRIORITY[b[0]] || a[1] - b[1])
@@ -363,14 +382,23 @@ export function buildFromSolution(solution, decoys, tests, spec) {
     // Encaixe de nome com uma peça só não tem o que escolher: as outras entradas
     // da sala entram de isca (é o "repita vao" contra o "repita faixas").
     if (blocks.nome.length === 1) {
-        names.forEach((n) => { if (!blocks.nome.includes(n)) blocks.nome.push(n); });
+        inputNames.forEach((n) => { if (!blocks.nome.includes(n)) blocks.nome.push(n); });
     }
     // Nos laços, as peças são usadas uma vez cada e "vao x faixas" dá o mesmo
     // trocando a ordem: com só as duas, toda montagem passaria. O contador
     // (placas) entra de isca: repetir "placas" vezes, com ele em zero, não enche.
-    if (spec.requires?.includes("repita") && blocks.nome.length && blocks.nome.length < 3) {
+    if ((spec.requires?.includes("repita") || spec.requires?.includes("para")) && blocks.nome.length && blocks.nome.length < 3) {
         Object.keys(spec.outputs).forEach((n) => { if (!blocks.nome.includes(n)) blocks.nome.push(n); });
     }
+
+    // Conta como encaixe sem isca de operador: o "-" entra, senão a peça não tem o que escolher.
+    if (spec.arithmeticSlot && blocks.op.length === 1 && blocks.op[0] === "+") blocks.op.push("-");
+
+    // Isca de uma categoria sem encaixe nenhum (um "5" num programa só de nomes)
+    // ficaria parada na prateleira sem ter onde entrar: sai.
+    ["nome", "op", "valor"].forEach((c) => {
+        if (!lines.some((l) => l.includes(`[${c}]`))) blocks[c] = [];
+    });
 
     const parsed = lines.map(parseTemplateLine);
     const program = fill(parsed, values);

@@ -195,6 +195,7 @@ const loadProfile = async (client, userId, spec, slug) => {
 const describeInputs = (inputs) => Object.entries(inputs).map(([name, def]) => {
   if (def.type === 'text') return `- ${name}: texto, um de ${def.values.map((v) => `"${v}"`).join(', ')}`;
   if (def.type === 'bool') return `- ${name}: true ou false`;
+  if (def.type === 'list') return `- ${name}: LISTA de ${def.minLen} a ${def.maxLen} inteiros, cada um de ${def.min} a ${def.max}${def.unit ? ` (${def.unit})` : ''}, escrita como [2, 3, 1]`;
   const kind = def.type === 'int' ? 'inteiro' : 'número com casa decimal';
   return `- ${name}: ${kind} de ${def.min} a ${def.max}${def.unit ? ` (${def.unit})` : ''}`;
 }).join('\n');
@@ -213,6 +214,12 @@ const loopLanguage = (spec) => {
     return `- Repetição: "repita <n> vezes :", com o corpo 4 espaços mais recuado; n é um inteiro de 0 a ${MAX_REPEAT}
   (um número ou o nome de uma entrada). Dentro do corpo dá para acumular: "placas = placas + 1".
 - Contas: + - * / entre números.\n`;
+  }
+  if (spec.requires?.includes('para')) {
+    return `- Percorrer uma lista: "para cada <item> em <lista> :", com o corpo 4 espaços mais recuado. O corpo
+  roda uma vez para cada item, na ordem, com <item> valendo aquele item. A lista vem SÓ das entradas do caso
+  (não existe lista escrita no código). Dentro do corpo dá para acumular: "energia = energia + placa".
+- Contas: + - * / entre números (uma lista inteira não entra em conta).\n`;
   }
   if (spec.requires?.includes('enquanto')) {
     return `- Repetição com condição: "enquanto <condição> :", com o corpo 4 espaços mais recuado. O corpo roda
@@ -306,6 +313,7 @@ const schemaType = (def) => {
   if (def.type === 'int') return { type: 'INTEGER' };
   if (def.type === 'float') return { type: 'NUMBER' };
   if (def.type === 'bool') return { type: 'BOOLEAN' };
+  if (def.type === 'list') return { type: 'ARRAY', items: { type: 'INTEGER' } };
   return { type: 'STRING', enum: def.values };
 };
 

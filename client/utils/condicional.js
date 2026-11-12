@@ -15,6 +15,11 @@
 //       <corpo>                    der true; mais de MAX_REPEAT voltas = laço
 //                                  que não termina, com o motivo explicado)
 //
+//   para cada <nome> em <lista> :  (capítulo 3: o corpo roda uma vez para cada
+//       <corpo>                      item da lista, com <nome> valendo o item.
+//                                    Lista só vem das entradas do caso, ex.
+//                                    placas = [2, 3, 1]; não há literal de lista)
+//
 // Condição/expressão: números, true/false, "texto", nomes de variável,
 // + - * /, comparações (== != > < >= <=) e os conectivos `e` / `ou` / `não`.
 //
@@ -76,6 +81,8 @@ function structure(lines) {
         const kind = headerKind(line.tokens);
         if (kind === "repeat") {
             out.push({ type: "repeat", count: repeatTokens(line.tokens), body: structure(body) });
+        } else if (kind === "for") {
+            out.push({ type: "for", ...forTokens(line.tokens), body: structure(body) });
         } else if (kind === "while") {
             out.push({ type: "while", cond: conditionTokens(line.tokens, 1, "enquanto"), body: structure(body) });
         } else if (kind === "if") {
@@ -92,7 +99,7 @@ function structure(lines) {
             if (kind === "else") prev.closed = true;
         } else {
             if (body.length) {
-                throw new CondError("só o que está dentro de um se/senão ou de um laço (repita, enquanto) fica recuado");
+                throw new CondError("só o que está dentro de um se/senão ou de um laço (repita, enquanto, para cada) fica recuado");
             }
             out.push({ type: "assign", tokens: line.tokens });
         }
@@ -104,6 +111,7 @@ function structure(lines) {
 function headerKind(tokens) {
     if (tokens[0] === "repita") return "repeat";
     if (tokens[0] === "enquanto") return "while";
+    if (tokens[0] === "para") return "for";
     if (tokens[0] === "se") return "if";
     if (tokens[0] === "senão" && tokens[1] === "se") return "elif";
     if (tokens[0] === "senão") return "else";
@@ -130,6 +138,15 @@ function repeatTokens(tokens) {
     return rest;
 }
 
+// "para cada <nome> em <expressão> :" -> { item, list }.
+function forTokens(tokens) {
+    const rest = tokens[tokens.length - 1] === ":" ? tokens.slice(0, -1) : tokens;
+    if (rest[1] !== "cada" || rest[3] !== "em" || !NAME_RE.test(rest[2] ?? "") || rest.length < 5) {
+        throw new CondError(`o para cada tem a forma  para cada item em lista :  (está "${tokens.join(" ")}")`);
+    }
+    return { item: rest[2], list: rest.slice(4) };
+}
+
 function execBlock(statements, scope) {
     statements.forEach((st) => {
         if (st.type === "assign") {
@@ -144,6 +161,18 @@ function execBlock(statements, scope) {
             if (n < 0) throw new CondError("não dá para repetir um número negativo de vezes");
             if (n > MAX_REPEAT) throw new CondError(`repetir ${n} vezes passa do limite da máquina (${MAX_REPEAT})`);
             for (let k = 0; k < n; k += 1) execBlock(st.body, scope);
+            return;
+        }
+        if (st.type === "for") {
+            const list = evaluate(st.list, scope);
+            if (!Array.isArray(list)) {
+                throw new CondError(`o para cada percorre uma LISTA, e ${st.list.join(" ")} não é lista`);
+            }
+            if (list.length > MAX_REPEAT) throw new CondError(`a lista passa do limite da máquina (${MAX_REPEAT} itens)`);
+            list.forEach((value) => {
+                scope[st.item] = value;
+                execBlock(st.body, scope);
+            });
             return;
         }
         if (st.type === "while") {
@@ -292,6 +321,9 @@ function requireBool(value, op) {
 
 function arith(a, op, b) {
     if (typeof a !== "number" || typeof b !== "number") {
+        if (Array.isArray(a) || Array.isArray(b)) {
+            throw new CondError(`"${op}" não soma uma lista inteira: use para cada para passar item por item`);
+        }
         throw new CondError(`"${op}" só funciona com números`);
     }
     if (op === "+") return a + b;
@@ -339,6 +371,7 @@ export function runTests(lines, tests, defaults = {}) {
 // Valor -> literal como o jogador o vê nos blocos ("texto" com aspas).
 export function formatValue(value) {
     if (typeof value === "string") return `"${value}"`;
+    if (Array.isArray(value)) return `[${value.map(formatValue).join(", ")}]`;
     if (value === undefined) return "?";
     return String(value);
 }

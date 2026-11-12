@@ -297,5 +297,42 @@ export const AI_SPECS = {
             "texto do briefing na voz da Lua, pedindo para salvar as memórias",
             "texto do briefing na voz do sistema de backup, seco e técnico"
         ]
+    },
+
+    "ponte-luz": {
+        topic: "loops",
+        concept: "para cada: passar por TODOS os itens de uma lista, um de cada vez, usando o item da vez (não a lista inteira) dentro do laço.",
+        setting: "Um abismo corta o núcleo da Elysium, e a única travessia é uma ponte de luz feita de faixas de placas. Cada faixa é uma lista (placas) com a energia que cada placa precisa para acender, na ordem. O programa passa por cada placa da faixa e soma a energia dela no total que o gerador vai mandar (energia começa em 0). Energia a menos apaga as últimas placas; energia a mais sobrecarrega a faixa.",
+        inputs: {
+            placas: { type: "list", minLen: 2, maxLen: 6, min: 1, max: 5, unit: "energia de cada placa", required: true }
+        },
+        outputs: { energia: { type: "int", min: 0, max: 30 } },
+        requires: ["para"],
+        forbids: ["se", "senão", "repita", "enquanto"],
+        // a conta do corpo vira encaixe: o jogador escolhe + contra - (isca)
+        arithmeticSlot: true,
+        tests: [3, 4],
+        defaults: { energia: 0 },
+        rules: [
+            "O programa passa por cada placa da faixa (para cada placa em placas) e soma a energia daquela placa: energia = energia + placa.",
+            "As faixas têm quantidades de placas diferentes e placas com energias diferentes entre si, para que contar as placas (somar 1) ou repetir um número fixo não sirva.",
+            "Pelo menos uma faixa tem placas que pedem mais de 1 de energia, e o total de cada faixa é diferente do número de placas dela.",
+            "O briefing diz o objetivo (mandar para cada faixa a energia exata das placas dela), mas não escreve o código.",
+            "Nas iscas, inclua o operador \"-\" (op) e um nome errado (a lista inteira já entra sozinha como isca)."
+        ],
+        sanity: (tests) => {
+            const total = (t) => t.given.placas.reduce((a, b) => a + b, 0);
+            const wrong = tests.find((t) => t.expect.energia !== total(t));
+            if (wrong) return `a faixa ${wrong.label ?? ""} precisa de ${total(wrong)} de energia (a soma das placas), não ${wrong.expect.energia}: some a energia de cada placa no laço`;
+            if (tests.every((t) => total(t) === t.given.placas.length)) return "as placas precisam pedir energias diferentes de 1, senão contar as placas dá o mesmo que somar";
+            if (new Set(tests.map((t) => t.given.placas.length)).size < 2) return "varie a quantidade de placas entre as faixas";
+            return null;
+        },
+        variety: [
+            "uma faixa curta de placas fortes e uma longa de placas fracas",
+            "faixas com a mesma quantidade de placas mas energias diferentes",
+            "texto do briefing na voz do gerador da ponte",
+            "texto do briefing na voz do Cosmo, animado com a ponte"
+        ]
     }
 };
