@@ -159,8 +159,6 @@ export default class BackupStations {
             });
         };
         step(0);
-        // Contou mais salvos do que havia arquivos (contador fora do lugar).
-        if (salvos > row.files.length) row.overcount = true;
     }
 
     judge(row, salvos, used) {
