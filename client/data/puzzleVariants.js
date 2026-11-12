@@ -790,13 +790,19 @@ export function montagemPuzzle() {
 export function refrigeracaoPuzzle() {
     const limite = [35, 40, 45][between(0, 2)];
     const passos = shuffle([3, 4, 5, 6, 7, 8, 9, 10]);
+    // O rack quente tem de terminar ABAIXO do limite. Cortar a temperatura em 95
+    // depois de sortear podia deixá-lo cair exatamente no limite (todos os racks
+    // iguais); então as voltas diminuem até caber na faixa da ficha.
+    const quente = passos[2];
+    let voltas = between(3, 5);
+    while (voltas > 1 && limite + quente * voltas + quente - 1 > 95) voltas -= 1;
     const racks = [
         // já frio: o laço não roda
         { temp: limite - between(0, 8), passo: passos[0] },
         // cai exatamente no limite
         { temp: limite + passos[1] * between(2, 4), passo: passos[1] },
         // bem quente, termina abaixo do limite
-        { temp: Math.min(95, limite + passos[2] * between(3, 5) + between(1, passos[2] - 1)), passo: passos[2] }
+        { temp: limite + quente * voltas + between(1, quente - 1), passo: quente }
     ];
     if (between(0, 1)) {
         racks.push({ temp: limite + between(1, 12), passo: passos[3] });

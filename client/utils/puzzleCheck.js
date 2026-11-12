@@ -114,6 +114,12 @@ export function checkShape(puzzle, spec) {
     need(Array.isArray(puzzle?.briefing) && puzzle.briefing.length >= 1 && puzzle.briefing.length <= LIMITS.maxBriefingLines
         && puzzle.briefing.every((l) => typeof l === "string" && l.length <= 64),
         `briefing longo demais: no máximo ${LIMITS.maxBriefingLines} linhas de 60 caracteres. Corte as palavras que repetem o que o código já mostra`);
+    // Ficha que deixa a comparação para o jogador descobrir (`briefingForbids`):
+    // o briefing não pode entregá-la. Antes isso só estava nas regras do prompt.
+    const briefingText = (puzzle?.briefing ?? []).join(" ").toLowerCase();
+    (spec.briefingForbids ?? []).filter((p) => briefingText.includes(p)).forEach((p) => {
+        problems.push(`o briefing entrega a comparação ("${p}"): diga só o objetivo, sem dizer qual comparação usar`);
+    });
     need(typeof puzzle?.hint === "string" && puzzle.hint.length >= 8 && puzzle.hint.length <= 200,
         "hint ausente ou longo demais: até 200 caracteres, só com a solução em uma linha (sem repetir \"rampa =\" à toa)");
     need(Array.isArray(puzzle?.lines) && puzzle.lines.length >= 2 && puzzle.lines.length <= LIMITS.maxLines,

@@ -273,6 +273,8 @@ export const AI_SPECS = {
         forbids: ["senão", "enquanto"],
         tests: [3, 4],
         defaults: { salvos: 0 },
+        // O que o conferidor recusa no briefing (a regra 5 em código).
+        briefingForbids: [">", "<", "maior que", "menor que", "maior ou", "menor ou", "ou igual", "igual ou", "no mínimo", "pelo menos"],
         rules: [
             "O laço passa uma vez por arquivo (repita arquivos vezes); dentro dele, um se testa se o arquivo cabe no espaço que sobrou (espaco >= tamanho).",
             "Dentro do se: o espaço diminui do tamanho do arquivo e o contador salvos aumenta 1.",

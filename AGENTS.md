@@ -79,7 +79,8 @@ Monorepo com dois pacotes independentes (não há `package.json` na raiz):
     encaixes por linha, 14 peças, briefing de até 4 linhas), executa TODAS as montagens das peças (alguma passa, nem todas
     passam), recusa limite fora dos casos (`<` e `<=` passando juntos), briefing que não diz o
     número da regra (só os que DECIDEM: condição de `se` e contagem de `repita`; o passo de uma
-    conta, como o `+ 1`, não precisa estar escrito), `hint` cujos operadores e números não são os de uma montagem que passa e
+    conta, como o `+ 1`, não precisa estar escrito), briefing que ENTREGA a comparação quando a ficha
+    a deixa para o jogador descobrir (`briefingForbids`, hoje só no data center), `hint` cujos operadores e números não são os de uma montagem que passa e
     linha mais larga que a área de código do console (`maxLineWidth`: 3 encaixes já enchem uma linha
     com dois nomes escritos). Conectivo de `requires` pode vir como PEÇA em vez de texto fixo; aí
     TODA solução tem de usá-lo (é o caso do `ou` da ponte). As mensagens de recusa voltam para o modelo como correção, então escreva-as
