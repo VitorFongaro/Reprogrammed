@@ -22,6 +22,7 @@ import blocksUrl from "../assets/sprites/blocks/blocks.png";
 
 import { recordAttempt } from "../state/telemetry.js";
 import Sfx from "./Sfx";
+import { hudPx } from "../state/hud";
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -294,18 +295,26 @@ export default class BlockProgrammingConsole {
             color: COLOR.dim
         }).setOrigin(1, 0);
 
+        // Tamanho do HUD (opções) vale para o enunciado: cresce até onde cabe
+        // sem descer nos encaixes nem invadir o medidor à direita.
         const briefing = this.scene.add.text(
             PANEL_X + PAD,
             PANEL_Y + 74,
             this.puzzle.briefing.join("\n"),
-            { fontFamily: "VCR", fontSize: "22px", color: "#f4f6fb", lineSpacing: 12 }
+            {
+                fontFamily: "VCR", fontSize: hudPx(22), color: "#f4f6fb", lineSpacing: 12,
+                wordWrap: { width: this.briefingWidth() }
+            }
         );
+        while (briefing.y + briefing.height > SLOT_Y - BLOCK_H / 2 - 14 && parseInt(briefing.style.fontSize, 10) > 22) {
+            briefing.setFontSize(parseInt(briefing.style.fontSize, 10) - 1);
+        }
         // Sombra escura sutil: destaca a fonte fina do fundo com scanlines.
         briefing.setShadow(0, 2, "#000000", 4, false, true);
 
         this.outputText = this.scene.add.text(SLOT_CENTER_X, SLOT_Y + 64, "", {
             fontFamily: "VCR",
-            fontSize: "18px",
+            fontSize: hudPx(18),
             color: COLOR.dim,
             align: "center",
             wordWrap: { width: PANEL_W - PAD * 2 }
@@ -317,7 +326,7 @@ export default class BlockProgrammingConsole {
             this.singleAttempt
                 ? "monte com cuidado: uma única tentativa por turno"
                 : "arraste os blocos para os encaixes",
-            { fontFamily: "VCR", fontSize: "16px", color: COLOR.dim }
+            { fontFamily: "VCR", fontSize: hudPx(16), color: COLOR.dim }
         ).setOrigin(0.5, 1);
 
         this.container.add([backdrop, panel, title, escHint, briefing, this.outputText, footer]);
@@ -329,7 +338,7 @@ export default class BlockProgrammingConsole {
         if (this.timeLimitMs) {
             this.timerText = this.scene.add.text(PANEL_X + PANEL_W - PAD, PANEL_Y + 56, "", {
                 fontFamily: "VCR",
-                fontSize: "20px",
+                fontSize: hudPx(20),
                 color: "#ffb347"
             }).setOrigin(1, 0);
             this.container.add(this.timerText);
@@ -337,7 +346,7 @@ export default class BlockProgrammingConsole {
 
         const hintButton = this.scene.add.text(PANEL_X + PAD, PANEL_Y + PANEL_H - 22, "[ DICA ]", {
             fontFamily: "VCR",
-            fontSize: "16px",
+            fontSize: hudPx(16),
             color: COLOR.accent
         }).setOrigin(0, 1).setInteractive({ useHandCursor: true });
         hintButton.on("pointerover", () => hintButton.setColor("#ffffff"));
@@ -359,6 +368,17 @@ export default class BlockProgrammingConsole {
         });
 
         this.pieces.forEach((piece) => this.createPiece(piece));
+    }
+
+    // Largura livre para o enunciado: o painel inteiro, menos o medidor (que
+    // fica no canto direito, com a mesma conta do buildGauge).
+    briefingWidth() {
+        const full = PANEL_W - PAD * 2;
+        const kind = this.puzzle.gauge?.kind;
+        if (!kind) return full;
+        const gaugeW = kind === "thermometer" ? 60 : kind === "sector" ? 262 : 150;
+        const rightPad = kind === "sector" ? 0 : 14;
+        return full - gaugeW - rightPad - 24;
     }
 
     drawSlots(highlight = null) {

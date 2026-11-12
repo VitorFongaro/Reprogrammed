@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import BlockProgrammingConsole from "./BlockProgrammingConsole";
 import Sfx from "./Sfx";
 import { parseTemplateLine, runTests, formatValue } from "../utils/condicional";
+import { hudPx, hudScale } from "../state/hud";
 
 // Console de CONDICIONAIS (capítulo 2): o mesmo arrastar-e-encaixar do
 // BlockProgrammingConsole (herda arraste, flutuação, timer, [DICA], [ESC] e
@@ -57,6 +58,8 @@ const FRAME = { nome: 0, op: 1, valor: 2 };
 const CODE_X = PANEL_X + PAD + 34;        // depois do número da linha.
 const CODE_Y = PANEL_Y + 142;             // centro da 1ª linha.
 const LINE_H = 50;
+const MIN_LINE_H = 42;                    // altura do bloco (38) + respiro.
+const BRIEFING_PX = 19;
 const INDENT_W = 44;
 const TOKEN_GAP = 10;
 
@@ -113,14 +116,43 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         return width;
     }
 
+    // Tamanho do HUD (opções) vale também para o texto do console: o
+    // enunciado cresce e o código desce para não encostar nele. Se o enunciado
+    // grande não deixar espaço para todas as linhas, a fonte dele volta a
+    // diminuir até caber (código e blocos ficam sempre no tamanho original).
+    layoutCode() {
+        const lines = this.puzzle.lines.length;
+        const fits = (size) => {
+            const probe = this.scene.add.text(0, 0, this.puzzle.briefing.join("\n"), {
+                fontFamily: "VCR", fontSize: `${size}px`, lineSpacing: 6,
+                wordWrap: { width: TESTS_X - PANEL_X - PAD - 30 }
+            });
+            const height = probe.height;
+            probe.destroy();
+            const codeY = Math.max(CODE_Y, PANEL_Y + 56 + height + 30);
+            const lineH = lines > 1 ? Math.min(LINE_H, (PANEL_Y + 412 - codeY) / (lines - 1)) : LINE_H;
+            return { size, codeY, lineH, ok: lineH >= MIN_LINE_H };
+        };
+        let size = Math.round(BRIEFING_PX * hudScale());
+        let layout = fits(size);
+        while (!layout.ok && size > BRIEFING_PX) {
+            size -= 1;
+            layout = fits(size);
+        }
+        this.briefingSize = layout.size;
+        this.codeY = layout.codeY;
+        this.lineH = Math.max(MIN_LINE_H, layout.lineH);
+    }
+
     buildModel() {
         this.template = this.puzzle.lines.map(parseTemplateLine);
         this.slots = [];
         this.fixedTokens = [];
+        this.layoutCode();
 
         this.template.forEach((line, row) => {
             let x = CODE_X + line.indent * INDENT_W;
-            const y = CODE_Y + row * LINE_H;
+            const y = this.codeY + row * this.lineH;
             line.tokens.forEach((token, col) => {
                 if (typeof token === "string") {
                     const w = this.measureFixed(token);
@@ -192,7 +224,7 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
             fontFamily: "VCR", fontSize: "16px", color: COLOR.dim
         }).setOrigin(1, 0);
         const briefing = s.add.text(PANEL_X + PAD, PANEL_Y + 56, this.puzzle.briefing.join("\n"), {
-            fontFamily: "VCR", fontSize: "19px", color: "#f4f6fb", lineSpacing: 6,
+            fontFamily: "VCR", fontSize: `${this.briefingSize}px`, color: "#f4f6fb", lineSpacing: 6,
             wordWrap: { width: TESTS_X - PANEL_X - PAD - 30 }
         });
         briefing.setShadow(0, 2, "#000000", 4, false, true);
@@ -210,7 +242,7 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
 
         // Números de linha + texto fixo do programa (palavras-chave em destaque).
         this.template.forEach((_, row) => {
-            this.container.add(s.add.text(PANEL_X + PAD, CODE_Y + row * LINE_H, String(row + 1), {
+            this.container.add(s.add.text(PANEL_X + PAD, this.codeY + row * this.lineH, String(row + 1), {
                 fontFamily: "VCR", fontSize: "16px", color: COLOR.dim
             }).setOrigin(0, 0.5));
         });
@@ -228,10 +260,12 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
             this.buildTestsPanel();
         }
 
-        this.outputText = s.add.text(PANEL_X + PAD, TRAY_Y - 58, "", {
-            fontFamily: "VCR", fontSize: "17px", color: COLOR.dim,
+        // Ancorada pela base: com o HUD grande a mensagem quebra em mais
+        // linhas e cresce para cima, sem descer na prateleira de peças.
+        this.outputText = s.add.text(PANEL_X + PAD, TRAY_Y - 44, "", {
+            fontFamily: "VCR", fontSize: hudPx(17), color: COLOR.dim,
             wordWrap: { width: TESTS_X - PANEL_X - PAD - 30 }
-        }).setOrigin(0, 0.5);
+        }).setOrigin(0, 1);
 
         const footer = s.add.text(PANEL_X + PANEL_W / 2, PANEL_Y + PANEL_H - 12,
             this.singleAttempt
@@ -241,19 +275,19 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
                 : this.onRun
                     ? "encaixe todos os blocos: o programa roda direto no mapa"
                     : "encaixe todos os blocos: o programa roda nos testes sozinho",
-            { fontFamily: "VCR", fontSize: "15px", color: COLOR.dim }
+            { fontFamily: "VCR", fontSize: hudPx(15), color: COLOR.dim }
         ).setOrigin(0.5, 1);
         this.container.add([this.outputText, footer]);
 
         if (this.timeLimitMs) {
             this.timerText = s.add.text(TESTS_X + TESTS_W, PANEL_Y + 60, "", {
-                fontFamily: "VCR", fontSize: "20px", color: "#ffb347"
+                fontFamily: "VCR", fontSize: hudPx(20), color: "#ffb347"
             }).setOrigin(1, 0);
             this.container.add(this.timerText);
         }
 
         const hintButton = s.add.text(PANEL_X + PAD, PANEL_Y + PANEL_H - 12, "[ DICA ]", {
-            fontFamily: "VCR", fontSize: "16px", color: COLOR.accent
+            fontFamily: "VCR", fontSize: hudPx(16), color: COLOR.accent
         }).setOrigin(0, 1).setInteractive({ useHandCursor: true });
         hintButton.on("pointerover", () => hintButton.setColor("#ffffff"));
         hintButton.on("pointerout", () => hintButton.setColor(COLOR.accent));
@@ -271,19 +305,20 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
     // execução pinta cada cartão de verde/vermelho, um de cada vez.
     buildTestsPanel() {
         const s = this.scene;
+        const k = hudScale();
         const header = s.add.text(TESTS_X, TESTS_Y, "TESTES", {
-            fontFamily: "VCR", fontSize: "18px", color: COLOR.accent
+            fontFamily: "VCR", fontSize: hudPx(18), color: COLOR.accent
         });
         this.container.add(header);
 
-        let y = TESTS_Y + 28;
+        let y = TESTS_Y + Math.round(28 * k);
         const defaults = this.puzzle.defaults ?? {};
         if (Object.keys(defaults).length) {
             this.container.add(s.add.text(TESTS_X, y, `início: ${describe(defaults)}`, {
-                fontFamily: "VCR", fontSize: "15px", color: COLOR.dim,
+                fontFamily: "VCR", fontSize: hudPx(15), color: COLOR.dim,
                 wordWrap: { width: TESTS_W }
             }));
-            y += 26;
+            y += Math.round(26 * k);
         }
 
         // Até 4 casos cabem confortavelmente na coluna.
@@ -292,13 +327,13 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
             const top = y + i * (cardH + 6);
             const box = s.add.graphics();
             const given = s.add.text(TESTS_X + 10, top + 8, `se ${describe(test.given)}`, {
-                fontFamily: "VCR", fontSize: "16px", color: COLOR.text
+                fontFamily: "VCR", fontSize: hudPx(16), color: COLOR.text, wordWrap: { width: TESTS_W - 20 }
             });
-            const expect = s.add.text(TESTS_X + 10, top + 30, `espera ${describe(test.expect)}`, {
-                fontFamily: "VCR", fontSize: "15px", color: COLOR.dim, wordWrap: { width: TESTS_W - 20 }
+            const expect = s.add.text(TESTS_X + 10, top + 12 + given.height, `espera ${describe(test.expect)}`, {
+                fontFamily: "VCR", fontSize: hudPx(15), color: COLOR.dim, wordWrap: { width: TESTS_W - 20 }
             });
             const mark = s.add.text(TESTS_X + TESTS_W - 10, top + 8, "", {
-                fontFamily: "VCR", fontSize: "16px", color: COLOR.dim
+                fontFamily: "VCR", fontSize: hudPx(16), color: COLOR.dim
             }).setOrigin(1, 0);
             this.container.add([box, given, expect, mark]);
             const card = { box, expect, mark, top, h: cardH, test };
@@ -311,26 +346,30 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
     // cada objeto e as variáveis dele. SEM o "espera": o gabarito é o mapa.
     buildWorldPanel() {
         const s = this.scene;
+        const k = hudScale();
         this.container.add(s.add.text(TESTS_X, TESTS_Y, this.onProgram ? "AGORA" : "NO MAPA", {
-            fontFamily: "VCR", fontSize: "18px", color: COLOR.accent
+            fontFamily: "VCR", fontSize: hudPx(18), color: COLOR.accent
         }));
 
-        let y = TESTS_Y + 32;
+        let y = TESTS_Y + Math.round(32 * k);
         this.puzzle.tests.forEach((test, i) => {
             this.container.add(s.add.text(TESTS_X, y, test.label ?? String(i + 1), {
-                fontFamily: "VCR", fontSize: "16px", color: COLOR.accent
+                fontFamily: "VCR", fontSize: hudPx(16), color: COLOR.accent
             }));
-            this.container.add(s.add.text(TESTS_X + 30, y, describe(test.given), {
-                fontFamily: "VCR", fontSize: "16px", color: COLOR.text,
-                wordWrap: { width: TESTS_W - 30 }
-            }));
-            y += WORLD_ROW_H;
+            const row = s.add.text(TESTS_X + Math.round(30 * k), y, describe(test.given), {
+                fontFamily: "VCR", fontSize: hudPx(16), color: COLOR.text,
+                wordWrap: { width: TESTS_W - Math.round(30 * k) }
+            });
+            this.container.add(row);
+            // Linha que quebrou (HUD grande, muitas variáveis) empurra a próxima.
+            y += Math.max(Math.round(WORLD_ROW_H * k), row.height + 8);
         });
 
         this.container.add(s.add.text(TESTS_X, y + 12, this.onProgram
             ? "a condição é conferida no\ncomeço de cada turno seu."
             : "rode e olhe o mapa: cada objeto\nfaz o que o programa mandar.", {
-                fontFamily: "VCR", fontSize: "15px", color: COLOR.dim, lineSpacing: 4
+                fontFamily: "VCR", fontSize: hudPx(15), color: COLOR.dim, lineSpacing: 4,
+                wordWrap: { width: TESTS_W }
             }));
         this.testCards = [];   // nada para pintar: resetCards vira no-op.
     }

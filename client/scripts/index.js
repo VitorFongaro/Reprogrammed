@@ -165,7 +165,7 @@ const showLoginRequired = () => {
 };
 
 // Imagens dos cards (assets/images/site/), montadas a partir da arte do jogo por
-// tools/site_cards.py (e os retratos do Cosmo e da ADA por
+// tools/site_cards.py (e os retratos do Cosmo e da Artemis por
 // tools/site_retratos.lua). Mesmo motivo do glob dos ícones: com o caminho
 // dentro de uma string de template, o Vite não enxergaria o arquivo.
 const SITE_IMAGES = Object.fromEntries(
@@ -204,7 +204,7 @@ const sections = {
                 kicker: 'ARQUIVO / SOBRE',
                 command: 'abrir_arquivo elysium',
                 title: 'Um Andar, Um Conceito',
-                text: 'O prédio da Elysium é o mapa do jogo, e cada andar é um capítulo ligado a um conceito de programação. No subsolo, Artemis aprende variáveis e tipos de dados; no térreo, condicionais. Nos andares de cima esperam repetições e funções, cada um guardado por um boss inspirado em um computador histórico, como o ENIAC.'
+                text: 'O prédio da Elysium é o mapa do jogo, e cada andar é um capítulo ligado a um conceito de programação. No subsolo, Artemis aprende variáveis e tipos de dados; no térreo, condicionais; no núcleo, o último andar e território da ADA, repetições. Cada andar é guardado por um boss inspirado em um computador histórico, como o ENIAC e o WITCH.'
             },
             {
                 id: 'aprendizado',
@@ -213,7 +213,7 @@ const sections = {
                 kicker: 'ARQUIVO / SOBRE',
                 command: 'abrir_arquivo perfil',
                 title: 'Um Jogo que Aprende com Você',
-                text: 'Cada tentativa nos puzzles é registrada: acertos, erros e tempo. Esse perfil de aprendizado nunca é apagado ao carregar um save e serve de base para ajustar os desafios ao ritmo de cada jogador. Os puzzles também sorteiam valores e temas a cada partida, para que a resposta precise ser entendida, e não decorada.'
+                text: 'Cada tentativa nos puzzles é registrada: acertos, erros e tempo. Esse perfil de aprendizado nunca é apagado ao carregar um save, e é com ele que uma IA gera os puzzles a partir do térreo, montados para o nível de cada jogador. Todo puzzle gerado é executado e conferido pelo próprio jogo antes de chegar à tela, e a resposta precisa ser entendida, não decorada.'
             }
         ]
     },

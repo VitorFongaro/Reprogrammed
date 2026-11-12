@@ -344,5 +344,6 @@ end
 
 local ONLY = app.params["only"]
 if not ONLY or ONLY == "cosmo" then save("retrato_cosmo", cosmo()) end
-if not ONLY or ONLY == "ada" then save("retrato_ada", ada()) end
+-- O retrato da ADA agora sai do tools/site_cards.py (o sprite do jogo), não daqui.
+if ONLY == "ada" then save("retrato_ada", ada()) end
 if not ONLY or ONLY == "artemis" then save("retrato_artemis", artemis()) end

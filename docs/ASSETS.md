@@ -339,9 +339,8 @@ Arte nossa, feita por script escrito por um agente de IA — declarar no TCC.
 **Cards do site (`client/assets/images/site/`).** As imagens das abas SOBRE, PERSONAGENS e
 GAMEPLAY da página inicial saem de `tools/site_cards.py`, que só MONTA arte que já está no
 repositório (fundos das salas, mapas do Tiled, sprites, blocos do console e a fonte VCR) — nada
-é desenhado ou gerado ali. Os retratos da **Artemis**, do **Cosmo** e da **ADA** são desenhados por
-`tools/site_retratos.lua` no Aseprite (a Artemis na paleta do sprite do jogo, com o anel de reativação do porão atrás; a ADA nunca aparece no jogo, então o retrato é um olho
-num monólito ligado a uma rede de chips). O card **HISTÓRIA** (a Lua, o sinal descendo, a
+é desenhado ou gerado ali. Os retratos da **Artemis** e do **Cosmo** são desenhados por
+`tools/site_retratos.lua` no Aseprite (a Artemis na paleta do sprite do jogo, com o anel de reativação do porão atrás). O da **ADA** era um olho simbólico do mesmo script; agora que ela tem sprite (PixelLab, a boss do cap. 3), o `site_cards.py` monta o retrato com o quadro de frente do `idle.png` ampliado, sobre um halo e linhas de dado vermelhas (`retrato_ada`; o olho continua no Lua, só sob `ONLY=ada`). O card **ELYSIUM** mostra os três andares do jogo (núcleo, térreo e subsolo) e o **APRENDIZADO**, uma barra por capítulo. O card **HISTÓRIA** (a Lua, o sinal descendo, a
 torre da Elysium e a androide acordando no subsolo) foi **gerado pelo GPT (ChatGPT, geração de
 imagem)** a partir de um prompt descrevendo a cena, com a referência da Artemis anexada (ela
 também é gerada por IA; nenhum asset de pack foi usado como entrada). O original fica em

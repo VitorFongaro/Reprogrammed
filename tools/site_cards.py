@@ -4,7 +4,8 @@ Antes os cards eram padrões de CSS (listras, grade, bolinhas) sem relação com
 o jogo. Agora cada um mostra o jogo de verdade, MONTADO a partir da arte que já
 está no repositório: fundos das salas, sprites, blocos do console, a fonte VCR.
 Nada aqui é desenhado à mão nem gerado por IA — é composição. Os retratos do
-Cosmo e da ADA saem do Aseprite (tools/site_retratos.lua); o da Artemis é um
+Cosmo e da Artemis saem do Aseprite (tools/site_retratos.lua); o da ADA é o
+sprite do jogo, montado aqui (retrato_ada); o da Artemis é um
 recorte da referência que já existia (ver docs/ASSETS.md).
 
 Formato: 240x520 (a proporção do card no desktop). O site mostra tudo em tons de
@@ -147,30 +148,27 @@ def card_historia():
 
 
 def card_elysium():
+    """Os três andares do jogo, de cima para baixo: o NÚCLEO (repetições, o
+    andar vermelho da ADA), o TÉRREO e o SUBSOLO, cada um com a sala de verdade."""
     im = blank()
     andares = [
-        ("ANDAR 2", "FUNÇÕES", None),
-        ("ANDAR 1", "REPETIÇÃO", None),
+        ("NÚCLEO", "REPETIÇÕES", Image.open(asset("images", "montagem", "montagem_bg.png")).convert("RGBA")
+         .crop((280, 0, 760, 240)), (255, 69, 101)),
         ("TÉRREO", "CONDICIONAIS", room_composite(asset("images", "recepcao", "recepcao_bg.png"),
-                                                  asset("maps", "recepcao.json")).crop((240, 0, 720, 240))),
+                                                  asset("maps", "recepcao.json")).crop((240, 0, 720, 240)), CYAN),
         ("SUBSOLO", "VARIÁVEIS", room_composite(asset("images", "porao", "porao_bg.png"),
-                                               asset("maps", "porao.json")).crop((600, 0, 1080, 240))),
+                                               asset("maps", "porao.json")).crop((600, 0, 1080, 240)), CYAN),
     ]
-    band = H // 4
+    band = H // len(andares)
     d = ImageDraw.Draw(im)
-    for k, (andar, tema, foto) in enumerate(andares):
+    for k, (andar, tema, foto, cor) in enumerate(andares):
         y = k * band
-        if foto is not None:
-            im.alpha_composite(foto.resize((W, band - 8), Image.LANCZOS), (0, y + 4))
-        else:
-            for yy in range(y + 4, y + band - 4, 4):         # andar trancado: estática
-                d.line([(0, yy), (W, yy)], fill=(22, 24, 30))
-            text(im, (W // 2, y + band // 2 - 18), "? ? ?", 24, (70, 74, 88), "mm")
+        im.alpha_composite(foto.resize((W, band - 8), Image.LANCZOS), (0, y + 4))
         d.rectangle([0, y, W, y + 3], fill=(58, 62, 74))    # laje
         # etiquetas no PISO (embaixo), para não cobrir a parede da sala
         d.rectangle([0, y + band - 50, W, y + band - 4], fill=(5, 5, 5))
-        text(im, (10, y + band - 46), andar, 19, CYAN if foto is not None else DIM)
-        text(im, (10, y + band - 25), tema, 19, WHITE if foto is not None else (150, 156, 172))
+        text(im, (10, y + band - 46), andar, 19, cor)
+        text(im, (10, y + band - 25), tema, 19, WHITE)
     return im
 
 
@@ -179,10 +177,11 @@ def card_aprendizado():
     text(im, (W // 2, 46), "PERFIL DE", 22, (170, 176, 192), "mm")
     text(im, (W // 2, 72), "APRENDIZADO", 22, WHITE, "mm")
     d = ImageDraw.Draw(im)
-    barras = [("VAR", 0.86), ("SE", 0.58), ("LOOP", 0.0), ("FUNC", 0.0)]
+    # Um tópico por capítulo do jogo (variáveis, condicionais, repetições).
+    barras = [("VAR", 0.86), ("SE", 0.58), ("LOOP", 0.34)]
     base, topo = 380, 130
     for k, (rot, v) in enumerate(barras):
-        x = 30 + k * 50
+        x = 45 + k * 60
         d.rectangle([x, topo, x + 30, base], outline=(40, 44, 56), width=2)
         if v:
             y = base - int((base - topo) * v)
@@ -190,7 +189,7 @@ def card_aprendizado():
                 d.rectangle([x + 4, yy, x + 26, yy + 3], fill=CYAN if v > 0.7 else (255, 179, 71))
             text(im, (x + 15, y - 14), f"{int(v * 100)}%", 16, WHITE, "mm")
         text(im, (x + 15, base + 18), rot, 16, (170, 176, 192), "mm")
-    for k, linha in enumerate(["O JOGO MEDE CADA", "TENTATIVA E AJUSTA", "OS DESAFIOS"]):
+    for k, linha in enumerate(["CADA TENTATIVA CONTA", "E A IA GERA OS", "PRÓXIMOS DESAFIOS"]):
         text(im, (W // 2, 428 + k * 24), linha, 17, (170, 176, 192), "mm")
     return im
 
@@ -199,6 +198,36 @@ def card_aprendizado():
 
 # O retrato da Artemis é desenhado no Aseprite, junto com o do Cosmo e o da ADA
 # (tools/site_retratos.lua).
+
+
+def retrato_ada():
+    """A ADA de verdade, o sprite do jogo (gerado na PixelLab, ver docs/ASSETS.md),
+    de frente e ampliado por vizinho, com o halo e as linhas de dado vermelhas do
+    andar dela. Substituiu o olho simbólico do site_retratos.lua."""
+    im = blank((7, 6, 9))
+    d = ImageDraw.Draw(im)
+    red, dark = (255, 42, 74), (70, 14, 24)
+    # linhas de dado caindo (fixas)
+    for x, y0, n in [(22, 30, 70), (48, 120, 40), (196, 60, 90), (214, 210, 50), (34, 300, 60), (204, 330, 44)]:
+        for yy in range(y0, y0 + n, 6):
+            d.rectangle([x, yy, x + 1, yy + 3], fill=dark)
+        d.rectangle([x, y0 + n, x + 1, y0 + n + 4], fill=red)
+    # anel tracejado atrás da cabeça
+    cx, cy, r = W // 2, 150, 92
+    import math
+    for a in range(0, 360, 9):
+        t0, t1 = math.radians(a), math.radians(a + 5)
+        d.line([(cx + r * math.cos(t0), cy + r * math.sin(t0)), (cx + r * math.cos(t1), cy + r * math.sin(t1))],
+               fill=(120, 22, 38), width=3)
+    sheet = Image.open(asset("sprites", "boss", "ada", "idle.png")).convert("RGBA")
+    ada = sheet.crop((0, 80, 80, 160))                       # linha 1 = de frente (sul)
+    ada = ada.crop(ada.getbbox())
+    ada = ada.resize((ada.width * 5, ada.height * 5), Image.NEAREST)
+    piso = 470
+    d.rectangle([24, piso - 6, W - 24, piso], fill=(22, 18, 24))
+    d.rectangle([24, piso - 6, W - 24, piso - 5], fill=(70, 30, 40))
+    im.alpha_composite(ada, ((W - ada.width) // 2, piso - ada.height))
+    return im
 
 
 # --- GAMEPLAY ----------------------------------------------------------------------
@@ -291,6 +320,7 @@ if __name__ == "__main__":
     save("sobre_historia", card_historia(), pixel=False)
     save("sobre_elysium", card_elysium())
     save("sobre_aprendizado", card_aprendizado())
+    save("retrato_ada", retrato_ada(), pixel=False)
     save("gameplay_reprogramar", card_reprogramar())
     save("gameplay_puzzles", card_puzzles())
     save("gameplay_combate", card_combate())
