@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import Sfx from "../ui/Sfx";
+import Juice from "../ui/Juice";
 
 // PUZZLE DE MUNDO do jardim de inverno (cap. 2): uma fileira de CANTEIROS
 // encostada no vidro. Cada canteiro é um caso de teste do puzzle de irrigação —
@@ -132,7 +133,8 @@ export default class GardenBeds {
 
     finish(done) {
         if (this.beds.every((bed) => bed.right)) {
-            done(true);
+            // Resolvido: cada um pulsa em sequência com o tom subindo (game juice).
+            Juice.celebrate(this.scene, this.beds.map((bed) => bed.plant), () => done(true));
             return;
         }
         this.scene.time.delayedCall(RESULT_HOLD_MS, () => {

@@ -1,5 +1,6 @@
 import Effects from "../ui/Effects";
 import Sfx from "../ui/Sfx";
+import Juice from "../ui/Juice";
 import { makeCrate, flashCrate } from "./crates";
 
 // PUZZLE DE MUNDO (cap. 2): um bloco de ESTANTES com um corredor no meio,
@@ -159,7 +160,8 @@ export default class CrateCorridor {
 
     finish(done) {
         if (this.crates.every((crate) => crate.cleared)) {
-            done(true);
+            // Resolvido: cada um pulsa em sequência com o tom subindo (game juice).
+            Juice.celebrate(this.scene, this.crates.map((crate) => crate.box), () => done(true));
             return;
         }
         // Errou: o resultado fica à vista um instante e o pistão desfaz TUDO,

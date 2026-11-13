@@ -716,6 +716,8 @@ export default class BlockProgrammingConsole {
     onDragStart(piece) {
         if (this.solved) return;
         this.stopFloat(piece);
+        piece.snapTween?.stop();     // pegou a peça no meio do amasso do encaixe
+        piece.snapTween = null;
         this.container.bringToTop(piece.container);
         piece.container.setScale(1.06);
         piece.container.setAlpha(0.94);
@@ -792,7 +794,8 @@ export default class BlockProgrammingConsole {
     placeInSlot(piece, slot) {
         slot.piece = piece;
         piece.slot = slot;
-        Sfx.play(this.scene, "select");   // bloco encaixado num espaço
+        // Tom um pouco diferente a cada encaixe: é o som mais repetido do jogo.
+        Sfx.play(this.scene, "select", 1, { detune: Phaser.Math.Between(-120, 120) });
         this.updateGauge();
         this.drawSlots();
         this.scene.tweens.add({
@@ -801,7 +804,28 @@ export default class BlockProgrammingConsole {
             y: slot.y,
             duration: 140,
             ease: "Back.easeOut",
-            onComplete: () => this.checkSolution()
+            onComplete: () => {
+                this.snapJuice(piece, slot);
+                this.checkSolution();
+            }
+        });
+    }
+
+    // Game juice do encaixe: a peça AMASSA ao bater no lugar (larga e baixa,
+    // volta) e o contorno do encaixe pisca e abre para fora.
+    snapJuice(piece, slot) {
+        const s = this.scene;
+        const c = piece.container;
+        piece.snapTween = s.tweens.add({
+            targets: c, scaleX: 1.12, scaleY: 0.84, duration: 60, yoyo: true, ease: "Quad.easeOut",
+            onComplete: () => { piece.snapTween = null; c.setScale(1); }
+        });
+        const flash = s.add.rectangle(slot.x, slot.y, c.width, c.height)
+            .setStrokeStyle(3, 0xf7f7f7, 1);
+        this.container.add(flash);
+        s.tweens.add({
+            targets: flash, scaleX: 1.12, scaleY: 1.3, alpha: 0, duration: 220, ease: "Quad.easeOut",
+            onComplete: () => flash.destroy()
         });
     }
 

@@ -1,4 +1,5 @@
 import Sfx from "../ui/Sfx";
+import Juice from "../ui/Juice";
 import Effects from "../ui/Effects";
 
 // PUZZLE DE MUNDO do data center (cap. 3, contador com `se` dentro do laço):
@@ -193,7 +194,8 @@ export default class BackupStations {
 
     finish(done) {
         if (this.active.every((r) => r.right)) {
-            done(true);
+            // Resolvido: cada um pulsa em sequência com o tom subindo (game juice).
+            Juice.celebrate(this.scene, this.active.map((r) => r.c), () => done(true), { amount: 1.03 });
             return;
         }
         // Errou: as estações esvaziam para a próxima tentativa testar todas.

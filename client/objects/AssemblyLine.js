@@ -1,4 +1,5 @@
 import Sfx from "../ui/Sfx";
+import Juice from "../ui/Juice";
 import Effects from "../ui/Effects";
 
 // PUZZLE DE MUNDO da linha de montagem (cap. 3, `repita`): cada caso de teste é
@@ -161,7 +162,8 @@ export default class AssemblyLine {
 
     finish(done) {
         if (this.molds.every((m) => m.right)) {
-            done(true);
+            // Resolvido: cada um pulsa em sequência com o tom subindo (game juice).
+            Juice.celebrate(this.scene, this.molds.map((m) => m.c), () => done(true));
             return;
         }
         // Errou: os moldes voltam vazios para a próxima tentativa testar todos.

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import Sfx from "../ui/Sfx";
+import Juice from "../ui/Juice";
 import Effects from "../ui/Effects";
 
 // PUZZLE DE MUNDO da antessala (cap. 3, condição de parada): cada caso de teste
@@ -232,7 +233,8 @@ export default class SealLocks {
 
     finish(done) {
         if (this.active.every((l) => l.right)) {
-            done(true);
+            // Resolvido: cada um pulsa em sequência com o tom subindo (game juice).
+            Juice.celebrate(this.scene, this.active.map((l) => l.ring), () => done(true));
             return;
         }
         this.scene.time.delayedCall(RESULT_HOLD_MS, () => {

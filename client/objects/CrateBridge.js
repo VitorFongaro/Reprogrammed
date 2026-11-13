@@ -1,5 +1,6 @@
 import Effects from "../ui/Effects";
 import Sfx from "../ui/Sfx";
+import Juice from "../ui/Juice";
 import { makeCrate, flashCrate } from "./crates";
 
 // PUZZLE DE MUNDO (cap. 2): um abismo que só se atravessa por uma ponte de
@@ -293,7 +294,8 @@ export default class CrateBridge {
 
     finish(done) {
         if (this.slots.every((slot) => slot.state === "cheio")) {
-            done(true);
+            // Resolvido: cada um pulsa em sequência com o tom subindo (game juice).
+            Juice.celebrate(this.scene, this.slots.map((slot) => slot.crate?.box), () => done(true));
             return;
         }
         // Errou: a ponte furada fica à vista e depois o guindaste desmonta tudo

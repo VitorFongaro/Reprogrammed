@@ -1,4 +1,5 @@
 import Sfx from "../ui/Sfx";
+import Juice from "../ui/Juice";
 import Effects from "../ui/Effects";
 
 // PUZZLE DE MUNDO da ponte de luz (cap. 3, `para cada`): a ponte que atravessa o
@@ -154,7 +155,8 @@ export default class LightBridge {
 
     finish(done) {
         if (this.active.every((r) => r.right)) {
-            done(true);
+            // Resolvido: cada um pulsa em sequência com o tom subindo (game juice).
+            Juice.celebrate(this.scene, this.active.map((r) => r.emitter), () => done(true));
             return;
         }
         this.scene.time.delayedCall(RESULT_HOLD_MS, () => {

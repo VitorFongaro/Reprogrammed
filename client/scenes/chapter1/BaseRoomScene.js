@@ -10,6 +10,8 @@ import fxHealUrl from "../../assets/sprites/effects/fx_heal.png";
 import { PROP_EXAMINE, ENEMY_EXAMINE } from "../../data/examine";
 import ItemDrop, { preloadItemDrops, rollDrop } from "../../objects/ItemDrop";
 import { hudPx, hudScale } from "../../state/hud";
+import Juice from "../../ui/Juice";
+import HpMeter from "../../ui/HpMeter";
 
 // Cena-base das salas do capítulo 1: desenha a sala (mapa em imagem ou grade),
 // cria jogador/Cosmo/diálogo, gerencia interagíveis ([E] no mais próximo), a
@@ -44,6 +46,7 @@ const ENEMY_BULLET_DAMAGE = 3;
 const ENERGY_BALL_SPEED = 210;      // bolas do slam do biped (quicam nas paredes).
 const ENERGY_BALL_LIFESPAN = 4500;  // até sumirem (ms).
 const MELEE_RANGE = 110;
+const MELEE_HITSTOP_MS = 60;     // quadro congelado quando o [F] conecta
 const HP_BAR = { x: 70, y: 46, w: 200, h: 10 };
 
 // EXAMINAR (estilo Undertale): [E] perto de um prop com descrição em
@@ -922,6 +925,11 @@ export default class BaseRoomScene extends Phaser.Scene {
             fontFamily: "VCR", fontSize: hudPx(16), color: "#e7e9f2"
         }).setOrigin(0, 0.5).setDepth(900);
         this.hpBarGraphics = this.add.graphics().setDepth(900);
+        this.hpMeter = new HpMeter(this, this.hpBarGraphics, {
+            bar,
+            text: this.hpText,
+            color: (ratio) => (ratio > 0.5 ? 0x51e36b : ratio > 0.25 ? 0xffb347 : 0xff4545)
+        });
         this.updateHpBar();
     }
 
@@ -976,14 +984,7 @@ export default class BaseRoomScene extends Phaser.Scene {
         if (!this.hpBarGraphics) {
             return;
         }
-        const ratio = this.hp / this.maxHp;
-        const color = ratio > 0.5 ? 0x51e36b : ratio > 0.25 ? 0xffb347 : 0xff4545;
-        this.hpBarGraphics.clear();
-        this.hpBarGraphics.lineStyle(1, 0x4ad6ff, 0.6);
-        const bar = this.hpBar;
-        this.hpBarGraphics.strokeRect(bar.x, bar.y, bar.w, bar.h);
-        this.hpBarGraphics.fillStyle(color, 0.9);
-        this.hpBarGraphics.fillRect(bar.x + 1, bar.y + 1, (bar.w - 2) * ratio, bar.h - 2);
+        this.hpMeter.set(this.hp / this.maxHp);
         this.hpText.setText(`${this.hp}/${this.maxHp}`);
     }
 
@@ -1009,14 +1010,24 @@ export default class BaseRoomScene extends Phaser.Scene {
             return;
         }
         // Lunge curto da Artemis na direção do inimigo (placeholder de ataque).
-        const angle = Phaser.Math.Angle.Between(this.player.sprite.x, this.player.sprite.y, best.x, best.y);
+        // O golpe CONECTA no fim do avanço (onYoyo), não no começo: é ali que
+        // entram o hitstop, a faísca e o tranco da câmera (game juice). Golpe
+        // aparado (a guarda da WITCH) devolve false e fica sem o impacto.
+        const target = best;
+        const angle = Phaser.Math.Angle.Between(this.player.sprite.x, this.player.sprite.y, target.x, target.y);
         this.tweens.add({
             targets: this.player.sprite,
             x: this.player.sprite.x + Math.cos(angle) * 14,
             y: this.player.sprite.y + Math.sin(angle) * 14,
-            duration: 80, yoyo: true
+            duration: 80, yoyo: true,
+            onYoyo: () => {
+                if (target.disabled) return;
+                if (target.takeMeleeHit() === false) return;
+                Juice.hitStop(this, MELEE_HITSTOP_MS);
+                Juice.impact(this, target.x, target.y - 12);
+                this.cameras.main.shake(90, 0.004);
+            }
         });
-        best.takeMeleeHit();
     }
 
     // Modo [R] confirmou um inimigo: abre a batalha de reprogramação.

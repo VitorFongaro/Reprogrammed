@@ -40,13 +40,15 @@ const Sfx = {
 
     // `volumeScale` (0..1) atenua sons que disparam com frequência (ex.: tiros de
     // vários inimigos) para não dominarem os demais efeitos.
-    play(scene, name, volumeScale = 1) {
+    // `detune` (centésimos de semitom) muda o tom: o encaixe varia um pouco a
+    // cada peça para não cansar, e a comemoração dos puzzles sobe a cada acerto.
+    play(scene, name, volumeScale = 1, { detune = 0 } = {}) {
         const def = SOUNDS[name];
         const volume = getSfxVolume() * volumeScale;
         if (!def || volume <= 0 || !scene?.sound || !scene.cache.audio.exists(def.key)) {
             return;
         }
-        scene.sound.play(def.key, { volume });
+        scene.sound.play(def.key, { volume, detune });
     }
 };
 

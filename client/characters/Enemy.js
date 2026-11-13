@@ -37,6 +37,7 @@ import { ENEMY_DISABLE, resolvePuzzle } from "../data/puzzleVariants";
 // cena (BaseRoomScene).
 
 const FRAME = 32;
+const RECOIL_PX = 8;          // tranco ao levar um [F]
 
 // [chave] -> { url, quadros, fw?/fh? (tamanho do quadro, default 32),
 //              repeat? (default -1), fps? }.
@@ -800,9 +801,10 @@ export default class Enemy {
     }
 
     // Golpe de melee ([F]): reduz o HP e, ao zerar, quebra (fica disabled).
+    // Devolve se o golpe CONECTOU (a sala só toca o impacto quando conecta).
     takeMeleeHit() {
         if (this.disabled) {
-            return;
+            return false;
         }
         this.meleeHp -= 1;
         // Bater num mensageiro dormindo ACORDA ele: senão dava para desmontá-lo
@@ -814,9 +816,25 @@ export default class Enemy {
         this.scene.time.delayedCall(80, () => {
             if (!this.disabled) this.applyBaseTint();
         });
+        this.recoil();
         if (this.meleeHp <= 0) {
             this.disable();
         }
+        return true;
+    }
+
+    // Tranco para trás ao levar o golpe (vai e volta, então não empurra o robô
+    // para dentro de parede nenhuma).
+    recoil() {
+        const player = this.scene.player?.sprite;
+        if (!player) return;
+        const angle = Phaser.Math.Angle.Between(player.x, player.y, this.sprite.x, this.sprite.y);
+        this.scene.tweens.add({
+            targets: this.sprite,
+            x: this.sprite.x + Math.cos(angle) * RECOIL_PX,
+            y: this.sprite.y + Math.sin(angle) * RECOIL_PX,
+            duration: 70, yoyo: true, ease: "Quad.easeOut"
+        });
     }
 
     // Neutralizado (reprogramação ou melee): para e mostra o estado disabled.

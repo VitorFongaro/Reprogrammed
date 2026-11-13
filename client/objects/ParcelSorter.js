@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import Sfx from "../ui/Sfx";
+import Juice from "../ui/Juice";
 
 // PUZZLE DE MUNDO da expedição (cap. 2): a ESTEIRA da triagem, com três rampas
 // ao lado — CARGA, EXPRESSO e NORMAL. Cada pacote na esteira é um caso de teste
@@ -127,7 +128,8 @@ export default class ParcelSorter {
 
     finish(done) {
         if (this.parcels.every((p) => p.right)) {
-            done(true);
+            // Resolvido: cada um pulsa em sequência com o tom subindo (game juice).
+            Juice.celebrate(this.scene, this.chutes.map((chute) => chute.image), () => done(true), { amount: 1.08 });
             return;
         }
         // Errou: volta todo mundo para a fila, para a próxima tentativa testar

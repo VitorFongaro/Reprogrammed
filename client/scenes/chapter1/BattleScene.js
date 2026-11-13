@@ -12,6 +12,8 @@ import { itemDef } from "../../data/items";
 import { ENIAC_DEFENSES, resolvePuzzle } from "../../data/puzzleVariants";
 import Effects, { DEATH_SKULL } from "../../ui/Effects";
 import { hudPx, hudScale } from "../../state/hud";
+import Juice from "../../ui/Juice";
+import HpMeter from "../../ui/HpMeter";
 
 // Tela de COMBATE POR TURNOS contra o ENIAC (estilo Undertale), aberta pela
 // SalaSegurancaScene via scene.launch + pause. Layout: boss no topo (com barra
@@ -39,6 +41,7 @@ const BOX = { x: 640, y: 415, w: 480, h: 300 };
 const MENU_Y = 624;
 const STATUS_Y = 582;
 const HUD_DEPTH = 40;
+const ATTACK_HITSTOP_MS = 90;   // quadro congelado no golpe do ATACAR
 
 // --- Calibragem do combate ---
 // BOSS_MAX_HP calibrado para o embate durar uns 5-6 turnos MESMO na estratégia mais
@@ -286,6 +289,10 @@ export default class BattleScene extends Phaser.Scene {
         // Boss único (ENIAC) ou vários combatentes (dupla de sentinelas): quando a
         // config traz `combatants`, o topo mostra esses sprites e o HP é um pool
         // combinado (a dupla luta "de uma vez").
+        // A instância da cena é reaproveitada: sem zerar, um embate de
+        // combatentes depois do ENIAC (a WITCH) seguia mandando golpe, telegrafo
+        // e derrota para o ENIAC antigo, já destruído.
+        this.boss = null;
         if (this.config.combatants) {
             this.createCombatants();
         } else {
@@ -483,6 +490,12 @@ export default class BattleScene extends Phaser.Scene {
             color: "#e7e9f2"
         }).setOrigin(0, 0.5).setDepth(HUD_DEPTH);
         this.bossHpGraphics = this.add.graphics().setDepth(HUD_DEPTH);
+        this.bossMeter = new HpMeter(this, this.bossHpGraphics, {
+            bar: { x: WIDTH / 2 - 160, y: 52, w: 320, h: 12 },
+            stroke: [1, 0xff4545, 0.7],
+            text: this.bossHpText,
+            color: () => 0xff4545
+        });
         this.updateBossHp();
 
         // HP da Artemis (rodapé, esquerda).
@@ -497,6 +510,12 @@ export default class BattleScene extends Phaser.Scene {
             color: "#e7e9f2"
         }).setOrigin(0, 0.5).setDepth(HUD_DEPTH);
         this.hpGraphics = this.add.graphics().setDepth(HUD_DEPTH);
+        // Criado aqui a cada embate: a instância da cena é reaproveitada.
+        this.hpMeter = new HpMeter(this, this.hpGraphics, {
+            bar: this.hpBar,
+            text: this.hpText,
+            color: (ratio) => (ratio > 0.5 ? 0x51e36b : ratio > 0.25 ? 0xffb347 : 0xff4545)
+        });
         this.updateHpBar();
 
         // Estado da variável de ataque (rodapé, direita).
@@ -522,28 +541,12 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     updateBossHp() {
-        const w = 320;
-        const x = WIDTH / 2 - w / 2;
-        const ratio = this.bossHp / this.config.maxHp;
-
-        this.bossHpGraphics.clear();
-        this.bossHpGraphics.lineStyle(1, 0xff4545, 0.7);
-        this.bossHpGraphics.strokeRect(x, 52, w, 12);
-        this.bossHpGraphics.fillStyle(0xff4545, 0.9);
-        this.bossHpGraphics.fillRect(x + 1, 53, (w - 2) * ratio, 10);
+        this.bossMeter.set(this.bossHp / this.config.maxHp);
         this.bossHpText.setText(`${this.bossHp}/${this.config.maxHp}`);
     }
 
     updateHpBar() {
-        const bar = this.hpBar;
-        const ratio = this.hp / PLAYER_MAX_HP;
-        const color = ratio > 0.5 ? 0x51e36b : ratio > 0.25 ? 0xffb347 : 0xff4545;
-
-        this.hpGraphics.clear();
-        this.hpGraphics.lineStyle(1, 0x4ad6ff, 0.6);
-        this.hpGraphics.strokeRect(bar.x, bar.y, bar.w, bar.h);
-        this.hpGraphics.fillStyle(color, 0.9);
-        this.hpGraphics.fillRect(bar.x + 1, bar.y + 1, (bar.w - 2) * ratio, bar.h - 2);
+        this.hpMeter.set(this.hp / PLAYER_MAX_HP);
         this.hpText.setText(`${this.hp}/${PLAYER_MAX_HP}`);
     }
 
@@ -676,6 +679,16 @@ export default class BattleScene extends Phaser.Scene {
             s.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
             this.time.delayedCall(90, () => { if (s.active) s.clearTint().setTintMode(Phaser.TintModes.MULTIPLY); });
         });
+    }
+
+    // Meio do alvo na tela (boss único ou o grupo de combatentes), para o
+    // impacto e o número de dano do ATACAR.
+    foeCenter() {
+        const sprites = this.boss ? [this.boss.sprite] : this.combatantSprites.filter((sp) => sp.active);
+        if (!sprites.length) return { x: BOSS_POS.x, y: BOSS_POS.y };
+        const x = sprites.reduce((sum, sp) => sum + sp.x, 0) / sprites.length;
+        const y = sprites.reduce((sum, sp) => sum + (sp.baseY ?? sp.y), 0) / sprites.length;
+        return { x, y };
     }
 
     // Telegrafo do ataque; chama `cb` quando pode começar o bullet hell.
@@ -828,6 +841,13 @@ export default class BattleScene extends Phaser.Scene {
         this.cameras.main.shake(220, 0.004);
         this.bossHp = Math.max(0, this.bossHp - damage);
         this.updateBossHp();
+        // Game juice: o quadro congela no impacto e o dano salta em cima do alvo.
+        const at = this.foeCenter();
+        Juice.hitStop(this, ATTACK_HITSTOP_MS);
+        Juice.impact(this, at.x, at.y, { size: 1.6, depth: HUD_DEPTH - 1 });
+        Juice.popText(this, at.x, at.y - 40, `-${damage}`, {
+            color: damage > base ? "#ffb347" : "#ffffff", size: 38, depth: HUD_DEPTH + 1
+        });
 
         this.setBattleStatus(
             this.forca === null

@@ -993,21 +993,22 @@ export default class WitchBoss {
         const s = this.scene;
         const now = s.time.now;
         if (["tired", "down", "battle", "step", "clock", "dash"].includes(this.state)) {
-            return;                           // cansada: agora é com o [R]
+            return false;                     // cansada: agora é com o [R]
         }
         if (this.state !== "recover") {
             Effects.play(s, "fx-spark", this.x, this.y - 10, { scale: 0.3, depth: 830 });
             Sfx.play(s, "bump", 0.5);
-            return;
+            return false;                     // aparou com a foice
         }
         if (now < this.nextHitAt) {
-            return;
+            return false;
         }
         this.nextHitAt = now + HIT_COOLDOWN_MS;
         this.sprite.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
         s.time.delayedCall(80, () => this.applyTint());
         Sfx.play(s, "bump", 0.6);
         this.drain(TIRE_PER_HIT);
+        return true;
     }
 
     drain(amount) {
