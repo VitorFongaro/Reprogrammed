@@ -526,7 +526,10 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
     // do console e vai para o mapa, CERTO OU ERRADO — quem mostra o erro de
     // lógica é o objeto que travou, não um texto.
     runInWorld(results) {
-        const error = results.find((r) => r.error)?.error;
+        // `puzzle.worldErrors`: o laço infinito não para no console, vai para o
+        // mapa (a antessala mostra a trava girando para sempre). Os outros erros
+        // (o programa nem roda) continuam aqui.
+        const error = results.find((r) => r.error && !(this.puzzle.worldErrors && r.infinite))?.error;
         if (error) {
             this.countError();
             Sfx.play(this.scene, "error");

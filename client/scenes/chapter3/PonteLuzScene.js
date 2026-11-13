@@ -65,8 +65,7 @@ const CLEAR_SCRIPT = [
 export default class PonteLuzScene extends BaseRoomScene {
     constructor() {
         super("cap3-ponte", {
-            // Até a próxima sala do capítulo existir, a porta leva à sala de teste da ADA.
-            nextScene: "cap3-sala-ada",
+            nextScene: "cap3-antessala",
             spawn: SPAWN,
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
             door: DOOR,

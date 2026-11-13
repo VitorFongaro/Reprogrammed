@@ -185,7 +185,9 @@ function execBlock(statements, scope) {
                 if (!value) return;
                 turns += 1;
                 if (turns > MAX_REPEAT) {
-                    throw new CondError(`o enquanto deu mais de ${MAX_REPEAT} voltas sem a condição ficar falsa: o corpo precisa mudar a variável que a condição testa, na direção certa`);
+                    const err = new CondError(`o enquanto deu mais de ${MAX_REPEAT} voltas sem a condição ficar falsa: o corpo precisa mudar a variável que a condição testa, na direção certa`);
+                    err.infinite = true;    // laço infinito: a antessala mostra no mapa
+                    throw err;
                 }
                 execBlock(st.body, scope);
             }
@@ -361,7 +363,7 @@ export function runTests(lines, tests, defaults = {}) {
             return { pass, got, error: null };
         } catch (err) {
             if (err instanceof CondError) {
-                return { pass: false, got: null, error: err.message };
+                return { pass: false, got: null, error: err.message, infinite: Boolean(err.infinite) };
             }
             throw err;
         }

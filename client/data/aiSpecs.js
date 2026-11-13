@@ -334,5 +334,43 @@ export const AI_SPECS = {
             "texto do briefing na voz do gerador da ponte",
             "texto do briefing na voz do Cosmo, animado com a ponte"
         ]
+    },
+
+    "antessala-selo": {
+        topic: "loops",
+        concept: "condição de parada: um laço só termina se a condição puder ficar falsa. Com != o passo pode pular o alvo e o laço nunca para; com a conta ao contrário, também não. A condição certa é < (para assim que chegar ou passar).",
+        setting: "A antessala do núcleo da ADA. A porta do núcleo está lacrada por TRAVAS, e a ADA escreveu o laço das travas para nunca terminar. Cada trava tem um nível de carga (nivel) e a potência do carregador dela (passo: quanto o nível sobe por ciclo). O programa carrega a trava em ciclos enquanto ela não chegou no ponto de abertura; a trava abre na PRIMEIRA leitura igual ou acima do ponto. Parar antes deixa a trava fechada; um ciclo a mais sobrecarrega; um laço que nunca termina deixa a trava girando para sempre.",
+        inputs: {
+            nivel: { type: "int", min: 0, max: 40, unit: "carga inicial", required: true },
+            passo: { type: "int", min: 3, max: 9, unit: "carga por ciclo", required: true }
+        },
+        outputs: { nivel: { type: "int", min: 0, max: 50 } },
+        requires: ["enquanto"],
+        forbids: ["se", "senão", "repita", "para"],
+        tests: [3, 4],
+        // a conta do corpo vira encaixe: + contra - (o "-" faz o laço nunca parar)
+        arithmeticSlot: true,
+        rules: [
+            "O ponto de abertura é um número só, o mesmo para todas as travas, e aparece escrito no briefing. O programa certo é enquanto nivel < PONTO : nivel = nivel + passo.",
+            "Pelo menos uma trava cai EXATAMENTE no ponto durante a carga (separa < de <=) e pelo menos uma PASSA do ponto sem cair nele (é a que deixa != girando para sempre).",
+            "Pelo menos uma trava precisa de várias voltas, e as travas têm potências diferentes.",
+            "Nas iscas (op), inclua != e <=. O briefing diz o objetivo e o ponto, mas não escreve o código nem qual comparação usar."
+        ],
+        sanity: (tests) => {
+            const off = tests.find((t) => t.expect.nivel < t.given.nivel || (t.expect.nivel - t.given.nivel) % t.given.passo !== 0);
+            if (off) return `a trava ${off.label ?? ""} terminou em ${off.expect.nivel}, que não sai de ${off.given.nivel} somando ${off.given.passo} por volta: o corpo tem de ser nivel = nivel + passo`;
+            const looped = tests.filter((t) => t.expect.nivel > t.given.nivel);
+            if (!looped.some((t) => t.expect.nivel - t.given.nivel >= 2 * t.given.passo)) return "inclua uma trava que precise de pelo menos duas voltas";
+            const ponto = Math.min(...looped.map((t) => t.expect.nivel));
+            if (!looped.some((t) => t.expect.nivel > ponto)) return "inclua uma trava que PASSA do ponto sem cair exatamente nele (com != ela ficaria girando para sempre)";
+            if (new Set(tests.map((t) => t.given.passo)).size < 2) return "varie a potência (passo) entre as travas";
+            return null;
+        },
+        variety: [
+            "uma trava quase no ponto e outra começando do zero",
+            "carregadores fortes e fracos misturados",
+            "texto do briefing na voz da própria ADA, provocando",
+            "texto do briefing na voz do sistema do selo, seco e técnico"
+        ]
     }
 };

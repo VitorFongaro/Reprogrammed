@@ -901,12 +901,15 @@ function datacenterDraw() {
 export function ponteLuzPuzzle() {
     const faixa = (len) => Array.from({ length: len }, () => between(1, 5));
     const tamanhos = shuffle([2, 3, 4, 5, 6]).slice(0, between(3, 4));
-    const faixas = tamanhos.map((len) => {
-        let f = faixa(len);
-        while (f.every((v) => v === 1)) f = faixa(len);
-        return f;
-    });
     const soma = (f) => f.reduce((a, b) => a + b, 0);
+    let faixas;
+    do {
+        faixas = tamanhos.map((len) => {
+            let f = faixa(len);
+            while (f.every((v) => v === 1)) f = faixa(len);
+            return f;
+        });
+    } while (new Set(faixas.map(soma)).size < 2);     // totais diferentes entre as faixas
     return {
         title: "PONTE DE LUZ // GERADOR",
         briefing: [
@@ -927,5 +930,60 @@ export function ponteLuzPuzzle() {
             expect: { energia: soma(placas) }
         })),
         successMessage: "PONTE FIRME"
+    };
+}
+
+// Antessala (cap. 3, condição de parada): cada caso é uma TRAVA do selo do
+// núcleo, com a carga inicial e a potência do carregador. O laço carrega
+// enquanto nivel < PONTO. Sempre tem uma trava que cai exatamente no ponto
+// (separa < de <=), uma que passa dele (com != gira para sempre) e uma que já
+// começa no ponto ou acima (o laço não roda; com != também gira para sempre).
+export function antessalaPuzzle() {
+    for (let tries = 0; tries < 30; tries += 1) {
+        const puzzle = antessalaDraw();
+        if (checkSolvable(puzzle).problems.length === 0) return puzzle;
+    }
+    return antessalaDraw();
+}
+
+function antessalaDraw() {
+    const ponto = [20, 24, 30][between(0, 2)];
+    const passos = shuffle([3, 4, 5, 6, 7, 8, 9]);
+    const exato = { nivel: ponto - passos[0] * between(2, Math.min(4, Math.floor(ponto / passos[0]))), passo: passos[0] };
+    let p = passos[1];
+    let inicio = between(0, 6);
+    while ((ponto - inicio) % p === 0) inicio += 1;                 // passa do ponto sem cair nele
+    const passa = { nivel: inicio, passo: p };
+    const travas = [exato, passa, { nivel: ponto + between(0, 4), passo: passos[2] }];
+    if (between(0, 1)) {
+        p = passos[3];
+        inicio = between(0, ponto - 2 * p);
+        travas.push({ nivel: Math.max(0, inicio), passo: p });
+    }
+    const carrega = ({ nivel, passo }) => {
+        let n = nivel;
+        while (n < ponto) n += passo;
+        return n;
+    };
+    return {
+        title: "SELO DO NÚCLEO // TRAVAS",
+        briefing: [
+            `Cada trava abre ao chegar em ${ponto} de carga ou mais.`,
+            "O laço da ADA nunca para: reescreva para que",
+            "cada trava carregue só até abrir, e pare."
+        ],
+        hint: `monte:  enquanto nivel < ${ponto} :  /  nivel = nivel + passo`,
+        lines: [
+            "enquanto nivel [op] [valor] :",
+            "    nivel = nivel [op] [nome]"
+        ],
+        blocks: { nome: ["passo", "nivel"], op: ["<", "<=", "!=", "+", "-"], valor: [String(ponto), String(ponto - 5)] },
+        tests: shuffle(travas).map((given, i) => ({
+            label: LETTERS[i],
+            given,
+            expect: { nivel: carrega(given) }
+        })),
+        successMessage: "SELO ROMPIDO",
+        worldErrors: true
     };
 }

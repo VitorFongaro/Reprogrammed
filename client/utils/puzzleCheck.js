@@ -391,8 +391,9 @@ export function buildFromSolution(solution, decoys, tests, spec) {
         Object.keys(spec.outputs).forEach((n) => { if (!blocks.nome.includes(n)) blocks.nome.push(n); });
     }
 
-    // Conta como encaixe sem isca de operador: o "-" entra, senão a peça não tem o que escolher.
-    if (spec.arithmeticSlot && blocks.op.length === 1 && blocks.op[0] === "+") blocks.op.push("-");
+    // Conta como encaixe: o "-" sempre entra de isca (na ponte, a energia some; na
+    // antessala, o nível desce e o laço nunca para).
+    if (spec.arithmeticSlot && blocks.op.includes("+") && !blocks.op.includes("-")) blocks.op.push("-");
 
     // Isca de uma categoria sem encaixe nenhum (um "5" num programa só de nomes)
     // ficaria parada na prateleira sem ter onde entrar: sai.
