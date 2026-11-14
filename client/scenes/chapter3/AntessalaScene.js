@@ -1,5 +1,6 @@
 import BaseRoomScene from "../chapter1/BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
+import Enemy from "../../characters/Enemy";
 import SealLocks from "../../objects/SealLocks";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import Effects from "../../ui/Effects";
@@ -72,19 +73,21 @@ export default class AntessalaScene extends BaseRoomScene {
             door: DOOR,
             ySort: true,
             bg: antessalaBg,
-            combat: false,
+            combat: true,
             music: "cap3"
         });
     }
 
     preload() {
         super.preload();
+        Enemy.preload(this);
         BlockProgrammingConsole.preload(this);
         Effects.preload(this);
     }
 
     onRoomCreate() {
         Effects.createAnimations(this);
+        this.spawnEnemies();
         // A instância sobrevive ao restart: zera o que a montagem testa.
         this.waitingText = null;
         this.terminal = null;
@@ -163,6 +166,16 @@ export default class AntessalaScene extends BaseRoomScene {
                 this.locks.breakSeal(() => this.playDialogue(OPEN_SCRIPT, () => this.unlockDoor()));
             }),
             onRestore: () => this.unlockDoor()
+        });
+    }
+
+    // Inimigos do capítulo 3. A última sala antes do núcleo junta os dois: o carro e um semeador rondando as travas.
+    // Nascem a cada entrada (o restart reaproveita a instância, mas recria a sala).
+    spawnEnemies() {
+        new Enemy(this, 1060, 580, { type: "car" });
+        new Enemy(this, 420, 560, {
+            type: "semeador",
+            overrides: { route: [{ x: 420, y: 560 }, { x: 640, y: 620 }, { x: 860, y: 560 }, { x: 640, y: 470 }] }
         });
     }
 }

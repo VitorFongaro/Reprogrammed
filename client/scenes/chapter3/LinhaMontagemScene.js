@@ -1,5 +1,6 @@
 import BaseRoomScene from "../chapter1/BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
+import Enemy from "../../characters/Enemy";
 import AssemblyLine from "../../objects/AssemblyLine";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import Effects from "../../ui/Effects";
@@ -67,19 +68,21 @@ export default class LinhaMontagemScene extends BaseRoomScene {
             door: DOOR,
             ySort: true,
             bg: montagemBg,
-            combat: false,
+            combat: true,
             music: "cap3"
         });
     }
 
     preload() {
         super.preload();
+        Enemy.preload(this);
         BlockProgrammingConsole.preload(this);
         Effects.preload(this);
     }
 
     onRoomCreate() {
         Effects.createAnimations(this);
+        this.spawnEnemies();
         // A instância sobrevive ao restart: zera o que a montagem testa.
         this.line = null;
         this.waitingText = null;
@@ -184,5 +187,11 @@ export default class LinhaMontagemScene extends BaseRoomScene {
                 this.unlockDoor();
             }
         });
+    }
+
+    // Inimigos do capítulo 3. Um carro de ataque roda abaixo da esteira (a rajada é o repita do capítulo).
+    // Nascem a cada entrada (o restart reaproveita a instância, mas recria a sala).
+    spawnEnemies() {
+        new Enemy(this, 620, 570, { type: "car" });
     }
 }

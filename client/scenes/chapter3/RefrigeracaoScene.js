@@ -1,5 +1,6 @@
 import BaseRoomScene from "../chapter1/BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
+import Enemy from "../../characters/Enemy";
 import CoolingRacks, { SteamDuct } from "../../objects/CoolingRacks";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import Effects from "../../ui/Effects";
@@ -64,19 +65,21 @@ export default class RefrigeracaoScene extends BaseRoomScene {
             door: DOOR,
             ySort: true,
             bg: refrigeracaoBg,
-            combat: false,
+            combat: true,
             music: "cap3"
         });
     }
 
     preload() {
         super.preload();
+        Enemy.preload(this);
         BlockProgrammingConsole.preload(this);
         Effects.preload(this);
     }
 
     onRoomCreate() {
         Effects.createAnimations(this);
+        this.spawnEnemies();
         // A instância sobrevive ao restart: zera o que a montagem testa.
         this.waitingText = null;
         this.terminal = null;
@@ -161,5 +164,11 @@ export default class RefrigeracaoScene extends BaseRoomScene {
             }),
             onRestore: () => this.unlockDoor()
         });
+    }
+
+    // Inimigos do capítulo 3. Um varredor entre os racks e a grade de vapor: atira enquanto enxerga a Artemis.
+    // Nascem a cada entrada (o restart reaproveita a instância, mas recria a sala).
+    spawnEnemies() {
+        new Enemy(this, 640, 520, { type: "varredor" });
     }
 }

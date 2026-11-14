@@ -122,6 +122,21 @@ shoot/damage/broken) + `Projectile.png` (2 quadros 8×8). `tools/car_slice.py` f
 um PNG por animação (nomes minúsculos) e normaliza o projétil pra `projectile.png`. **Confirmar
 autor, licença e forma de crédito com quem baixou** antes da entrega do TCC.
 
+Usado só no capítulo 3 (montagem e antessala), atirando em rajada.
+
+### Free Drones Pack — CraftPix ([craftpix.net](https://craftpix.net/)) — inimigos `varredor` e `semeador`
+
+Drones do **capítulo 3**, em `client/assets/sprites/enemies/varredor/` (drone 1 do pack: idle,
+scan, walk_scan e death) e `client/assets/sprites/enemies/semeador/` (drone 6: walk, drop e a
+cápsula). Folhas horizontais de quadros 48×48, vistas de lado — como voam, funcionam na sala
+vista de cima. O drone 6 não tem animação de morte: o `disabled.png` é gerado (1º quadro do
+`Walk2` escurecido e inclinado). Tudo sai de `tools/drones_sheets.py "<pasta do pack>"`; o resto
+do pack (avião, helicóptero, personagens) não foi copiado.
+
+O `license.txt` do pack só aponta para `https://craftpix.net/file-licenses/`. **Conferir os
+termos nesse link** (em especial se pode ficar num repositório público) e a forma de crédito
+antes da entrega do TCC. A fonte que vem junto (Future Millennium) não é usada.
+
 ### Complete UI Essential Pack — UI do inventário — Crusenho ([itch.io](https://crusenho.itch.io))
 
 Origem da UI do **inventário** (`client/assets/ui/`): `inv_slot.png` (FrameSlot02a, slot azul),

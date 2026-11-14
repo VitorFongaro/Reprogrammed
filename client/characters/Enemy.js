@@ -24,7 +24,16 @@ import msgCharge from "../assets/sprites/enemies/mensageiro/charge.png";
 import msgShoot from "../assets/sprites/enemies/mensageiro/shoot.png";
 import msgDisabled from "../assets/sprites/enemies/mensageiro/disabled.png";
 import msgDash from "../assets/sprites/enemies/mensageiro/dash.png";
+import varIdle from "../assets/sprites/enemies/varredor/idle.png";
+import varScan from "../assets/sprites/enemies/varredor/scan.png";
+import varWalkScan from "../assets/sprites/enemies/varredor/walk_scan.png";
+import varDeath from "../assets/sprites/enemies/varredor/death.png";
+import semWalk from "../assets/sprites/enemies/semeador/walk.png";
+import semDrop from "../assets/sprites/enemies/semeador/drop.png";
+import semCapsule from "../assets/sprites/enemies/semeador/capsule.png";
+import semDisabled from "../assets/sprites/enemies/semeador/disabled.png";
 import Sfx from "../ui/Sfx";
+import Juice from "../ui/Juice";
 import { ENEMY_DISABLE, resolvePuzzle } from "../data/puzzleVariants";
 
 // Inimigos dos capítulos 1 e 2 (packs SteamRobotsPack + biped_robot, quadros 32×32).
@@ -69,7 +78,17 @@ const SHEETS = {
     "enemy-mensageiro-disabled": { url: msgDisabled, frames: 6, fw: 36, repeat: 0, fps: 10 },
     // Rastro da investida a gás: quadro LARGO (117), desenhado como sprite
     // separado atrás do robô — ver DASH_ANCHOR_X e showDashTrail.
-    "enemy-mensageiro-dash": { url: msgDash, frames: 6, fw: 117, repeat: 0, fps: 12 }
+    "enemy-mensageiro-dash": { url: msgDash, frames: 6, fw: 117, repeat: 0, fps: 12 },
+    // DRONES do cap. 3 (Free Drones Pack, CraftPix; tools/drones_sheets.py),
+    // quadros de 48x48 e vistos de lado: voam, então funcionam na sala vista de cima.
+    "enemy-varredor-idle": { url: varIdle, frames: 4, fw: 48, fh: 48 },
+    "enemy-varredor-scan": { url: varScan, frames: 8, fw: 48, fh: 48, fps: 12 },
+    "enemy-varredor-walk": { url: varWalkScan, frames: 8, fw: 48, fh: 48, fps: 10 },
+    "enemy-varredor-death": { url: varDeath, frames: 6, fw: 48, fh: 48, repeat: 0, fps: 10 },
+    "enemy-semeador-walk": { url: semWalk, frames: 4, fw: 48, fh: 48 },
+    "enemy-semeador-drop": { url: semDrop, frames: 6, fw: 48, fh: 48, repeat: 0, fps: 12 },
+    "enemy-semeador-capsule": { url: semCapsule, frames: 6, fw: 48, fh: 48, repeat: 0, fps: 12 },
+    "enemy-semeador-disabled": { url: semDisabled, frames: 1, fw: 48, fh: 48 }
 };
 
 // No desenho do rastro, o robô está em x=100 de 117 (o resto é o gás saindo
@@ -122,13 +141,16 @@ const TYPES = {
         walkKey: "enemy-car-move",
         disabledKey: "enemy-car-broken",
         scale: 3.3, speed: 95, meleeHp: 3, ranged: true, contactDamage: 3,
-        // Carro: dirige pelo mapa; ao avistar a Artemis ATIVA a arma (torreta sobe)
-        // e passa a ATIRAR mantendo distância (kite). Máquina de estados em updateCar.
-        car: true, fireMs: 1500,
+        // Carro (cap. 3): dirige pelo mapa; ao avistar a Artemis ATIVA a arma
+        // (torreta sobe) e passa a manter distância (kite). Atira em RAJADA: a
+        // mesma bala `burst` vezes seguidas e depois recarrega por `fireMs` - a
+        // repetição que o jogador lê olhando, e a recarga é a janela para chegar
+        // perto. Máquina de estados em updateCar.
+        car: true, fireMs: 2600, burst: 3, burstGapMs: 170,
         detectRange: 360, fireRange: 400, kiteMin: 190, kiteMax: 320,
         activateKey: "enemy-car-activate",
         shootKey: "enemy-car-shoot",
-        dodge: ["fan"],                // bullet hell da reprogramação.
+        dodge: ["fan", "bigDropHoming"],   // bullet hell da reprogramação.
         disablePuzzle: ENEMY_DISABLE.car
     },
 
@@ -206,6 +228,49 @@ const TYPES = {
         },
         dodge: ["laserLane", "fan"],    // bullet hell: laser na faixa avisada + leque.
         disablePuzzle: ENEMY_DISABLE.mensageiro
+    },
+
+    // === Capítulo 3 (repetições) ==============================================
+    // Cada comportamento é um LAÇO que o jogador lê olhando: a rajada do carro
+    // (a mesma bala N vezes), o varredor (atira ENQUANTO enxerga), o semeador
+    // (uma cápsula PARA CADA ponto da rota) e o mech que pula em sequência
+    // (biped com `slamRepeat`, configurado na sala). O puzzle de desligar é um
+    // laço de verdade (ConditionalConsole).
+
+    // VARREDOR: drone com um cone de varredura que gira devagar. Enquanto a
+    // Artemis estiver DENTRO do cone, ele para e atira sem parar, virando o cone
+    // atrás dela mais devagar do que ela corre: sair de lado é a saída. Fora do
+    // cone, nada acontece. O cone fica desenhado no chão (updateScanner).
+    varredor: {
+        name: "VARREDOR",
+        walkKey: "enemy-varredor-walk",
+        disabledKey: "enemy-varredor-death",
+        scanKey: "enemy-varredor-scan",
+        scale: 2, speed: 45, meleeHp: 3, ranged: true, contactDamage: 3,
+        wander: true,
+        scanner: { range: 300, halfAngle: 0.32, turnSpeed: 0.9, trackSpeed: 1.1, fireMs: 300 },
+        body: { w: 24, h: 16, ox: 12, oy: 18 },
+        portraitScale: 0.67,
+        dodge: ["laserSweep", "bigDropHoming"],
+        disablePuzzle: ENEMY_DISABLE.varredor
+    },
+
+    // SEMEADOR: drone que percorre uma ROTA fixa (`route`, passada pela sala) e,
+    // para cada ponto dela, larga uma cápsula. A cápsula arma com um anel
+    // crescendo no chão e explode na área do anel. Não persegue ninguém: o
+    // perigo é o caminho, que se repete.
+    semeador: {
+        name: "SEMEADOR",
+        walkKey: "enemy-semeador-walk",
+        disabledKey: "enemy-semeador-disabled",
+        dropKey: "enemy-semeador-drop",
+        capsuleKey: "enemy-semeador-capsule",
+        scale: 2, speed: 120, meleeHp: 2, ranged: false, contactDamage: 3,
+        seeder: { armMs: 1500, radius: 70, damage: 4 },
+        body: { w: 22, h: 16, ox: 13, oy: 16 },
+        portraitScale: 0.67,
+        dodge: ["fallExplode", "fan"],
+        disablePuzzle: ENEMY_DISABLE.semeador
     }
 };
 
@@ -220,7 +285,8 @@ export default class Enemy {
     // vigia e faxineiro reusam folhas de outros tipos, e o carro "anda" na move.
     static look(type) {
         const def = TYPES[type] ?? TYPES.exploding;
-        return { walkKey: def.walkKey, tint: def.tint };
+        // Folha maior que 32 (os drones, 48) encolhe o retrato na mesma proporção.
+        return { walkKey: def.walkKey, tint: def.tint, portraitScale: def.portraitScale ?? 1 };
     }
 
     static preload(scene) {
@@ -302,8 +368,21 @@ export default class Enemy {
             // corpo sobre ele, centralizado no eixo x (o flip não desalinha).
             this.sprite.body.setSize(16, 10, false);
             this.sprite.body.setOffset(8, 22);
+        } else if (this.def.body) {
+            // Folha de 48 (drones): corpo sobre o desenho, não no quadro inteiro.
+            const b = this.def.body;
+            this.sprite.body.setSize(b.w, b.h, false);
+            this.sprite.body.setOffset(b.ox, b.oy);
         } else {
             this.sprite.body.setSize(HITBOX, HITBOX, true);
+        }
+        if (this.def.scanner) {
+            this.scanAngle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+            this.scanCone = scene.add.graphics().setDepth(2);
+        }
+        if (this.def.seeder) {
+            this.routeIndex = 0;
+            this.capsules = [];
         }
         this.sprite.setCollideWorldBounds(true);
         this.sprite.enemyRef = this;
@@ -355,6 +434,14 @@ export default class Enemy {
         }
         if (this.def.courier) {
             this.updateCourier(time, player);
+            return;
+        }
+        if (this.def.scanner) {
+            this.updateScanner(time, player);
+            return;
+        }
+        if (this.def.seeder) {
+            this.updateSeeder();
             return;
         }
         if (this.def.dash && this.updateDash(time, player)) {
@@ -714,8 +801,153 @@ export default class Enemy {
 
         if (time >= this.nextFire && dist <= this.def.fireRange) {
             this.nextFire = time + this.def.fireMs;
-            this.carShoot(angle);
+            this.carBurst();
         }
+    }
+
+    // A mesma bala `burst` vezes, mirando de novo em cada uma.
+    carBurst() {
+        const shots = this.def.burst ?? 1;
+        for (let k = 0; k < shots; k += 1) {
+            this.scene.time.delayedCall(k * (this.def.burstGapMs ?? 160), () => {
+                const player = this.scene.player?.sprite;
+                if (this.disabled || this.carState !== "armed" || !player) {
+                    return;
+                }
+                this.carShoot(Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y));
+            });
+        }
+    }
+
+    // VARREDOR: o cone gira; com a Artemis dentro, ele para, segue ela devagar e
+    // atira sem parar (enquanto a vê). `dt` sai do relógio do próprio update.
+    updateScanner(time, player) {
+        const cfg = this.def.scanner;
+        const dt = Math.min(0.1, (time - (this.lastScan ?? time)) / 1000);
+        this.lastScan = time;
+        const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+        const toPlayer = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
+        const diff = Phaser.Math.Angle.Wrap(toPlayer - this.scanAngle);
+        const seen = dist <= cfg.range && Math.abs(diff) <= cfg.halfAngle;
+
+        if (seen) {
+            const step = cfg.trackSpeed * dt;
+            this.scanAngle += Phaser.Math.Clamp(diff, -step, step);
+            this.sprite.body.setVelocity(0, 0);
+            if (time >= this.nextFire) {
+                this.nextFire = time + cfg.fireMs;
+                Sfx.play(this.scene, "laser", 0.4);
+                this.scene.spawnEnemyBullet?.(
+                    this.x + Math.cos(toPlayer) * 22, this.y + Math.sin(toPlayer) * 22, toPlayer
+                );
+            }
+        } else {
+            this.scanAngle += cfg.turnSpeed * dt;
+            this.wander(time);
+        }
+        if (seen !== this.locked) {
+            this.locked = seen;
+            this.sprite.play(seen ? this.def.scanKey : this.def.walkKey, true);
+            // O primeiro tiro sai um instante depois de travar: dá para ver o
+            // cone acender antes de levar.
+            if (seen) this.nextFire = time + 250;
+        }
+        this.drawScanCone();
+    }
+
+    drawScanCone() {
+        const g = this.scanCone;
+        if (!g) return;
+        const cfg = this.def.scanner;
+        g.clear();
+        if (this.disabled) return;
+        const steps = 10;
+        const points = [{ x: this.x, y: this.y }];
+        for (let k = 0; k <= steps; k += 1) {
+            const a = this.scanAngle - cfg.halfAngle + (2 * cfg.halfAngle * k) / steps;
+            points.push({ x: this.x + Math.cos(a) * cfg.range, y: this.y + Math.sin(a) * cfg.range });
+        }
+        g.fillStyle(0xff4545, this.locked ? 0.26 : 0.1);
+        g.fillPoints(points, true);
+        g.lineStyle(2, 0xff4545, this.locked ? 0.8 : 0.35);
+        g.strokePoints(points, true);
+    }
+
+    // SEMEADOR: vai de ponto em ponto da rota; em cada um para, toca a soltura
+    // e larga uma cápsula. Depois do último, recomeça do primeiro.
+    updateSeeder() {
+        const route = this.def.route;
+        if (!route?.length) {
+            this.wander(this.scene.time.now);
+            return;
+        }
+        if (this.seeding) {
+            this.sprite.body.setVelocity(0, 0);
+            return;
+        }
+        const target = route[this.routeIndex % route.length];
+        const dist = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
+        // Preso atrás de alguma coisa (a Artemis no caminho, um colisor): larga a
+        // cápsula onde está em vez de ficar empurrando para sempre.
+        const now = this.scene.time.now;
+        if (this.routeTarget !== this.routeIndex) {
+            this.routeTarget = this.routeIndex;
+            this.routeDeadline = now + 6000;
+        }
+        if (dist < 10 || now > this.routeDeadline) {
+            this.seeding = true;
+            this.sprite.body.setVelocity(0, 0);
+            this.playOnce(this.def.dropKey, () => {
+                if (this.disabled) return;
+                this.dropCapsule(this.x, this.y + 26);
+                this.routeIndex += 1;
+                this.seeding = false;
+                this.sprite.play(this.def.walkKey, true);
+            });
+            return;
+        }
+        const angle = Phaser.Math.Angle.Between(this.x, this.y, target.x, target.y);
+        const s = Math.min(this.def.speed, dist * 6);
+        this.sprite.body.setVelocity(Math.cos(angle) * s, Math.sin(angle) * s);
+        if (Math.abs(this.sprite.body.velocity.x) > 1) {
+            this.sprite.setFlipX(this.sprite.body.velocity.x < 0);
+        }
+    }
+
+    // Cápsula: anel crescendo no chão (o aviso de onde vai doer), abre no fim e
+    // explode na área do anel. Desligar o semeador desarma as que sobraram.
+    dropCapsule(x, y) {
+        const s = this.scene;
+        const cfg = this.def.seeder;
+        const capsule = s.add.sprite(x, y, this.def.capsuleKey, 0)
+            .setScale(this.def.scale * 0.75).setOrigin(0.5, 0.85).setDepth(y);
+        const ring = s.add.circle(x, y, cfg.radius, 0xff4545, 0.08)
+            .setStrokeStyle(2, 0xff4545, 0.7).setDepth(3).setScale(0.15);
+        const grow = s.tweens.add({ targets: ring, scale: 1, duration: cfg.armMs, ease: "Sine.easeIn" });
+        const entry = { capsule, ring };
+        this.capsules.push(entry);
+        const openAt = s.time.delayedCall(Math.max(0, cfg.armMs - 500), () => capsule.play(this.def.capsuleKey));
+        const boom = s.time.delayedCall(cfg.armMs, () => {
+            this.capsules = this.capsules.filter((c) => c !== entry);
+            capsule.destroy();
+            ring.destroy();
+            Juice.impact(s, x, y - 6, { color: 0xff6a3d, size: 2.2 });
+            Sfx.play(s, "bump", 0.6);
+            s.cameras.main.shake(120, 0.003);
+            const p = s.player?.sprite;
+            if (p && Phaser.Math.Distance.Between(x, y, p.x, p.y) <= cfg.radius) {
+                s.damagePlayer?.(cfg.damage);
+            }
+        });
+        entry.defuse = () => {
+            grow.remove();
+            openAt.remove();
+            boom.remove();
+            s.tweens.add({
+                targets: [capsule, ring], alpha: 0, duration: 300,
+                onComplete: () => { capsule.destroy(); ring.destroy(); }
+            });
+        };
     }
 
     carShoot(angle) {
@@ -737,7 +969,13 @@ export default class Enemy {
     }
 
     // Pula (hop visual, sem física) e ao aterrissar solta 4 bolas nas diagonais.
-    slamAttack() {
+    // Com `slamRepeat` (o mech do cap. 3), repete o pulo em sequência, cada um
+    // com as bolas giradas 22,5 graus: a brecha de um pulo é onde cai o próximo.
+    slamAttack(hop = 0) {
+        if (this.disabled || !this.sprite.body) {
+            this.jumping = false;
+            return;
+        }
         this.jumping = true;
         const gx = this.sprite.x;
         const gy = this.sprite.y;
@@ -751,8 +989,8 @@ export default class Enemy {
             yoyo: true,
             ease: "Quad.easeOut",
             onComplete: () => {
-                this.jumping = false;
                 if (this.disabled || !this.sprite.body) {
+                    this.jumping = false;
                     return;
                 }
                 this.sprite.body.enable = true;
@@ -760,7 +998,14 @@ export default class Enemy {
                 Sfx.play(this.scene, "bump");   // o biped atingiu o chão
                 this.scene.cameras.main.shake(200, 0.006);
                 const d = Math.PI / 4;
-                [d, 3 * d, 5 * d, 7 * d].forEach((a) => this.scene.spawnEnergyBall?.(gx, gy, a));
+                const turn = hop * (Math.PI / 8);
+                [d, 3 * d, 5 * d, 7 * d].forEach((a) => this.scene.spawnEnergyBall?.(gx, gy, a + turn));
+                // Ainda tem pulo na sequência: continua "pulando" (o update fica de fora).
+                if (hop + 1 < (this.def.slamRepeat ?? 1)) {
+                    this.scene.time.delayedCall(this.def.slamGapMs ?? 240, () => this.slamAttack(hop + 1));
+                } else {
+                    this.jumping = false;
+                }
             }
         });
     }
@@ -857,6 +1102,9 @@ export default class Enemy {
         this.sprite.play(this.def.disabledKey);
         this.weapon?.destroy();
         this.weapon = null;
+        this.scanCone?.clear();
+        this.capsules?.forEach((c) => c.defuse());
+        this.capsules = [];
         this.scene.onEnemyDisabled?.(this);
     }
 
@@ -878,6 +1126,7 @@ export default class Enemy {
 
     destroy() {
         this.standbyTween?.remove();
+        this.scanCone?.destroy();
         this.trail?.destroy();
         this.weapon?.destroy();
         this.sprite?.destroy();

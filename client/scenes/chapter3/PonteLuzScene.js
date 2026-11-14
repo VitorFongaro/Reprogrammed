@@ -1,5 +1,6 @@
 import BaseRoomScene from "../chapter1/BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
+import Enemy from "../../characters/Enemy";
 import LightBridge from "../../objects/LightBridge";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import Effects from "../../ui/Effects";
@@ -68,19 +69,21 @@ export default class PonteLuzScene extends BaseRoomScene {
             door: DOOR,
             ySort: true,
             bg: ponteBg,
-            combat: false,
+            combat: true,
             music: "cap3"
         });
     }
 
     preload() {
         super.preload();
+        Enemy.preload(this);
         BlockProgrammingConsole.preload(this);
         Effects.preload(this);
     }
 
     onRoomCreate() {
         Effects.createAnimations(this);
+        this.spawnEnemies();
         // A instância sobrevive ao restart: zera o que a montagem testa.
         this.waitingText = null;
         this.terminal = null;
@@ -168,6 +171,15 @@ export default class PonteLuzScene extends BaseRoomScene {
                 });
             }),
             onRestore: () => this.unlockDoor()
+        });
+    }
+
+    // Inimigos do capítulo 3. Um semeador faz a ronda do lado de cá do abismo, onde fica o terminal.
+    // Nascem a cada entrada (o restart reaproveita a instância, mas recria a sala).
+    spawnEnemies() {
+        new Enemy(this, 150, 600, {
+            type: "semeador",
+            overrides: { route: [{ x: 150, y: 600 }, { x: 460, y: 610 }, { x: 470, y: 250 }, { x: 330, y: 250 }] }
         });
     }
 }

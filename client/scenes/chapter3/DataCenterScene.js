@@ -1,10 +1,11 @@
 import BaseRoomScene from "../chapter1/BaseRoomScene";
 import PuzzleDevice from "../../objects/PuzzleDevice";
+import Enemy from "../../characters/Enemy";
 import BackupStations from "../../objects/BackupStations";
 import BlockProgrammingConsole from "../../ui/BlockProgrammingConsole";
 import Effects from "../../ui/Effects";
 import Sfx from "../../ui/Sfx";
-import { datacenterPuzzle } from "../../data/puzzleVariants";
+import { datacenterPuzzle, ENEMY_DISABLE } from "../../data/puzzleVariants";
 import { requestAiPuzzle } from "../../state/aiPuzzles";
 import { isSolved } from "../../state/progress";
 import datacenterBg from "../../assets/images/datacenter/datacenter_bg.png";
@@ -73,19 +74,21 @@ export default class DataCenterScene extends BaseRoomScene {
             door: DOOR,
             ySort: true,
             bg: datacenterBg,
-            combat: false,
+            combat: true,
             music: "cap3"
         });
     }
 
     preload() {
         super.preload();
+        Enemy.preload(this);
         BlockProgrammingConsole.preload(this);
         Effects.preload(this);
     }
 
     onRoomCreate() {
         Effects.createAnimations(this);
+        this.spawnEnemies();
         // A instância sobrevive ao restart: zera o que a montagem testa.
         this.waitingText = null;
         this.terminal = null;
@@ -201,5 +204,20 @@ export default class DataCenterScene extends BaseRoomScene {
             }),
             onRestore: () => this.unlockDoor()
         });
+    }
+
+    // Inimigos do capítulo 3. O mech de impacto do lado da saída e um varredor embaixo das bancadas.
+    // Nascem a cada entrada (o restart reaproveita a instância, mas recria a sala).
+    spawnEnemies() {
+        new Enemy(this, 1030, 430, {
+            type: "biped",
+            // O biped do cap. 1, com o padrão trocado: três pulos seguidos, cada
+            // um com as bolas giradas (repita 3 vezes), e um descanso maior depois.
+            overrides: {
+                name: "MECH DE IMPACTO", slamRepeat: 3, slamGapMs: 260, slamMs: 5600,
+                meleeHp: 5, dodge: ["laserSweep", "fallExplode"], disablePuzzle: ENEMY_DISABLE.mech
+            }
+        });
+        new Enemy(this, 640, 600, { type: "varredor" });
     }
 }

@@ -62,8 +62,8 @@ export default class ReprogramScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor("#04060a");
         this.drawBackdrop();
 
-        const { walkKey, tint } = Enemy.look(this.config.type);
-        this.portrait = this.add.sprite(WIDTH / 2, 160, walkKey, 0).setScale(PORTRAIT_SCALE);
+        const { walkKey, tint, portraitScale } = Enemy.look(this.config.type);
+        this.portrait = this.add.sprite(WIDTH / 2, 160, walkKey, 0).setScale(PORTRAIT_SCALE * portraitScale);
         this.portrait.play(walkKey);
         // Tint do tipo (vigia, faxineiro): os clarões de acerto voltam para ele.
         this.portraitTint = tint;

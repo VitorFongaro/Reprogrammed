@@ -466,6 +466,132 @@ ENEMY_DISABLE.vigia = vigiaPuzzle;
 ENEMY_DISABLE.faxineiro = faxineiroPuzzle;
 ENEMY_DISABLE.mensageiro = mensageiroPuzzle;
 
+// =============================================================================
+// CAP. 3 — repetições (desligar inimigo)
+// =============================================================================
+// Rápidos e com tempo, como os do cap. 2, mas cada um é um LAÇO: o console
+// executa o programa contra os `tests`. Dois casos com números diferentes, para
+// um número fixo não passar no lugar do nome certo. Conferidos no Node: alguma
+// montagem passa e nem todas passam (checkSolvable).
+
+// CARRO: a torreta carrega pentes iguais; esvaziar tudo é repetir a retirada
+// de um pente por pente. `disparos` (1) é a isca: repetir ou tirar 1 não zera.
+function carroPuzzle() {
+    const [a, b] = sample([[2, 4], [3, 5], [4, 3], [2, 5], [3, 4], [5, 2]], 2);
+    const test = ([pentes, balas]) => ({
+        given: { pentes, balas, disparos: 1, municao: pentes * balas },
+        expect: { municao: 0 }
+    });
+    return {
+        briefing: [
+            "A torreta só para com a munição zerada.",
+            "Ela carrega pentes cheios, todos do mesmo tamanho."
+        ],
+        hint: "monte:  repita pentes vezes :  /  municao = municao - balas",
+        lines: ["repita [nome] vezes :", "    municao = municao - [nome]"],
+        blocks: { nome: ["pentes", "balas", "disparos"] },
+        tests: [test(a), test(b)],
+        timeLimitMs: 35000
+    };
+}
+
+// VARREDOR: cada pulso apaga `passo` do sinal; pulsar até zerar, nem um a mais.
+// O caso com o sinal já em 0 é o laço que não roda nenhuma vez. O sinal nunca é
+// múltiplo de passo+1, senão a isca vizinha também zeraria.
+function varredorPuzzle() {
+    const passo = pick([2, 3]);
+    const sinais = [2, 3, 4, 5].map((k) => passo * k).filter((v) => v % (passo + 1) !== 0);
+    return {
+        briefing: [
+            `Cada pulso apaga ${passo} do sinal do varredor.`,
+            "Pulse até o sinal zerar, e nem um pulso a mais."
+        ],
+        hint: `monte:  enquanto sinal > 0 :  /  sinal = sinal - ${passo}`,
+        lines: ["enquanto sinal [op] [valor] :", "    sinal = sinal - [valor]"],
+        blocks: { op: [">", "<", "=="], valor: ["0", String(passo), String(passo + 1)] },
+        tests: [
+            { given: { sinal: pick(sinais) }, expect: { sinal: 0 } },
+            { given: { sinal: 0 }, expect: { sinal: 0 } }
+        ],
+        timeLimitMs: 35000
+    };
+}
+
+// SEMEADOR: uma cápsula por item da lista; desarmar é CONTAR os itens, não
+// somar o peso deles (a isca "carga" soma, como na ponte de luz).
+function semeadorPuzzle() {
+    const lista = () => Array.from({ length: between(3, 4) }, () => between(1, 3));
+    const comPeso = () => {
+        let l = lista();
+        while (l.every((v) => v === 1)) l = lista();
+        return l;
+    };
+    const tests = [comPeso(), comPeso()].map((cargas) => ({
+        given: { cargas }, expect: { desarmadas: cargas.length }
+    }));
+    return {
+        briefing: [
+            "Cada item da lista cargas é uma cápsula armada.",
+            "Conte as cápsulas desarmadas, uma por uma."
+        ],
+        hint: "monte:  para cada carga em cargas :  /  desarmadas = desarmadas + 1",
+        lines: ["para cada carga em [nome] :", "    desarmadas = desarmadas + [valor]"],
+        blocks: { nome: ["cargas", "desarmadas"], valor: ["1", "2", "carga"] },
+        defaults: { desarmadas: 0 },
+        tests,
+        timeLimitMs: 35000
+    };
+}
+
+// MECH DE IMPACTO (o biped do cap. 3): a pressão sai em aberturas iguais da
+// válvula. O número de aberturas não está escrito: sai da conta pressao/valvula,
+// a mesma nos dois casos. `tempo` é a isca de nome; sorteia até só a resposta
+// certa passar.
+function mechPuzzle() {
+    for (let tries = 0; tries < 40; tries += 1) {
+        const vezes = pick([2, 3, 4]);
+        const [v1, v2] = sample([3, 4, 5, 6], 2);
+        const tempo = pick([2, 3, 4, 5, 6, 7].filter((t) => t !== v1 && t !== v2));
+        const puzzle = {
+            briefing: [
+                "O mech só para com a pressão zerada.",
+                "Cada abertura da válvula tira o valor dela."
+            ],
+            hint: `monte:  repita ${vezes} vezes :  /  pressao = pressao - valvula`,
+            lines: ["repita [valor] vezes :", "    pressao = pressao - [nome]"],
+            blocks: {
+                nome: ["valvula", "tempo"],
+                valor: shuffle([String(vezes), String(vezes + 1), String(Math.max(1, vezes - 1))])
+            },
+            tests: [v1, v2].map((valvula) => ({
+                given: { pressao: valvula * vezes, valvula, tempo },
+                expect: { pressao: 0 }
+            })),
+            timeLimitMs: 35000
+        };
+        // Só a contagem de montagens importa aqui (o número de repetições fica
+        // de fora do briefing de propósito: o jogador tira da conta).
+        if (checkSolvable(puzzle).solutions === 1) return puzzle;
+    }
+    // Reserva que sabidamente tem uma resposta só (3 x 4 e 3 x 5, isca 7).
+    return {
+        briefing: ["O mech só para com a pressão zerada.", "Cada abertura da válvula tira o valor dela."],
+        hint: "monte:  repita 3 vezes :  /  pressao = pressao - valvula",
+        lines: ["repita [valor] vezes :", "    pressao = pressao - [nome]"],
+        blocks: { nome: ["valvula", "tempo"], valor: ["2", "3", "4"] },
+        tests: [
+            { given: { pressao: 12, valvula: 4, tempo: 7 }, expect: { pressao: 0 } },
+            { given: { pressao: 15, valvula: 5, tempo: 7 }, expect: { pressao: 0 } }
+        ],
+        timeLimitMs: 35000
+    };
+}
+
+ENEMY_DISABLE.car = carroPuzzle;          // o carro só aparece no cap. 3
+ENEMY_DISABLE.varredor = varredorPuzzle;
+ENEMY_DISABLE.semeador = semeadorPuzzle;
+ENEMY_DISABLE.mech = mechPuzzle;
+
 // --- LEO -----------------------------------------------------------------------
 
 function leoTrayPuzzle() {

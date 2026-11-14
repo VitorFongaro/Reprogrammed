@@ -262,5 +262,13 @@ export const ENEMY_EXAMINE = {
     mensageiro: [
         "Um mensageiro capotado. Uma roda só: rápido, mas nunca soube frear.",
         "A caixa de entregas está vazia. Ele corria para o lado errado há anos."
+    ],
+    varredor: [
+        "Um varredor no chão. O cone apagou junto com ele: enfim dá para passar sem ser vista.",
+        "Ainda tem um pontinho vermelho piscando nele. Vou fingir que não vi."
+    ],
+    semeador: [
+        "Um semeador pousado. Plantava cápsula em vez de flor. Péssimo jardineiro.",
+        "A rota dele está gravada num chip. O mesmo caminho, de novo e de novo, desde sempre."
     ]
 };
