@@ -30,6 +30,7 @@ import RefrigeracaoScene from './scenes/chapter3/RefrigeracaoScene';
 import DataCenterScene from './scenes/chapter3/DataCenterScene';
 import PonteLuzScene from './scenes/chapter3/PonteLuzScene';
 import AntessalaScene from './scenes/chapter3/AntessalaScene';
+import NucleoScene from './scenes/chapter3/NucleoScene';
 import InventoryScene from './scenes/InventoryScene';
 import { loadInventory } from './state/inventory.js';
 
@@ -84,6 +85,7 @@ const config = {
         DataCenterScene,
         PonteLuzScene,
         AntessalaScene,
+        NucleoScene,
         SalaAdaScene,
         // Overlays por último: renderizam por cima das salas (ver bringToTop).
         PauseMenuScene,

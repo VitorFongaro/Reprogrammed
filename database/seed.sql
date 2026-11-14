@@ -101,7 +101,8 @@ cross join (values
   ('cap3-refrigeracao', 'Refrigeração', 'Os racks da ADA fervem e o vapor bloqueia a sala: o enquanto resfria cada um até o ponto, com os racks gerados pela IA.', 'medium', 'loops', 2),
   ('cap3-datacenter', 'Data Center', 'A ADA vai apagar as memórias: o backup copia arquivo por arquivo só o que cabe, contando os salvos, com as estações geradas pela IA.', 'medium', 'loops', 3),
   ('cap3-ponte', 'Ponte de Luz', 'Um abismo e uma ponte de luz feita de faixas de placas: o para cada soma a energia de cada placa, com as faixas geradas pela IA.', 'medium', 'loops', 4),
-  ('cap3-antessala', 'Antessala', 'O selo do núcleo roda um laço que nunca termina: o jogador reescreve as travas com uma condição de parada, com as travas geradas pela IA.', 'hard', 'loops', 5)
+  ('cap3-antessala', 'Antessala', 'O selo do núcleo roda um laço que nunca termina: o jogador reescreve as travas com uma condição de parada, com as travas geradas pela IA.', 'hard', 'loops', 5),
+  ('cap3-nucleo', 'Núcleo', 'A sala da ADA, a última do jogo: a galeria com o perfil de aprendizagem da Artemis e a arena do embate final.', 'hard', 'loops', 6)
 ) as v(slug, title, description, base_difficulty, main_topic, order_index)
 where c.order_index = 3;
 

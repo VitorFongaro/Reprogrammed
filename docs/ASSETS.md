@@ -344,6 +344,13 @@ no chão até ela, e o letreiro NUCLEO) sai de `tools/antessala_bg.py`; as trava
 são desenhados no código (`client/objects/SealLocks.js`) e o terminal reusa o `painel_prensa`. Arte
 nossa, feita por script escrito por um agente de IA — declarar no TCC.
 
+**Núcleo (cap. 3).** O fundo (`client/assets/images/nucleo/nucleo_bg.png`: a chapa de aço do
+capítulo, o anel da arena no centro do chão e as molduras das quatro
+telas e do painel na parede) sai de `tools/nucleo_bg.py`. Painel,
+telas do perfil e o olho da ADA são desenhados no código (`NucleoScene`); as lembranças em
+holograma reusam sprites já catalogados aqui (ENIAC, WITCH, `catraca_fechada`, `planta_samambaia_seca`)
+e a ADA é a da PixelLab. Arte nossa, feita por script escrito por um agente de IA — declarar no TCC.
+
 **Corredor do térreo (cap. 2).** O fundo (`client/assets/images/corredor_terreo/corredor_terreo_bg.png`:
 só a faixa do corredor, com a pedra e as janelas da recepção e o elevador no fim) sai de
 `tools/corredor_terreo_bg.py`. A cabine do elevador (`ElevadorScene`) é desenhada no código. Arte

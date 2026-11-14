@@ -65,8 +65,7 @@ const OPEN_SCRIPT = [
 export default class AntessalaScene extends BaseRoomScene {
     constructor() {
         super("cap3-antessala", {
-            // Até o núcleo existir, a porta leva à sala de teste da ADA.
-            nextScene: "cap3-sala-ada",
+            nextScene: "cap3-nucleo",
             doorLabel: "[E] NÚCLEO",
             spawn: SPAWN,
             bounds: { x: 34, y: 140, w: 1212, h: 526 },
