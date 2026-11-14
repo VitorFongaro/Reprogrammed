@@ -38,9 +38,8 @@ const ENEMY_SPAWNS = [
 ];
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Barreira de laser e robôs de segurança. Atravesse quando a barreira apagar." },
-    { speaker: "COSMO", text: "Contra os robôs: aperte [R] pra reprogramar um deles, ou [F] pra quebrá-lo no braço." },
-    { speaker: "COSMO", text: "Se o HP zerar, eu te reinicio aqui. Desligue a barreira e neutralize todos." }
+    { speaker: "COSMO", text: "Barreira de laser no meio da sala e robôs de guarda. A porta só abre com a barreira desligada e nenhum robô de pé." },
+    { speaker: "COSMO", text: "Se o seu HP zerar, eu te reinicio aqui na entrada." }
 ];
 
 const CLEARED_SCRIPT = [

@@ -30,18 +30,19 @@ const SAVE_STATION = { x: 265, y: 200 };
 // em si só descreve o objetivo; a estrutura vem daqui e do botão [DICA]).
 const PUZZLE_INTRO_SCRIPT = [
     { speaker: "COSMO", text: "Uma variável é um espaço na memória: um NOME que guarda um VALOR." },
-    { speaker: "COSMO", text: "Arraste os blocos na ordem: o nome, o sinal de =, e o valor. Se travar, clique em [DICA]." }
+    { speaker: "COSMO", text: "Arraste os blocos para os encaixes: o nome, o =, o valor. Se travar, tem a [DICA]." }
 ];
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Sistemas online. Mova-se com WASD - e segure Shift para correr." },
-    { speaker: "COSMO", text: "Sem energia, nenhuma porta abre. Aperte [E] no gerador - ou [R] para reprogramá-lo à distância, em câmara lenta." },
-    { speaker: "COSMO", text: "Ah, e se algo no caminho chamar sua atenção, chegue perto e aperte [E]. Eu sempre tenho um comentário." }
+    { speaker: "COSMO", text: "Sistemas online. WASD para andar, Shift para correr. Vai com calma: você ficou um bom tempo desligada." },
+    { speaker: "COSMO", text: "Sem energia, nenhuma porta abre. O gerador fica ali: chegue perto e aperte [E]." },
+    { speaker: "COSMO", text: "E se alguma coisa chamar sua atenção, [E] também serve. Eu sempre tenho um comentário." }
 ];
 
 const SOLVED_SCRIPT = [
-    { speaker: "COSMO", text: "Energia de volta - você criou sua primeira variável." },
-    { speaker: "COSMO", text: "Porta destravada. A sala de arquivos é logo adiante." }
+    { speaker: "COSMO", text: "Energia de volta. Sua primeira variável - e a porta destravou." },
+    { speaker: "SISTEMA", text: "> credencial encontrada: AUDITORIA. acesso ao núcleo: revogado" },
+    { speaker: "COSMO", text: "...Log velho. Esse porão tem lixo de tudo quanto é sistema. Vamos." }
 ];
 
 export default class PoraoScene extends BaseRoomScene {

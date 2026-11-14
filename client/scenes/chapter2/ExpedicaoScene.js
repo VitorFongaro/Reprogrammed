@@ -53,26 +53,21 @@ const PILE = { x: 620, baseY: 668, collider: { x: 552, y: 562, w: 138, h: 110 } 
 const COURIER = { x: 1060, y: 470 };
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "A expedição. Daqui sai tudo que a Elysium manda para fora... e hoje não está saindo nada." },
-    { speaker: "COSMO", text: "A triagem pifou: todo pacote vai parar no fim da esteira. A pilha entupiu a passarela, o único jeito de atravessar." },
-    { speaker: "COSMO", text: "Três rampas: CARGA, EXPRESSO e NORMAL. O painel ali decide para qual vai cada pacote." }
+    { speaker: "COSMO", text: "A expedição. Daqui sai tudo que a Elysium manda para fora... e hoje não sai nada." },
+    { speaker: "COSMO", text: "A triagem pifou: todo pacote cai no fim da esteira. E a pilha entupiu a passarela." },
 ];
 
 const AI_SCRIPT = [
-    { speaker: "COSMO", text: "Chegou carga nova na esteira agora mesmo. A ADA mexeu na triagem de novo, do jeito que acha que você resolve." }
+    { speaker: "COSMO", text: "Carga nova na esteira. Terceira sala em que ela mexe em tudo bem quando a gente chega." }
 ];
 
 const SOLVED_SCRIPT = [
-    { speaker: "COSMO", text: "Cada pacote na rampa certa. A ordem fez diferença: o pesado e urgente tinha de ser pego pelo peso antes." },
-    { speaker: "COSMO", text: "Sem pacote errado chegando, o braço de descarte limpou a passarela." }
+    { speaker: "COSMO", text: "Viu o pesado e urgente? Se a primeira pergunta fosse 'é urgente?', ele ia de moto. A ordem decidiu." },
+    { speaker: "COSMO", text: "O braço de descarte limpou a passarela." }
 ];
 
 const COURIER_SCRIPT = [
     { speaker: "COSMO", text: "E aquele mensageiro dormindo do lado da porta... a porta é dele. Melhor desligar antes que acorde." }
-];
-
-const CLEARED_SCRIPT = [
-    { speaker: "COSMO", text: "Passarela livre e mensageiro desligado. A porta é nossa." }
 ];
 
 export default class ExpedicaoScene extends BaseRoomScene {
@@ -168,9 +163,7 @@ export default class ExpedicaoScene extends BaseRoomScene {
         }
         if (this.enemies.every((e) => e.disabled)) {
             this.cleared = true;
-            this.time.delayedCall(500, () => {
-                this.playDialogue(CLEARED_SCRIPT, () => this.unlockDoor());
-            });
+            this.time.delayedCall(500, () => this.unlockDoor());
         }
     }
 

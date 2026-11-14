@@ -20,12 +20,12 @@ const ENEMY_SPAWNS = [
 ];
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Controle ambiental: dois painéis, dois tipos de valor - texto e número decimal. Reative os dois." },
-    { speaker: "COSMO", text: "Cuidado, tem robôs de segurança soltos. [R] reprograma um deles, [F] golpeia - ou só desvie." }
+    { speaker: "COSMO", text: "Dois painéis apagados: um da temperatura, outro do ar. Sem os dois, esse andar não respira." },
+    { speaker: "COSMO", text: "E tem robô de segurança solto. [R] reprograma, [F] golpeia. Ou só não fique no caminho." }
 ];
 
 const SOLVED_SCRIPT = [
-    { speaker: "COSMO", text: "Sistemas estáveis. À frente fica o setor de treinamento da segurança - vá preparada." }
+    { speaker: "COSMO", text: "Sistemas estáveis. Adiante fica o treinamento da segurança. Vai preparada." }
 ];
 
 export default class SalaControleScene extends BaseRoomScene {

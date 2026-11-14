@@ -45,9 +45,8 @@ const MOLD_GAP = 26;          // espaço entre moldes (encolhe se a IA mandar mo
 const TERMINAL = { x: 150, y: 330, w: 64, h: 88 };
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Último andar. Tudo aqui é vermelho... é o andar dela. O da ADA." },
-    { speaker: "COSMO", text: "Uma linha de montagem. A prensa enche os moldes com placas, e os moldes viram a ponte daquele fosso." },
-    { speaker: "COSMO", text: "Só que a prensa está parada. Ela faz a MESMA batida de novo e de novo: é só dizer quantas vezes." }
+    { speaker: "COSMO", text: "Último andar. Tudo vermelho... é o andar dela." },
+    { speaker: "COSMO", text: "Uma linha de montagem. Os moldes cheios fecham aquele fosso, mas a prensa está parada." },
 ];
 
 const AI_SCRIPT = [
@@ -55,12 +54,8 @@ const AI_SCRIPT = [
 ];
 
 const SOLVED_SCRIPT = [
-    { speaker: "COSMO", text: "Cada molde na medida. Uma batida por coluna, repetida quantas vezes o molde pedia." },
-    { speaker: "COSMO", text: "Isso é um LAÇO: escrever o passo uma vez e mandar repetir." }
-];
-
-const BRIDGE_SCRIPT = [
-    { speaker: "COSMO", text: "Ponte montada. Vamos." }
+    { speaker: "COSMO", text: "Cada molde na medida. A batida escrita uma vez, repetida quantas vezes o molde pedia." },
+    { speaker: "COSMO", text: "...É isso que ela faz o dia inteiro, né? Escreve uma vez e manda repetir." }
 ];
 
 export default class LinhaMontagemScene extends BaseRoomScene {
@@ -179,7 +174,8 @@ export default class LinhaMontagemScene extends BaseRoomScene {
                 this.player.setEnabled(false);
                 this.line.buildBridge(BRIDGE, () => {
                     this.gapCollider.body.enable = false;
-                    this.playDialogue(BRIDGE_SCRIPT, () => this.unlockDoor());
+                    this.player.setEnabled(true);
+                    this.unlockDoor();
                 });
             }),
             onRestore: () => {

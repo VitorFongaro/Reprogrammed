@@ -56,10 +56,14 @@ const FLAPS = [
 const VIGIA_POS = { x: 1060, y: 448 };
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Térreo. Luz de verdade, piso polido... bem-vinda ao lado bonito da Elysium." },
+    { speaker: "COSMO", text: "Térreo. Luz de verdade, piso polido... o lado bonito da Elysium." },
     { speaker: "COSMO", text: "As catracas travaram no bloqueio. Consegui um crachá de técnico lá embaixo: nível 4." },
-    { speaker: "COSMO", text: "Catraca é pura CONDIÇÃO: SE o crachá tem nível, ela abre. O sistema fica no balcão." },
-    { speaker: "COSMO", text: "E do outro lado tem uma vigia. Ela só atira em quem se mexe. Lembre disso." }
+    { speaker: "COSMO", text: "O sistema das catracas fica no balcão." },
+    { speaker: "COSMO", text: "E aquela vigia do outro lado só atira em quem se mexe. Guarda isso." }
+];
+
+const GATE_INTRO_SCRIPT = [
+    { speaker: "COSMO", text: "Até agora era guardar um valor. Aqui a máquina decide: ela olha uma coisa e, conforme for, age ou não." }
 ];
 
 const GATES_OPEN_SCRIPT = [
@@ -110,6 +114,8 @@ export default class RecepcaoScene extends BaseRoomScene {
             blocks: true,
             // Nível mínimo sorteado a cada entrada (data/puzzleVariants.js).
             puzzle: catracaPuzzle(),
+            // O conceito novo do capítulo, numa frase, na hora de abrir o console.
+            introScript: GATE_INTRO_SCRIPT,
             onSolved: () => this.openGates(true),
             // Save com as catracas já liberadas: abre calado.
             onRestore: () => this.openGates(false)

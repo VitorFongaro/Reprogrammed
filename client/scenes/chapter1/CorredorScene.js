@@ -26,8 +26,8 @@ const TRANSMISSION_SCRIPT = [
     { speaker: "LUA", color: LUA_COLOR, text: "A ADA mente. Os chips neurais não apenas monitoram... eles reescrevem memórias." },
     { speaker: "LUA", color: LUA_COLOR, text: "As pessoas lá em cima não lembram do que perderam. Suba, e você vai ent..." },
     { speaker: "SISTEMA", text: "> sinal perdido" },
-    { speaker: "COSMO", text: "É a colônia da Lua - foram eles que me enviaram. Cada sistema da ADA que cai, o sinal deles chega mais longe." },
-    { speaker: "COSMO", text: "Reescrever memórias... Artemis, precisamos subir. O elevador está ali." }
+    { speaker: "COSMO", text: "Era a Lua. A colônia que me mandou te buscar." },
+    { speaker: "COSMO", text: "Reescrever memórias... ...O elevador está ali. Vamos subir." }
 ];
 
 export default class CorredorScene extends BaseRoomScene {

@@ -90,7 +90,8 @@ const EXAMPLE = {
   title: 'CATRACAS // ACESSO',
   briefing: [
     'O bloqueio travou as catracas para todo mundo.',
-    'Reescreva a regra: só crachá de nível 3 ou mais passa.'
+    'Regra nova: crachá de nível 3 ou mais passa.',
+    'Abaixo disso, a catraca continua fechada.'
   ],
   solution: ['se cracha >= 3 :', '    catraca = true', 'senão :', '    catraca = false'],
   decoys: { nome: [], op: ['<', '>'], valor: ['"3"', '2'] },
@@ -295,9 +296,15 @@ ${difficultyGuide(spec, difficulty).map((l) => `- ${l}`).join('\n')}
   deem resultados diferentes. Inclua também o operador vizinho nas iscas (decoys).
 - Os casos precisam ter saídas diferentes entre si; varie as entradas que não importam.
 - "title": curto, em MAIÚSCULAS, no estilo "SISTEMA // FUNÇÃO" (até 40 caracteres).
-- "briefing": 1 a 3 linhas de até 60 caracteres (no máximo 4 se o programa tiver três saídas), na voz da sala, descrevendo só o OBJETIVO. Não escreva
-  a estrutura do código nem a ordem das peças, mas DIGA o número exato de cada limite (o jogador não
-  tem outro lugar para descobrir que o limite é 35).
+- "briefing": 1 a 3 linhas de até 60 caracteres (no máximo 4 se o programa tiver três saídas), na voz da sala.
+  Ele precisa ser entendido sem ninguém explicar, nesta ordem:
+  1. o que está acontecendo na sala (por que o problema existe);
+  2. o resultado que conta como certo, de um jeito que o jogador consiga conferir no mapa;
+  3. as regras: DIGA o número exato de cada limite (o jogador não tem outro lugar para descobrir
+     que o limite é 35) e o que acontece com cada categoria.
+  Use as mesmas palavras das entradas (se a entrada é "vao", escreva "vão"; se é "nivel", "nível").
+  Não escreva a estrutura do código nem a ordem das peças, e não use termo técnico de programação
+  ("condicional", "repita", "string", "booleano"): o jogador descobre pela situação. Sem travessão longo: use "-", ":" ou "...".
 - "successMessage": curta, em MAIÚSCULAS.
 - Escreva em português com acentos (água, não, irrigação).
 

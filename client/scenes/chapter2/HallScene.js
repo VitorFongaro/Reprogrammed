@@ -91,12 +91,9 @@ export function wireWitchStatus(scene, witch) {
 
 export const WITCH_ENTRY_SCRIPT = [
     { speaker: "COSMO", text: "Essa é a WITCH. Nome de um computador de 1951: o mais velho do mundo que ainda liga." },
-    { speaker: "COSMO", text: "Enquanto ela luta, o núcleo fica blindado. O [R] não pega. Primeiro, canse ela." },
-    { speaker: "COSMO", text: "Ela cansa sozinha de tanto atacar. E logo depois de um golpe abre a guarda: bata ali com [F]." },
-    { speaker: "COSMO", text: "Só que todo golpe dela deixa um ECO que repete o golpe no mesmo lugar. Bata DEPOIS do eco." },
-    { speaker: "COSMO", text: "E cuidado com o chão: ela escreve a sentença onde você está... e onde você acabou de estar." },
-    { speaker: "COSMO", text: "De longe, a foice solta uma onda. Saia da linha dela. E se o relógio voltar a andar, saia do mostrador." },
-    { speaker: "COSMO", text: "Quando ela ficar tonta, sem fôlego, é a hora: [R]." }
+    { speaker: "COSMO", text: "O núcleo dela está blindado. O [R] não pega. Primeiro, canse ela." },
+    { speaker: "COSMO", text: "Ela abre a guarda logo depois de cada golpe: bata ali com [F]. Mas o golpe deixa um ECO - bata depois dele." },
+    { speaker: "COSMO", text: "Sem fôlego, ela fica tonta. Aí sim: [R]." }
 ];
 
 const HALL_SCRIPT = [
@@ -107,10 +104,6 @@ const HALL_SCRIPT = [
 
 export const WITCH_VICTORY_SCRIPT = [
     { speaker: "COSMO", text: "Parou. Pela primeira vez desde 1951, o relógio dela não anda." }
-];
-
-const DOOR_SCRIPT = [
-    { speaker: "COSMO", text: "Sem ela, o térreo é nosso. A porta do fundo liberou." }
 ];
 
 export default class HallScene extends BaseRoomScene {
@@ -172,7 +165,7 @@ export default class HallScene extends BaseRoomScene {
             return;
         }
         this.witch.defeat();
-        this.time.delayedCall(600, () => this.playDialogue([...WITCH_VICTORY_SCRIPT, ...DOOR_SCRIPT], () => this.unlockDoor()));
+        this.time.delayedCall(600, () => this.playDialogue(WITCH_VICTORY_SCRIPT, () => this.unlockDoor()));
     }
 
 }

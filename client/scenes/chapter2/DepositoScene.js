@@ -68,8 +68,7 @@ const MATERIAL_LABEL = { aco: "AÇO", madeira: "MADEIRA", papelao: "PAPELÃO" };
 
 const ENTRY_SCRIPT = [
     { speaker: "COSMO", text: "O almoxarifado. A diretoria nunca pisou aqui: por isso ainda tem caixa de papelão." },
-    { speaker: "COSMO", text: "O bloqueio travou o corredor com caixas. Do lado de cada uma tem um vão na estante, em cima ou embaixo." },
-    { speaker: "COSMO", text: "Aqui o seu código não acende luzinha. Ele EMPURRA coisas. Se errar, você vai ver qual caixa travou." }
+    { speaker: "COSMO", text: "O bloqueio travou o corredor com caixas. Cada uma tem um vão vazio na estante ao lado, em cima ou embaixo." },
 ];
 // Voltando pelo save com o corredor já livre.
 const RETURN_SCRIPT = [
@@ -77,11 +76,10 @@ const RETURN_SCRIPT = [
 ];
 // Só quando algum dos puzzles veio da IA.
 const AI_SCRIPT = [
-    { speaker: "COSMO", text: "Opa. O estoque mudou de lugar agora mesmo. A ADA reorganizou o depósito inteiro." },
-    { speaker: "COSMO", text: "Essas caixas foram arrumadas para o seu jeito de resolver. Ela está prestando atenção." }
+    { speaker: "COSMO", text: "De novo. O estoque inteiro mudou de lugar... justo quando a gente entrou." },
 ];
 const CORREDOR_LIVRE = [
-    { speaker: "COSMO", text: "Corredor livre. Leve em cima, pesada embaixo: até estante tem condicional." },
+    { speaker: "COSMO", text: "Corredor livre. Até estante tem condicional." },
     { speaker: "COSMO", text: "Lá na frente tem um fosso. O guindaste monta uma ponte com as caixas da esteira." }
 ];
 const PONTE_PRONTA = [
@@ -93,10 +91,6 @@ const FAXINEIRO_AVISO = [
 const OUTRO_LADO = [
     { speaker: "COSMO", text: "Esse caminho não existia. Foi o seu programa que construiu." }
 ];
-const CLEARED_SCRIPT = [
-    { speaker: "COSMO", text: "Depósito liberado. Vamos." }
-];
-
 export default class DepositoScene extends BaseRoomScene {
     constructor() {
         super("cap2-deposito", {
@@ -194,7 +188,7 @@ export default class DepositoScene extends BaseRoomScene {
         }
         if (!this.cleared && this.bridgeDone && this.enemies.every((e) => e.disabled)) {
             this.cleared = true;
-            this.time.delayedCall(600, () => this.playDialogue(CLEARED_SCRIPT, () => this.unlockDoor()));
+            this.time.delayedCall(600, () => this.unlockDoor());
         }
     }
 

@@ -46,11 +46,10 @@ const SHUTTER = { x: 1100, y: 18, w: 104, h: 116 };   // cobre a porta pintada n
 const TERMINAL = { x: 200, y: 400, w: 64, h: 88 };
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Um data center. Esses armários guardam... memórias. De gente." },
-    { speaker: "COSMO", text: "As pessoas ligadas aos chips. A ADA guarda tudo aqui, e pelo visto vai apagar." },
+    { speaker: "COSMO", text: "Esses armários guardam... memórias. De gente." },
+    { speaker: "COSMO", text: "As pessoas ligadas aos chips. E pelo visto ela vai apagar tudo." },
     { speaker: "SISTEMA", text: "> quarentena ativa: porta selada até o fim do backup" },
-    { speaker: "COSMO", text: "Dá para copiar os arquivos para aqueles drives. Um por um... mas só o que couber em cada drive." },
-    { speaker: "COSMO", text: "E contando quantos salvou. Repetir para cada arquivo, decidindo dentro da repetição." }
+    { speaker: "COSMO", text: "Dá para copiar para aqueles drives. Mas cada drive tem o espaço contado." },
 ];
 
 const AI_SCRIPT = [
@@ -59,7 +58,6 @@ const AI_SCRIPT = [
 
 const SOLVED_SCRIPT = [
     { speaker: "COSMO", text: "Tudo que cabia, salvo. Nem um a mais, nem um a menos." },
-    { speaker: "COSMO", text: "O laço passou por cada arquivo, e o se dentro dele decidiu um por um. E o contador foi somando." }
 ];
 
 const OPEN_SCRIPT = [

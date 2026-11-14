@@ -26,15 +26,15 @@ const LUA_COLOR = "#51e36b";
 const TRANSMISSION_SCRIPT = [
     { speaker: "SISTEMA", text: "> bloqueio de sinal: nível 2 de 4 removido" },
     { speaker: "LUA", color: LUA_COLOR, text: "Cosmo, Artemis... o sinal está mais limpo. Vocês derrubaram o térreo inteiro." },
-    { speaker: "LUA", color: LUA_COLOR, text: "Ouçam. Aqueles sistemas que mudavam toda vez que vocês chegavam perto... não era defeito." },
-    { speaker: "LUA", color: LUA_COLOR, text: "Era a ADA estudando você. Cada regra que ela reescreve é um teste, montado sob medida para o que você ainda erra." },
-    { speaker: "LUA", color: LUA_COLOR, text: "É assim que ela faz com as pessoas conectadas aos chips: aprende onde cada uma é fraca e ajusta tudo em volta." },
+    { speaker: "LUA", color: LUA_COLOR, text: "Aqueles sistemas que mudavam quando vocês chegavam perto... não era pane. Era a ADA estudando você." },
+    { speaker: "LUA", color: LUA_COLOR, text: "Cada regra que ela reescreve é um teste, montado para o que você ainda erra." },
+    { speaker: "LUA", color: LUA_COLOR, text: "É o que ela faz com as pessoas dos chips: aprende onde cada uma é fraca e ajusta tudo em volta." },
     { speaker: "LUA", color: LUA_COLOR, text: "E Artemis... antes do bloqueio, você era a auditora dela. A única máquina com acesso ao núcleo." },
     { speaker: "LUA", color: LUA_COLOR, text: "Por isso ela apagou você no porão. Por isso os robôs dizem que você os traiu." },
     { speaker: "LUA", color: LUA_COLOR, text: "O núcleo fica no último andar. Lá ela não reescreve só sistemas. Reescreve gen..." },
     { speaker: "SISTEMA", text: "> sinal perdido" },
-    { speaker: "COSMO", text: "Auditora... então é por isso que ela tem medo de você." },
-    { speaker: "COSMO", text: "Ela anda estudando você? Ótimo. A gente também aprendeu. O elevador está no fim do corredor." }
+    { speaker: "COSMO", text: "Auditora. ...Aquele log do porão não era lixo, então." },
+    { speaker: "COSMO", text: "O elevador está no fim do corredor." }
 ];
 
 export default class CorredorTerreoScene extends BaseRoomScene {

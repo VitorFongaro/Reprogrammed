@@ -26,11 +26,9 @@ const BARRIER_CY = BARRIER_TOP + BARRIER_H / 2;
 const ROBOT = { x: 1000, y: 470 };
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "A sala de arquivos. E um problema: aquela unidade de segurança trancou tudo." },
-    { speaker: "COSMO", text: "Ela está atrás de uma barreira de laser. Chegar perto pra desativar? Nem pensar." },
-    { speaker: "COSMO", text: "Mas você não precisa chegar perto. Aperte [R] para desacelerar o tempo." },
-    { speaker: "COSMO", text: "No tempo lento, mire nela com o mouse e clique para reprogramar à distância." },
-    { speaker: "COSMO", text: "Ela vai revidar - desvie do ataque e desligue o sistema dela. Vai." }
+    { speaker: "COSMO", text: "Aquela unidade de segurança trancou a sala. E está atrás de uma barreira de laser." },
+    { speaker: "COSMO", text: "Você não precisa chegar perto. Aperte [R]: o tempo desacelera para todo mundo, menos para você." },
+    { speaker: "COSMO", text: "Mire nela com o mouse e clique. Ela vai revidar - desvie e desligue o sistema dela." },
 ];
 
 export default class SalaArquivosScene extends BaseRoomScene {
@@ -151,7 +149,8 @@ export default class SalaArquivosScene extends BaseRoomScene {
             },
             { speaker: "COSMO", text: '"Artemis". Foi como ela te chamou. Acho que é o seu nome.' },
             { speaker: "COSMO", text: 'Um nome é só um valor de texto - guardado entre aspas: nome = "Artemis".' },
-            { speaker: "COSMO", text: "Vamos, Artemis. O controle ambiental fica adiante." }
+            { speaker: "COSMO", text: "...Sistema corrompido. Eles repetem qualquer coisa quando caem." },
+            { speaker: "COSMO", text: "Vamos. O controle ambiental fica adiante." }
         ];
     }
 

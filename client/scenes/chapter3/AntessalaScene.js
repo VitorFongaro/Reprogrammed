@@ -43,20 +43,18 @@ const LOCK_SLOTS = [430, 520, 760, 850].map((x) => ({ x, y: 300 }));
 const TERMINAL = { x: 250, y: 420, w: 64, h: 88 };
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "É aqui. Atrás daquela porta fica o núcleo. A ADA." },
+    { speaker: "COSMO", text: "É aqui. Atrás daquela porta fica o núcleo." },
     { speaker: "SISTEMA", text: "> selo do núcleo: rotina de travas em execução" },
     { speaker: "COSMO", text: "Olha as travas... sobem, estouram, recomeçam. Ela escreveu um laço que nunca termina." },
-    { speaker: "COSMO", text: "Enquanto esse laço rodar, a porta não abre. Todo laço precisa de um jeito de PARAR." }
 ];
 
 const AI_SCRIPT = [
-    { speaker: "ADA", text: "Meus laços terminam quando eu decido. Este eu decidi que não termina.", color: "#ff4565" }
+    { speaker: "ADA", text: "Você revisava os meus laços, Artemis. Este eu escrevi sem você.", color: "#ff4565" }
 ];
 
 const SOLVED_SCRIPT = [
     { speaker: "COSMO", text: "Todas paradas no ponto. Um laço só termina se a condição puder ficar falsa." },
-    { speaker: "COSMO", text: "Com != o passo pulava o ponto e a condição nunca virava falsa. Com < ela vira assim que chega." },
-    { speaker: "COSMO", text: "E sabe o que é a ADA? Um laço também. Enquanto houver gente lá fora: controlar. Vamos dar a ela uma condição de parada." }
+    { speaker: "COSMO", text: "...Às vezes eu acho que ela também é isso. Um laço que ninguém escreveu como parar." },
 ];
 
 const OPEN_SCRIPT = [

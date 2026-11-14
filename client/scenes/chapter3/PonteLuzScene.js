@@ -44,18 +44,15 @@ const TERMINAL = { x: 260, y: 420, w: 64, h: 88 };
 
 const ENTRY_SCRIPT = [
     { speaker: "COSMO", text: "Um abismo. Do outro lado, a porta. E nenhum chão no meio." },
-    { speaker: "COSMO", text: "Aquilo ali são emissores de uma ponte de luz. Cada faixa da ponte é uma fileira de placas." },
-    { speaker: "COSMO", text: "Cada placa pede a sua energia. O gerador tem que mandar o total de cada faixa, placa por placa." },
-    { speaker: "COSMO", text: "Não é repetir N vezes, nem enquanto alguma coisa... é passar por CADA placa da lista." }
+    { speaker: "COSMO", text: "Aquilo são emissores de uma ponte de luz. Cada faixa é uma fileira de placas, e cada placa pede a sua energia." },
 ];
 
 const AI_SCRIPT = [
-    { speaker: "ADA", text: "Uma ponte de luz. Acenda o caminho até mim, se souber contar o que vale cada passo.", color: "#ff4565" }
+    { speaker: "ADA", text: "Esta ponte só firma para quem soma direito. Você somava direito.", color: "#ff4565" }
 ];
 
 const SOLVED_SCRIPT = [
-    { speaker: "COSMO", text: "Cada placa recebeu a dela. O laço passou por todas, uma de cada vez." },
-    { speaker: "COSMO", text: "Isso é o PARA CADA: você não diz quantas vezes, a lista diz. E dentro, você usa o item da vez." }
+    { speaker: "COSMO", text: "Cada placa recebeu a dela. Você não disse quantas vezes: a lista disse." },
 ];
 
 const CLEAR_SCRIPT = [

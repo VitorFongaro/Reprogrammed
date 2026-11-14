@@ -43,23 +43,16 @@ const RACK_SLOTS = [390, 510, 630, 750].map((x) => ({ x, y: 240 }));
 const TERMINAL = { x: 200, y: 400, w: 64, h: 88 };
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Que calor... são os servidores da ADA. Os racks estão fervendo." },
-    { speaker: "COSMO", text: "E o calor sai todo por aquela grade no chão. Vapor desse jeito derrete androide, não dá para atravessar." },
-    { speaker: "COSMO", text: "Cada resfriador baixa a temperatura um pouco por ciclo. Quantos ciclos? Depende do rack." },
-    { speaker: "COSMO", text: "Então não dá para contar antes. Tem que repetir ENQUANTO o rack estiver quente, e parar na hora certa." }
+    { speaker: "COSMO", text: "Que calor... são os servidores dela." },
+    { speaker: "COSMO", text: "E o calor sai todo por aquela grade no chão. Vapor desse jeito derrete androide." },
 ];
 
 const AI_SCRIPT = [
-    { speaker: "ADA", text: "Aumentei a carga dos meus servidores. Vamos ver quando você para.", color: "#ff4565" }
+    { speaker: "ADA", text: "Você sempre soube a hora de parar. Era o seu trabalho.", color: "#ff4565" }
 ];
 
 const SOLVED_SCRIPT = [
-    { speaker: "COSMO", text: "Todos no ponto. Um precisou de várias voltas, outro de nenhuma." },
-    { speaker: "COSMO", text: "Isso é o ENQUANTO: repete enquanto a condição for verdadeira, sem saber antes quantas vezes." }
-];
-
-const CLEAR_SCRIPT = [
-    { speaker: "COSMO", text: "O vapor parou. Caminho livre." }
+    { speaker: "COSMO", text: "Um rack precisou de várias voltas, outro de nenhuma. Esse laço não conta antes: ele pergunta a cada volta." },
 ];
 
 export default class RefrigeracaoScene extends BaseRoomScene {
@@ -161,7 +154,10 @@ export default class RefrigeracaoScene extends BaseRoomScene {
             onRun: (results, done) => this.racks.play(results, done),
             onSolved: () => this.playDialogue(SOLVED_SCRIPT, () => {
                 this.player.setEnabled(false);
-                this.duct.stop(() => this.playDialogue(CLEAR_SCRIPT, () => this.unlockDoor()));
+                this.duct.stop(() => {
+                    this.player.setEnabled(true);
+                    this.unlockDoor();
+                });
             }),
             onRestore: () => this.unlockDoor()
         });

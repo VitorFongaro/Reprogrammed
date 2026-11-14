@@ -56,9 +56,9 @@ export function generatorPuzzle() {
     return {
         title: "GERADOR // NÚCLEO",
         briefing: [
-            "O gerador está sem carga.",
-            "Guarde na variável energia a carga certa",
-            "para deixar a bateria cheia, sem sobrecarregar."
+            "O gerador está zerado e a bateria tem um limite.",
+            "Carregue pela variável energia até a bateria",
+            "ficar cheia. Passou do limite, ela sobrecarrega."
         ],
         hint: "a estrutura é  energia = valor  - teste os valores e olhe a bateria.",
         variable: "energia",
@@ -82,9 +82,9 @@ export function thermostatPuzzle() {
     return {
         title: "TERMOSTATO // NÚCLEO",
         briefing: [
-            "O núcleo está superaquecendo.",
-            "Ajuste a variável temperatura até o",
-            "termômetro bater no marcador seguro."
+            "O núcleo esquentou demais e o termostato desligou.",
+            "Ajuste a variável temperatura até o termômetro",
+            "parar exatamente no marcador verde."
         ],
         hint: "temperatura = número decimal (com ponto) - qual bate no marcador?",
         variable: "temperatura",
@@ -110,9 +110,9 @@ export function ventilationPuzzle() {
     return {
         title: "VENTILAÇÃO // SETOR",
         briefing: [
-            "A ventilação precisa do setor onde você",
-            "está agora. Leia o mapa (o ponto azul) e",
-            "informe o código - é um texto (string)."
+            "A ventilação deste setor travou. Para religar,",
+            "ela pede o código do setor onde você está,",
+            "do jeito que aparece no mapa. Guarde em setor."
         ],
         hint: 'setor = "código do mapa" (a linha e a coluna, entre aspas)',
         variable: "setor",
@@ -158,8 +158,8 @@ const BARRIER_THEMES = [
         off: false,
         briefing: [
             "A barreira de lasers corta a sala.",
-            "Ela só fica de pé enquanto o alarme",
-            "toca. Silencie a variável alarme."
+            "Ela só fica de pé enquanto o alarme toca.",
+            "Desligue o alarme pela variável alarme."
         ],
         hint: "alarme = <tocando ou não?>  (booleano true/false)"
     }
@@ -344,7 +344,8 @@ export function catracaPuzzle() {
         title: "CATRACAS // ACESSO",
         briefing: [
             "O bloqueio travou as catracas para todo mundo.",
-            `Reescreva a regra: só crachá de nível ${level} ou mais passa.`
+            `Regra nova: crachá de nível ${level} ou mais passa.`,
+            "Abaixo disso, a catraca continua fechada."
         ],
         hint: `monte:  se cracha >= ${level} :   catraca = true`,
         lines: [
@@ -605,6 +606,7 @@ export function irrigacaoPuzzle() {
     return {
         title: "IRRIGAÇÃO // ESTUFA",
         briefing: [
+            "A irrigação rega todo canteiro, precise ou não.",
             `Terra com menos de ${limit}% de umidade precisa de água.`,
             "O resto não: planta regada demais encharca."
         ],
@@ -764,8 +766,9 @@ export function montagemPuzzle() {
         title: "LINHA DE MONTAGEM",
         briefing: [
             "Cada molde vira um pedaço da ponte sobre o fosso.",
-            "A prensa bate uma vez em cada coluna e cada batida",
-            "estampa uma placa por fileira. Sem faltar, sem sobrar."
+            "A prensa bate uma vez por vão do molde, e cada",
+            "batida estampa uma placa em cada faixa. Encha",
+            "todos os encaixes, sem faltar nem sobrar."
         ],
         hint: "monte:  repita vao vezes :  /  placas = placas + faixas",
         lines: [
@@ -817,7 +820,7 @@ export function refrigeracaoPuzzle() {
         briefing: [
             `Os racks precisam baixar até ${limite} graus ou menos.`,
             "Cada ciclo do resfriador tira o passo do rack.",
-            "Desligue no ponto: ciclo a mais congela o rack."
+            "Desligue no ponto: um ciclo a mais congela o rack."
         ],
         hint: `monte:  enquanto temp > ${limite} :  /  temp = temp - passo`,
         lines: [
@@ -872,9 +875,9 @@ function datacenterDraw() {
     return {
         title: "DATA CENTER // BACKUP",
         briefing: [
-            "A ADA vai apagar as memórias deste arquivo.",
-            "Copie para cada drive só o que ainda cabe nele",
-            "e conte quantos arquivos foram salvos."
+            "A ADA vai apagar as memórias deste acervo.",
+            "Copie para cada drive os arquivos que ainda cabem",
+            "nele, um por um, e conte quantos foram salvos."
         ],
         hint: "monte:  repita arquivos vezes :  /  se espaco >= tamanho :  /  espaco = espaco - tamanho  /  salvos = salvos + 1",
         lines: [
@@ -968,7 +971,7 @@ function antessalaDraw() {
     return {
         title: "SELO DO NÚCLEO // TRAVAS",
         briefing: [
-            `Cada trava abre ao chegar em ${ponto} de carga ou mais.`,
+            `Cada trava abre quando o nível chega a ${ponto} ou mais.`,
             "O laço da ADA nunca para: reescreva para que",
             "cada trava carregue só até abrir, e pare."
         ],

@@ -53,13 +53,13 @@ const BATTLE_CONFIG = {
 };
 
 const ENTRY_SCRIPT = [
-    { speaker: "COSMO", text: "Duas sentinelas de treino - e elas atacam juntas. Vai ser mais puxado." },
-    { speaker: "COSMO", text: "ATACAR usa a variável forca; REPROGRAMAR cria ou dobra a forca; ANALISAR dá dicas." },
-    { speaker: "COSMO", text: "No turno delas, três padrões diferentes de tiro. Ache as brechas e desvie com WASD. [E] pra começar." }
+    { speaker: "COSMO", text: "Duas sentinelas de treino. Elas lutam juntas." },
+    { speaker: "COSMO", text: "ATACAR bate com o valor de forca. REPROGRAMAR cria a forca ou dobra ela. ANALISAR é quando eu tiver algo útil a dizer." },
+    { speaker: "COSMO", text: "No turno delas, desvie com WASD. [E] quando estiver pronta." }
 ];
 
 const VICTORY_SCRIPT = [
-    { speaker: "COSMO", text: "As duas no chão. O ENIAC é mais duro - mas a lógica é a mesma. Vamos." }
+    { speaker: "COSMO", text: "As duas no chão. Guarda esse ritmo: o próximo não é de treino." }
 ];
 
 export default class SentinelaScene extends BaseRoomScene {

@@ -43,6 +43,8 @@ const CONNECTIVES = ["e", "ou", "não"];
 const FIXED_WORDS = ["se", "senão", ":", "=", "repita", "vezes", "enquanto", "para", "cada", "em", "+", "-", "*", "/", ...CONNECTIVES];
 const LITERAL_RE = /^(-?\d+(\.\d+)?|"[^"]*"|true|false)$/;
 const NAME_RE = /^[a-z_][a-z0-9_]*$/;
+// Termos que o enunciado de um puzzle gerado não pode usar (ver checkShape).
+const TECH_WORDS = ["string", "booleano", "boolean", "condicional", "repita"];
 const BOUNDARY_PAIRS = { ">": ">=", ">=": ">", "<": "<=", "<=": "<" };
 
 const usesWord = (text, word) => new RegExp(`(^|\\s)${word}(\\s|$)`, "m").test(text);
@@ -131,6 +133,10 @@ export function checkShape(puzzle, spec) {
     const briefingText = (puzzle?.briefing ?? []).join(" ").toLowerCase();
     (spec.briefingForbids ?? []).filter((p) => briefingText.includes(p)).forEach((p) => {
         problems.push(`o briefing entrega a comparação ("${p}"): diga só o objetivo, sem dizer qual comparação usar`);
+    });
+    // Termo técnico no enunciado vira aula: o jogador descobre a estrutura pela situação.
+    TECH_WORDS.filter((w) => new RegExp(`\\b${w}\\b`).test(briefingText)).forEach((w) => {
+        problems.push(`o briefing usa o termo técnico "${w}": descreva a situação da sala, sem nomear estrutura nem tipo de dado`);
     });
     need(typeof puzzle?.hint === "string" && puzzle.hint.length >= 8 && puzzle.hint.length <= 200,
         "hint ausente ou longo demais: até 200 caracteres, só com a solução em uma linha (sem repetir \"rampa =\" à toa)");

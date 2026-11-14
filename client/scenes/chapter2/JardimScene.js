@@ -57,23 +57,21 @@ const FLOOD = {
 
 const ENTRY_SCRIPT = [
     { speaker: "COSMO", text: "Uma estufa! Lá fora neva, e aqui dentro tem cacto. Só a Elysium mesmo." },
-    { speaker: "COSMO", text: "Ih. A irrigação está regando tudo sem parar. A água transbordou e alagou a frente da porta." },
-    { speaker: "COSMO", text: "E tem um cabo de força caído bem na poça. Água, cabo e androide... nem pensar." },
-    { speaker: "COSMO", text: "O painel ali é o sistema. Cada canteiro tem um sensor de umidade: rega só quem precisa e a água para de sobrar." }
+    { speaker: "COSMO", text: "A irrigação está regando tudo sem parar. Alagou a frente da porta... e tem um cabo de força caído na poça." },
+    { speaker: "COSMO", text: "Água, cabo e androide. Não. O painel da irrigação fica ali." },
 ];
 
 // Só quando o puzzle veio da IA: a ADA reescreve a sala para o jogador.
 const AI_SCRIPT = [
-    { speaker: "COSMO", text: "Opa. Os canteiros mudaram agora mesmo. A ADA reescreveu a irrigação inteira." },
-    { speaker: "COSMO", text: "Ela está aprendendo com você. Esta regra foi montada para o seu jeito de resolver." }
+    { speaker: "COSMO", text: "Opa. Os canteiros mudaram sozinhos agora mesmo. Pane, deve ser." },
 ];
 
 const SOLVED_SCRIPT = [
-    { speaker: "COSMO", text: "Cada planta com a água que precisa. SE a terra está seca, rega. SENÃO, deixa quieta." }
+    { speaker: "COSMO", text: "Seca, rega. Úmida, deixa quieta. Até que essa estufa é razoável quando alguém decide por ela." }
 ];
 
 const DRAINED_SCRIPT = [
-    { speaker: "COSMO", text: "Sem água sobrando, o ralo deu conta. E o cabo parou de faiscar: sem água, sem curto. Caminho livre." }
+    { speaker: "COSMO", text: "O ralo deu conta. E o cabo parou de faiscar. Caminho livre." }
 ];
 
 export default class JardimScene extends BaseRoomScene {
