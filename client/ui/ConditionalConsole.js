@@ -36,7 +36,17 @@ import { hudPx, hudScale } from "../state/hud";
 // programa que quiser (as ROTINAS do Cache, na batalha); o console só confere
 // que ele RODA nos estados de amostra (`tests`, só com `given`, mostrados como
 // "AGORA") e entrega as linhas montadas em `onProgram(lines)`. Peça com espaço
-// no rótulo ("forca * 2") vira vários tokens na entrega.
+// no rótulo ("forca * 2") vira vários tokens na entrega. Opções do modo:
+//   - `validateProgram(lines)` -> mensagem ou null: recusa o que roda mas não
+//     faz sentido (ex.: `reparo = "overclock"`), com a explicação;
+//   - `confirmProgram: true` + `describeProgram(lines)`: em vez de entregar na
+//     hora, mostra a PRÉVIA do que o programa faz e espera o [ENTER]/[INSTALAR].
+//
+// `puzzle.slotRules` (array, um por encaixe, na ordem do molde): função
+// (rótulo, { labelAt(i) }) -> motivo da recusa ou null. Com ela, cada encaixe
+// só aceita peça da própria categoria e que a regra deixe; arrastando, os
+// encaixes que aceitam a peça acendem e os outros apagam, e soltar no lugar
+// errado devolve a peça com o motivo.
 //
 // Use `createConsole` (abaixo) para abrir o console certo a partir do puzzle.
 
@@ -91,6 +101,7 @@ const COLOR = {
 // Contorno do encaixe na cor da categoria: dica visual de que peça vai ali.
 const SLOT_TINT = { nome: 0x4ad6ff, op: 0xffb347, valor: 0x6f8cff };
 const KEYWORDS = ["se", "senão", "e", "ou", "não", "repita", "vezes", "enquanto", "para", "cada", "em"];
+const CATEGORY_NAMES = { nome: "nome (ciano)", op: "operador (âmbar)", valor: "valor (azul)" };
 
 export function createConsole(scene, puzzle, options) {
     return puzzle?.lines
@@ -104,6 +115,9 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         // Com onRun, o puzzle é de MUNDO (ver o topo do arquivo).
         this.onRun = options.onRun ?? null;
         this.onProgram = options.onProgram ?? null;
+        this.validateProgram = options.validateProgram ?? null;
+        this.confirmProgram = Boolean(options.confirmProgram);
+        this.describeProgram = options.describeProgram ?? null;
     }
 
     // Largura real de uma palavra fixa do programa. A fonte do jogo é
@@ -403,12 +417,24 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
 
     drawSlots(highlight = null) {
         this.slotGraphics.clear();
+        const dragging = this.puzzle.slotRules ? this.dragging : null;
         this.slots.forEach((slot) => {
             const filled = !!slot.piece;
             const armed = slot === highlight;
             const left = slot.x - BLOCK_W / 2;
             const top = slot.y - BLOCK_H / 2;
             const tint = SLOT_TINT[slot.category] ?? COLOR.border;
+            // Arrastando com regras: quem aceita a peça acende, quem não aceita apaga.
+            if (dragging && !armed) {
+                const ok = this.slotAccepts(dragging, slot);
+                this.slotGraphics.lineStyle(ok ? 3 : 1, ok ? 0xf7f7f7 : tint, ok ? 0.9 : 0.15);
+                this.slotGraphics.strokeRoundedRect(left, top, BLOCK_W, BLOCK_H, 8);
+                if (!filled && ok) {
+                    this.slotGraphics.fillStyle(0xf7f7f7, 0.08);
+                    this.slotGraphics.fillRoundedRect(left, top, BLOCK_W, BLOCK_H, 8);
+                }
+                return;
+            }
             this.slotGraphics.lineStyle(armed ? 3 : 2, armed ? 0xf7f7f7 : tint, armed ? 1 : filled ? 0.5 : 0.8);
             this.slotGraphics.strokeRoundedRect(left, top, BLOCK_W, BLOCK_H, 8);
             if (!filled) {
@@ -454,12 +480,43 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
     onDragStart(piece) {
         if (this.solved || this.running) return;
         this.resetCards();
+        this.clearInstallPrompt();
+        this.dragging = piece;
         super.onDragStart(piece);
+    }
+
+    // Motivo de o encaixe recusar a peça, ou null (só com `puzzle.slotRules`).
+    slotReason(piece, slot) {
+        const rules = this.puzzle.slotRules;
+        if (!rules) return null;
+        if (piece.category !== slot.category) {
+            return `esse encaixe pede um bloco de ${CATEGORY_NAMES[slot.category] ?? slot.category}`;
+        }
+        const rule = rules[this.slots.indexOf(slot)];
+        return rule ? rule(piece.label, { labelAt: (i) => this.slots[i]?.piece?.label ?? null }) : null;
+    }
+
+    slotAccepts(piece, slot) {
+        return !this.slotReason(piece, slot);
     }
 
     // Peça arrastada enquanto os testes rodam volta para a prateleira: o
     // programa em execução não muda no meio.
     onDragEnd(piece) {
+        this.dragging = null;
+        // Soltou perto de um encaixe que não aceita: volta, com o motivo.
+        if (this.puzzle.slotRules && !this.running && !this.solved) {
+            const near = this.nearestSlot(piece, true);
+            const reason = near && this.slotReason(piece, near);
+            if (reason && !this.nearestSlot(piece)) {
+                piece.container.setScale(1).setAlpha(1);
+                Sfx.play(this.scene, "error", 0.6);
+                this.setOutput(reason, COLOR.error);
+                this.returnHome(piece);
+                this.drawSlots();
+                return;
+            }
+        }
         if (this.running) {
             piece.container.setScale(1).setAlpha(1);
             if (piece.slot) {
@@ -561,7 +618,8 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         });
     }
 
-    // Modo programa: só não pode dar erro; aí guarda e fecha.
+    // Modo programa: não pode dar erro nem ser recusado pela validação; aí
+    // guarda e fecha (ou mostra a prévia e espera a confirmação).
     deliverProgram(program, results) {
         const error = results.find((r) => r.error)?.error;
         if (error) {
@@ -570,10 +628,53 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
             this.setOutput(`o programa não roda: ${error}`, COLOR.error);
             return;
         }
+        const problem = this.validateProgram?.(program);
+        if (problem) {
+            this.countError();
+            Sfx.play(this.scene, "error");
+            this.setOutput(problem, COLOR.error);
+            return;
+        }
+        if (this.confirmProgram) {
+            this.showInstallPrompt(program);
+            return;
+        }
+        this.finishProgram(program);
+    }
+
+    finishProgram(program) {
+        this.clearInstallPrompt();
         Sfx.play(this.scene, "confirm");
         this.solved = true;
         this.onProgram(program);
         this.close();
+    }
+
+    // Prévia: o que o programa vai fazer, e o botão de instalar ([ENTER] também).
+    showInstallPrompt(program) {
+        this.clearInstallPrompt();
+        const s = this.scene;
+        const summary = this.describeProgram?.(program);
+        this.setOutput(summary ? `> pronta: ${summary}` : "> pronta para instalar", COLOR.success);
+        this.installButton = s.add.text(PANEL_X + PANEL_W - PAD, TRAY_Y - 44, "[ INSTALAR ]  [ENTER]", {
+            fontFamily: "VCR", fontSize: hudPx(18), color: COLOR.success,
+            backgroundColor: "#0b1a10", padding: { x: 8, y: 4 }
+        }).setOrigin(1, 1).setInteractive({ useHandCursor: true });
+        this.installButton.on("pointerover", () => this.installButton.setColor("#ffffff"));
+        this.installButton.on("pointerout", () => this.installButton.setColor(COLOR.success));
+        this.installButton.on("pointerdown", () => this.finishProgram(program));
+        this.container.add(this.installButton);
+        this.installKey = () => this.finishProgram(program);
+        s.input.keyboard.once("keydown-ENTER", this.installKey);
+    }
+
+    clearInstallPrompt() {
+        if (this.installKey) {
+            this.scene.input.keyboard.off("keydown-ENTER", this.installKey);
+            this.installKey = null;
+        }
+        this.installButton?.destroy();
+        this.installButton = null;
     }
 
     // Diferente do console de variável, NÃO devolve peças: o jogador lê qual
@@ -606,6 +707,7 @@ export default class ConditionalConsole extends BlockProgrammingConsole {
         this.revealTimer?.remove();
         this.revealTimer = null;
         this.running = false;
+        this.clearInstallPrompt();
         super.close(viaEsc);
     }
 }

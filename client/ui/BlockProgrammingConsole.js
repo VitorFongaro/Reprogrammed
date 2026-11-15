@@ -757,10 +757,13 @@ export default class BlockProgrammingConsole {
 
     // Encaixe mais próximo dentro do raio de snap (ocupado ou não). Se o alvo já
     // tiver uma peça, ela é devolvida à prateleira (troca) — ver onDragEnd.
-    nearestSlot(piece) {
+    // Só conta encaixe que ACEITA a peça (slotAccepts), a não ser que
+    // `ignoreRules` peça o mais próximo de qualquer jeito (para explicar a recusa).
+    nearestSlot(piece, ignoreRules = false) {
         let best = null;
         let bestDistance = SNAP_RADIUS;
         this.slots.forEach((slot) => {
+            if (!ignoreRules && !this.slotAccepts(piece, slot)) return;
             const distance = Phaser.Math.Distance.Between(
                 piece.container.x, piece.container.y, slot.x, slot.y
             );
@@ -770,6 +773,12 @@ export default class BlockProgrammingConsole {
             }
         });
         return best;
+    }
+
+    // Todo encaixe aceita qualquer peça; o ConditionalConsole restringe quando o
+    // puzzle traz `slotRules` (as rotinas do Cache).
+    slotAccepts() {
+        return true;
     }
 
     // Devolve uma peça que estava num encaixe para a prateleira (com flutuação).

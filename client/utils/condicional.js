@@ -58,9 +58,20 @@ export function parseTemplateLine(line) {
 // --- Execução ---------------------------------------------------------------
 // `lines` = [{ indent, tokens: string[] }] (encaixes já preenchidos). Devolve o
 // ambiente final. Lança CondError em programa inválido.
-export function run(lines, env) {
+// `options.onAssign(nome, valor)` é avisado a cada atribuição EXECUTADA, na
+// ordem. As rotinas do Cache usam para saber quais ações o programa pediu (mesmo
+// quando o valor não muda), inclusive dentro de laços e de `se` aninhados.
+let assignHook = null;
+
+export function run(lines, env, options = {}) {
     const scope = { ...env };
-    execBlock(structure(lines), scope);
+    const previous = assignHook;
+    assignHook = options.onAssign ?? null;
+    try {
+        execBlock(structure(lines), scope);
+    } finally {
+        assignHook = previous;
+    }
     return scope;
 }
 
@@ -218,6 +229,7 @@ function assign(tokens, scope) {
         throw new CondError("uma atribuição tem a forma  nome = valor");
     }
     scope[name] = evaluate(expr, scope);
+    assignHook?.(name, scope[name]);
 }
 
 // --- Expressões (descida recursiva) --------------------------------------------
