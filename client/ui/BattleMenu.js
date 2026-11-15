@@ -56,8 +56,15 @@ export default class BattleMenu {
             });
             hit.on("pointerdown", () => this.confirm(index));
 
-            this.container.add([graphics, label, hit]);
-            return { graphics, label, x: bx };
+            // Legenda acima do botão (vazia): a luta da ADA escreve condições ali.
+            const caption = this.scene.add.text(bx, this.y - BUTTON_H / 2 - 12, "", {
+                fontFamily: "VCR",
+                fontSize: hudPx(14),
+                color: COLOR.dim
+            }).setOrigin(0.5);
+
+            this.container.add([graphics, label, hit, caption]);
+            return { graphics, label, caption, x: bx };
         });
 
         this.hint = this.scene.add.text(this.x, this.y + BUTTON_H / 2 + 20, "[A]/[D] selecionar   [E] confirmar", {
@@ -85,6 +92,21 @@ export default class BattleMenu {
             button.graphics.strokeRect(left, top, BUTTON_W, BUTTON_H);
             button.label.setColor(selected ? COLOR.text : COLOR.dim);
         });
+    }
+
+    // Troca o rótulo de um botão (ex.: REPROGRAMAR vira REESCREVER na ADA).
+    setLabel(id, text) {
+        const i = this.actions.findIndex((a) => a.id === id);
+        if (i < 0) return;
+        this.actions[i].label = text;
+        this.buttons[i].label.setText(text);
+    }
+
+    // Legenda curta acima de um botão; null apaga.
+    setCaption(id, text, color = COLOR.dim) {
+        const i = this.actions.findIndex((a) => a.id === id);
+        if (i < 0) return;
+        this.buttons[i].caption.setText(text ?? "").setColor(color);
     }
 
     show() {

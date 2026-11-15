@@ -48,7 +48,7 @@ const LABELS = {
 
 const ENTRY_SCRIPT = [
     { speaker: "COSMO", text: "Sala de teste da ADA. Ela só vai mostrar os golpes, ainda não luta." },
-    { speaker: "ADA", text: "Você não deveria ter chegado até aqui.", color: "#ff4565" }
+    { speaker: "ADA", text: "Você chegou longe. Ainda dá tempo de ficar do lado certo.", color: "#ff4565" }
 ];
 
 export default class SalaAdaScene extends BaseRoomScene {

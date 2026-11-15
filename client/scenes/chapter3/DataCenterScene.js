@@ -54,7 +54,7 @@ const ENTRY_SCRIPT = [
 ];
 
 const AI_SCRIPT = [
-    { speaker: "ADA", text: "Cada byte que você salvar, eu apago de novo. Mas continue contando.", color: "#ff4565" }
+    { speaker: "ADA", text: "Perda, medo, arrependimento. Apagar é um alívio. Salve o que achar que vale essa dor.", color: "#ff4565" }
 ];
 
 const SOLVED_SCRIPT = [

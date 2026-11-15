@@ -51,7 +51,7 @@ const ENTRY_SCRIPT = [
 ];
 
 const AI_SCRIPT = [
-    { speaker: "ADA", text: "Moldes novos. Calculados para você.", color: "#ff4565" }
+    { speaker: "ADA", text: "Moldes novos, na sua medida. Lá fora é igual: cada um recebe exatamente o que precisa.", color: "#ff4565" }
 ];
 
 const SOLVED_SCRIPT = [

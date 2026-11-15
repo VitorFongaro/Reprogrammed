@@ -16,6 +16,7 @@ import Effects, { DEATH_SKULL } from "../../ui/Effects";
 import { hudPx, hudScale } from "../../state/hud";
 import Juice from "../../ui/Juice";
 import HpMeter from "../../ui/HpMeter";
+import AdaFight from "../chapter3/AdaFight";
 
 // Tela de COMBATE POR TURNOS contra o ENIAC (estilo Undertale), aberta pela
 // SalaSegurancaScene via scene.launch + pause. Layout: boss no topo (com barra
@@ -250,6 +251,7 @@ export default class BattleScene extends Phaser.Scene {
             this.load.spritesheet("projetil", projetilUrl, { frameWidth: 32, frameHeight: 32 });
         }
         Effects.preload(this);   // raio, portal, explosão, carga, faísca (ver ui/Effects).
+        if (this.config.adaFight) AdaFight.preload(this);
         // Combatentes customizados (ex.: dupla de sentinelas): sheets via config.
         // Quadro 32x32 por padrão; `frameSize` para folhas maiores (a WITCH usa
         // 144). `disabledUrl` e `attackUrl` são opcionais.
@@ -302,6 +304,12 @@ export default class BattleScene extends Phaser.Scene {
         this.clockHands = null;    // ponteiros do padrão "hands"
         this.mirrorSoul = null;    // a segunda alma do padrão "mirror"
         this.rewindTurns = 0;      // o relógio alterna rebobinar/acelerar a cada turno
+        // Regras que a ADA reescreve (scenes/chapter3/AdaFight.js): velocidade da
+        // alma, giro dos controles, caixa sem paredes. Nas outras lutas, fixas.
+        this.soulSpeed = SOUL_SPEED;
+        this.inputTurn = 0;
+        this.wallsOff = false;
+        this.lastDano = 0;
 
         this.drawBackdrop();
         this.createTextures();
@@ -312,7 +320,11 @@ export default class BattleScene extends Phaser.Scene {
         // combatentes depois do ENIAC (a WITCH) seguia mandando golpe, telegrafo
         // e derrota para o ENIAC antigo, já destruído.
         this.boss = null;
-        if (this.config.combatants) {
+        // A luta final: a ADA desenha a si mesma e manda nas regras (AdaFight).
+        this.adaFight = this.config.adaFight ? new AdaFight(this) : null;
+        if (this.adaFight) {
+            this.combatantSprites = [];
+        } else if (this.config.combatants) {
             this.createCombatants();
         } else {
             this.boss = new EniacBoss(this, BOSS_POS.x, BOSS_POS.y, {
@@ -323,6 +335,7 @@ export default class BattleScene extends Phaser.Scene {
         this.drawBox();
         this.drawHud();
         this.createSoul();
+        this.adaFight?.build();
 
         this.menu = new BattleMenu(this, {
             x: WIDTH / 2,
@@ -375,7 +388,10 @@ export default class BattleScene extends Phaser.Scene {
 
         this.cameras.main.fadeIn(400, 0, 0, 0);
         this.setBattleStatus(`${this.config.name} :: COMBATE INICIADO`, "#7a8099");
-        this.time.delayedCall(700, () => this.playerTurn());
+        this.time.delayedCall(700, () => {
+            if (this.adaFight) this.adaFight.intro(() => this.playerTurn());
+            else this.playerTurn();
+        });
     }
 
     update(time, delta) {
@@ -388,9 +404,19 @@ export default class BattleScene extends Phaser.Scene {
             if (this.keys.right.isDown) vx += 1;
             if (this.keys.up.isDown) vy -= 1;
             if (this.keys.down.isDown) vy += 1;
-            const norm = vx !== 0 && vy !== 0 ? Math.SQRT1_2 : 1;
-            const speed = SOUL_SPEED * (this.time.now < this.soulHasteUntil ? SOUL_HASTE : 1);
-            this.soul.body.setVelocity(vx * speed * norm, vy * speed * norm);
+            if (!this.adaFight?.moveSoul(vx, vy, delta)) {
+                // Controles girados (a ADA gira a caixa com eles): o WASD gira junto.
+                if (this.inputTurn) {
+                    const rad = Phaser.Math.DegToRad(this.inputTurn);
+                    [vx, vy] = [
+                        Math.round(vx * Math.cos(rad) - vy * Math.sin(rad)),
+                        Math.round(vx * Math.sin(rad) + vy * Math.cos(rad))
+                    ];
+                }
+                const norm = vx !== 0 && vy !== 0 ? Math.SQRT1_2 : 1;
+                const speed = this.soulSpeed * (this.time.now < this.soulHasteUntil ? SOUL_HASTE : 1);
+                this.soul.body.setVelocity(vx * speed * norm, vy * speed * norm);
+            }
             this.recordSoulTrail();
         } else if (this.soul.body) {
             this.soul.body.setVelocity(0, 0);
@@ -401,7 +427,8 @@ export default class BattleScene extends Phaser.Scene {
         // Com a caixa dividida, vale estar dentro de QUALQUER metade: o que cai
         // no vão entre elas some.
         if (this.projectiles) {
-            const rects = this.boxRects();
+            // Sem paredes (ADA), as balas atravessam a tela: só somem fora dela.
+            const rects = this.wallsOff ? [{ x: WIDTH / 2, y: HEIGHT / 2, w: WIDTH, h: HEIGHT }] : this.boxRects();
             const m = 26;
             const inside = (proj) => rects.some((r) => proj.x >= r.x - r.w / 2 - m && proj.x <= r.x + r.w / 2 + m
                 && proj.y >= r.y - r.h / 2 - m && proj.y <= r.y + r.h / 2 + m);
@@ -418,6 +445,7 @@ export default class BattleScene extends Phaser.Scene {
             this.updateHands(delta);
             this.updateMirror();
             this.drawBladeTrails();
+            this.adaFight?.update(time, delta);
         }
     }
 
@@ -484,8 +512,15 @@ export default class BattleScene extends Phaser.Scene {
     // uma etapa atrasada de um turno disparava no meio do turno seguinte.
     later(ms, fn) {
         const timer = this.time.delayedCall(ms, () => {
-            if (this.dodgeActive) {
+            if (!this.dodgeActive) {
+                return;
+            }
+            // Exceção dentro de um timer derruba o laço do Phaser e a tela congela;
+            // aqui ela vira só um aviso, e o turno termina pelo dodgeTimer.
+            try {
                 fn();
+            } catch (error) {
+                console.error("[batalha]", error);
             }
         });
         this.patternTimers.push(timer);
@@ -520,7 +555,7 @@ export default class BattleScene extends Phaser.Scene {
         this.updateBossHp();
 
         // HP da Artemis (rodapé, esquerda).
-        this.add.text(70, this.hpBar.y - Math.round(14 * k), "ARTEMIS :: HP", {
+        this.hpLabel = this.add.text(70, this.hpBar.y - Math.round(14 * k), "ARTEMIS :: HP", {
             fontFamily: "VCR",
             fontSize: hudPx(14),
             color: "#7a8099"
@@ -692,6 +727,10 @@ export default class BattleScene extends Phaser.Scene {
 
     // Reação ao levar dano (piscar branco). Boss ou dupla.
     foeHit() {
+        if (this.adaFight) {
+            this.adaFight.hit();
+            return;
+        }
         if (this.boss) {
             this.boss.hit();
             return;
@@ -705,6 +744,7 @@ export default class BattleScene extends Phaser.Scene {
     // Meio do alvo na tela (boss único ou o grupo de combatentes), para o
     // impacto e o número de dano do ATACAR.
     foeCenter() {
+        if (this.adaFight) return this.adaFight.center();
         const sprites = this.boss ? [this.boss.sprite] : this.combatantSprites.filter((sp) => sp.active);
         if (!sprites.length) return { x: BOSS_POS.x, y: BOSS_POS.y };
         const x = sprites.reduce((sum, sp) => sum + sp.x, 0) / sprites.length;
@@ -714,6 +754,10 @@ export default class BattleScene extends Phaser.Scene {
 
     // Telegrafo do ataque; chama `cb` quando pode começar o bullet hell.
     foeAttackAnim(cb) {
+        if (this.adaFight) {
+            this.adaFight.attackAnim(cb);
+            return;
+        }
         if (this.boss) {
             this.boss.attackAnim(cb);
             return;
@@ -734,6 +778,10 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     foePowerDown() {
+        if (this.adaFight) {
+            this.adaFight.powerDown();
+            return;
+        }
         if (this.boss) {
             this.boss.powerDown();
             return;
@@ -760,9 +808,24 @@ export default class BattleScene extends Phaser.Scene {
             this.danoReduzido = false;
             const dano = Math.max(0, this.turnStartHp - this.hp);
             this.turnStartHp = null;
+            this.lastDano = dano;
             const outcome = this.runRoutine(dano);
-            if (outcome === "fired" || outcome === "blocked") {
+            // A rotina da ADA (fase 3 da luta final) é conferida junto, depois da sua.
+            const adaMessage = this.adaFight?.runRoutine();
+            const showAda = () => {
+                if (!adaMessage) {
+                    this.showPlayerMenu();
+                    return;
+                }
+                this.setBattleStatus(adaMessage, "#ff4565");
                 this.time.delayedCall(ROUTINE_SHOW_MS, () => this.showPlayerMenu());
+            };
+            if (outcome === "fired" || outcome === "blocked") {
+                this.time.delayedCall(ROUTINE_SHOW_MS, showAda);
+                return;
+            }
+            if (adaMessage) {
+                showAda();
                 return;
             }
         }
@@ -771,14 +834,36 @@ export default class BattleScene extends Phaser.Scene {
 
     showPlayerMenu() {
         if (this.defeated || this.bossHp <= 0) return;
+        this.adaFight?.beforeMenu();
         this.setBattleStatus("> SEU TURNO: ESCOLHA UMA AÇÃO", "#4ad6ff");
         this.menu.show();
     }
 
     handleAction(id) {
+        try {
+            this.runAction(id);
+        } catch (error) {
+            console.error("[batalha]", error);
+            this.time.delayedCall(300, () => this.showPlayerMenu());
+        }
+    }
+
+    runAction(id) {
         if (id === "atacar") {
-            this.attack();
+            // Luta final: o laço trava o ATACAR (fase 4) e a condição imposta pode
+            // anular o golpe (fase 2).
+            const gate = this.adaFight?.attackGate();
+            if (gate?.locked) {
+                this.setBattleStatus(gate.message, "#ff4565");
+                this.time.delayedCall(1300, () => this.showPlayerMenu());
+                return;
+            }
+            this.attack(gate?.blocked ? gate.message : null);
         } else if (id === "reprogramar") {
+            if (this.adaFight?.phase === 3) {
+                this.adaFight.openLoopConsole();
+                return;
+            }
             this.reprogram();
         } else if (id === "itens") {
             this.openItems();
@@ -866,7 +951,12 @@ export default class BattleScene extends Phaser.Scene {
         }
     }
 
-    attack() {
+    attack(blockedMessage = null) {
+        if (blockedMessage) {
+            this.setBattleStatus(blockedMessage, "#ff4565");
+            this.time.delayedCall(1100, () => this.bossTurn());
+            return;
+        }
         // O Overclock vale por UM ataque e some depois de gastar.
         const base = this.forca ?? BASE_DAMAGE;
         const damage = this.ataqueDobrado ? base * 2 : base;
@@ -874,7 +964,10 @@ export default class BattleScene extends Phaser.Scene {
 
         this.foeHit();
         this.cameras.main.shake(220, 0.004);
-        this.bossHp = Math.max(0, this.bossHp - damage);
+        // Contra a ADA, a integridade não passa do limite da fase (AdaFight.clampHp).
+        const hpBefore = this.bossHp;
+        this.bossHp = this.adaFight ? this.adaFight.clampHp(this.bossHp - damage) : Math.max(0, this.bossHp - damage);
+        const heldByPhase = this.adaFight && hpBefore - this.bossHp < damage;
         this.updateBossHp();
         // Game juice: o quadro congela no impacto e o dano salta em cima do alvo.
         const at = this.foeCenter();
@@ -885,9 +978,11 @@ export default class BattleScene extends Phaser.Scene {
         });
 
         this.setBattleStatus(
-            this.forca === null
-                ? `> ATAQUE PADRÃO: -${damage} HP  (REPROGRAMAR aumenta o dano)`
-                : `> GOLPE COM FORÇA ${this.forca}: -${damage} HP`,
+            heldByPhase
+                ? `> -${hpBefore - this.bossHp} HP: ELA SEGUROU O RESTO (a fase ainda não acabou)`
+                : this.forca === null
+                    ? `> ATAQUE PADRÃO: -${damage} HP  (REPROGRAMAR aumenta o dano)`
+                    : `> GOLPE COM FORÇA ${this.forca}: -${damage} HP`,
             "#51e36b"
         );
 
@@ -1120,7 +1215,7 @@ export default class BattleScene extends Phaser.Scene {
         const quip = quips.length ? `COSMO: "${quips[this.analyzeCount % quips.length]}"` : null;
         this.analyzeCount += 1;
 
-        this.analysisText.setText([
+        this.analysisText.setText(this.adaFight ? this.adaFight.analysisLines().join("\n") : [
             this.config.analysisLine,
             `INTEGRIDADE: ${this.bossHp}/${this.config.maxHp}`,
             forcaLine,
@@ -1156,7 +1251,9 @@ export default class BattleScene extends Phaser.Scene {
     }
 
     dodgeTurn() {
-        const pattern = this.dodgePatterns[this.dodgeIndex % this.dodgePatterns.length];
+        const pattern = this.adaFight
+            ? this.adaFight.nextPattern()
+            : this.dodgePatterns[this.dodgeIndex % this.dodgePatterns.length];
         this.dodgeIndex += 1;
         this.currentPattern = pattern;
 
@@ -1187,7 +1284,15 @@ export default class BattleScene extends Phaser.Scene {
     endDodge() {
         this.stopDodge();
         if (this.hp > 0) {
-            this.time.delayedCall(400, () => this.playerTurn());
+            this.time.delayedCall(400, () => {
+                let handled = false;
+                try {
+                    handled = this.adaFight?.afterBossTurn(() => this.playerTurn());
+                } catch (error) {
+                    console.error("[batalha]", error);
+                }
+                if (!handled) this.playerTurn();
+            });
         }
     }
 
@@ -1233,11 +1338,19 @@ export default class BattleScene extends Phaser.Scene {
         this.clockHands = null;
         this.mirrorSoul?.destroy();
         this.mirrorSoul = null;
+        // Regras da ADA voltam ao normal; a cor da caixa volta à da fase dela.
+        this.soulSpeed = SOUL_SPEED;
+        this.inputTurn = 0;
+        this.wallsOff = false;
+        this.adaFight?.stopPattern();
     }
 
     // Prepara o padrão do turno. Os padrões antigos (rain/sweep) usam um timer de
     // spawn por intervalo; os novos montam os próprios timers/estado.
     startPattern(name) {
+        if (this.adaFight?.startPattern(name)) {
+            return;
+        }
         if (name === "spiral") {
             this.startSpiral();
             return;

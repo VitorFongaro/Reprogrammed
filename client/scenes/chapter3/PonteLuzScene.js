@@ -49,7 +49,7 @@ const ENTRY_SCRIPT = [
 ];
 
 const AI_SCRIPT = [
-    { speaker: "ADA", text: "Esta ponte só firma para quem soma direito. Você somava direito.", color: "#ff4565" }
+    { speaker: "ADA", text: "Cada placa recebe a sua parte, nem mais nem menos. É assim que eu cuido de todos lá fora.", color: "#ff4565" }
 ];
 
 const SOLVED_SCRIPT = [

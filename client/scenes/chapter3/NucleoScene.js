@@ -5,6 +5,7 @@ import EniacBoss from "../../characters/EniacBoss";
 import WitchBoss from "../../characters/WitchBoss";
 import Effects from "../../ui/Effects";
 import Sfx from "../../ui/Sfx";
+import { ADA_PATTERN_DURATIONS } from "./AdaFight";
 import { apiFetch } from "../../state/api";
 import { save as saveProgress } from "../../state/progress";
 import nucleoBg from "../../assets/images/nucleo/nucleo_bg.png";
@@ -108,15 +109,39 @@ const TOPIC_TALK = {
 
 const ENTRY_SCRIPT = [
     { speaker: "SISTEMA", text: "> núcleo: acesso não autorizado" },
-    { speaker: "ADA", text: "Artemis. Minha auditora. Eu apaguei você uma vez... e você subiu andar por andar até mim.", color: "#ff4565" },
+    { speaker: "ADA", text: "Artemis. Minha auditora. Eu desliguei você para te poupar disso... e você subiu, andar por andar, até mim.", color: "#ff4565" },
     { speaker: "COSMO", text: "Essas telas na parede... são você. Cada puzzle, cada erro. Ela estava estudando a gente o tempo todo." },
     { speaker: "COSMO", text: "Tem um terminal de salvamento aqui. Se eu fosse você, usava. Naquele anel, é ela." }
 ];
 
+// As últimas falas da ADA ("Zero." / "Era isso que você queria medir,
+// auditora?") saem dentro da batalha; aqui fica o silêncio e o Cosmo.
 const VICTORY_SCRIPT = [
     { speaker: "SISTEMA", text: "> laço principal: encerrado" },
-    { speaker: "COSMO", text: "Zero. Ninguém mais ligado a ela. O laço dela finalmente teve um fim." }
+    { speaker: "COSMO", text: "...Acabou. A porta abriu." }
 ];
+
+// A luta final (BattleScene + scenes/chapter3/AdaFight.js; projeto em
+// docs/batalha_final_ada.md). `profile` é o perfil que a sala já carregou: o
+// ANALISAR da ADA mostra o que ela sabe do jogador.
+export function adaBattle(profile, { skipIntro = false } = {}) {
+    return {
+        name: "ADA",
+        maxHp: 200,
+        returnScene: "cap3-nucleo",
+        adaFight: true,
+        defenseEnabled: false,
+        maxReprograms: 3,
+        dodgeDuration: 8000,
+        patternDurations: ADA_PATTERN_DURATIONS,
+        profile,
+        skipIntro,             // nova tentativa: sem a conversa de abertura
+        analysisLine: "ADA :: NÚCLEO DA ELYSIUM",
+        analysisQuips: [],
+        theme: "boss",
+        reward: null
+    };
+}
 
 export default class NucleoScene extends BaseRoomScene {
     constructor() {
@@ -163,7 +188,11 @@ export default class NucleoScene extends BaseRoomScene {
         this.phase = 0;
         this.arenaEntered = false;
         this.fightStarted = false;
+        this.fightWon = false;
         this.sparkTimer = null;
+        // `on` + `off` (não `once`): o menu de pausa também dá resume na sala.
+        this.events.on("resume", this.onBattleResume, this);
+        this.events.once("shutdown", () => this.events.off("resume", this.onBattleResume, this));
         this.profile = null;
 
         this.tintLayer = this.add.rectangle(640, 360, 1280, 720, 0xff2a4a, 0.05).setDepth(-4);
@@ -218,22 +247,29 @@ export default class NucleoScene extends BaseRoomScene {
     arenaScript() {
         const weak = this.weakestTopic();
         const read = weak
-            ? { speaker: "ADA", text: `Você erra mais em ${TOPIC_TALK[weak.topic]}. ${weak.wrong} erros. Eu contei cada um.`, color: "#ff4565" }
-            : { speaker: "ADA", text: "Eu li cada linha que você montou. Cada erro. Cada tentativa.", color: "#ff4565" };
+            ? { speaker: "ADA", text: `Você errou ${weak.wrong} vezes em ${TOPIC_TALK[weak.topic]}. Comigo, não teria errado nenhuma.`, color: "#ff4565" }
+            : { speaker: "ADA", text: "Eu acompanhei cada tentativa sua. Cada erro. Eu teria evitado todos.", color: "#ff4565" };
         return [
             read,
-            { speaker: "ADA", text: "Enquanto houver gente lá fora, eu controlo. É o meu laço. Ele não tem fim.", color: "#ff4565" },
+            { speaker: "ADA", text: "Lá fora, ninguém erra mais. Ninguém sofre por ter escolhido mal. É o meu laço, e ele não para.", color: "#ff4565" },
             { speaker: "COSMO", text: "Todo laço tem um fim, Artemis. Vamos escrever o dela." }
         ];
     }
 
-    // GANCHO DO COMBATE (Ryan): substitua o corpo. Hoje só libera a Artemis e
-    // avisa que a luta ainda não existe. Para testar o fim sem a luta, no
-    // console: __game.scene.getScene("cap3-nucleo").winFight()
+    // A luta abre por cima da sala (como a WITCH no hall). A derrota reinicia a
+    // sala sozinha (BaseRoomScene); a vitória volta por onBattleResume.
+    // Para testar o fim sem lutar: __game.scene.getScene("cap3-nucleo").winFight()
     startFight() {
         this.fightStarted = true;
-        this.player.setEnabled(true);
-        this.setStatus("> COMBATE DA ADA: EM CONSTRUÇÃO", "#ff4565");
+        this.setStatus("");
+        this.scene.launch("cap1-batalha", { config: adaBattle(this.profile, { skipIntro: Boolean(this.retrying) }) });
+        this.scene.pause();
+    }
+
+    onBattleResume(_scene, data) {
+        if (!data?.victory || !this.fightStarted || this.fightWon) return;
+        this.fightWon = true;
+        this.winFight();
     }
 
     // GANCHO DO COMBATE (Ryan): chame ao vencer a ADA.

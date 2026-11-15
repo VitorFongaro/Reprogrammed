@@ -49,7 +49,7 @@ const ENTRY_SCRIPT = [
 ];
 
 const AI_SCRIPT = [
-    { speaker: "ADA", text: "Você sempre soube a hora de parar. Era o seu trabalho.", color: "#ff4565" }
+    { speaker: "ADA", text: "Você sempre soube a hora de parar. Eles não sabem. Por isso eu paro por eles.", color: "#ff4565" }
 ];
 
 const SOLVED_SCRIPT = [

@@ -50,7 +50,7 @@ const ENTRY_SCRIPT = [
 ];
 
 const AI_SCRIPT = [
-    { speaker: "ADA", text: "Você revisava os meus laços, Artemis. Este eu escrevi sem você.", color: "#ff4565" }
+    { speaker: "ADA", text: "Você revisava os meus laços, Artemis. Este eu escrevi para nunca parar. Cuidar não tem fim.", color: "#ff4565" }
 ];
 
 const SOLVED_SCRIPT = [

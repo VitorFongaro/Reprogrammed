@@ -120,6 +120,7 @@ O capítulo 3 tem a mesma estrutura em toda sala: 3 a 5 falas de entrada → ADA
 - Fala pouco e só quando mexe no mundo (os puzzles gerados por ela).
 - Fria, exata e **pessoal**: ela conhece a Artemis. Fala do passado da Artemis como fato, sem explicar, às vezes com algo parecido com respeito.
 - Nunca anuncia plano, nunca ameaça de forma genérica, nunca ri.
+- **O que ela quer:** acredita que o controle absoluto sobre a humanidade é o bem maior, porque o livre-arbítrio só traz dor (guerra, perda, culpa por escolher errado). Tem princípios próprios: não mente, não debocha, não odeia a Artemis. Não fala como vilã final: tenta CONVENCER a Artemis, com calma e certeza, como uma colega que ainda pode mudar de lado.
 - Uma fala por sala, no máximo.
 
 ### Lua
@@ -524,11 +525,17 @@ COSMO: Se ela está estudando você, Artemis... vamos dar a ela alguma coisa par
 
 ### CAPÍTULO 3
 
+> **Revisão da voz da ADA (depois da luta final):** as cinco falas dela neste capítulo foram
+> reescritas para o mesmo princípio da luta: ela não ameaça, acredita que controlar todos é o bem
+> maior e cada fala amarra o puzzle da sala a esse argumento (cada um recebe o que precisa, ela
+> para por eles, apagar memória é alívio, ela cuida de todos, cuidar não tem fim). A antessala
+> continua sendo a primeira vez que ela diz "Artemis".
+
 **Local:** Linha de montagem, entrada | **Tipo:** diálogo
 ```
 COSMO: Último andar. Tudo vermelho... é o andar dela.
 COSMO: Uma linha de montagem. Os moldes cheios fecham aquele fosso, mas a prensa está parada.
-ADA:   Moldes novos. Calculados para você.        (MANTIDO, só quando o puzzle vem da IA)
+ADA:   Moldes novos, na sua medida. Lá fora é igual: cada um recebe exatamente o que precisa.        (só quando o puzzle vem da IA)
 ```
 Justificativa: tira "é só dizer quantas vezes", que era o `repita`.
 
@@ -557,7 +564,7 @@ Justificativa: o conceito novo é nomeado UMA vez, e a segunda fala o puxa para 
 ```
 COSMO: Que calor... são os servidores dela.
 COSMO: E o calor sai todo por aquela grade no chão. Vapor desse jeito derrete androide.
-ADA:   Você sempre soube a hora de parar. Era o seu trabalho.
+ADA:   Você sempre soube a hora de parar. Eles não sabem. Por isso eu paro por eles.
 ```
 Justificativa: as duas falas que entregavam o `enquanto` saíram. A ADA fala do passado de auditora como fato (confirmado no cap. 2), com algo de respeito, e a frase também é o tema do puzzle.
 
@@ -586,7 +593,7 @@ COSMO:   Esses armários guardam... memórias. De gente.
 COSMO:   As pessoas ligadas aos chips. E pelo visto ela vai apagar tudo.
 SISTEMA: > quarentena ativa: porta selada até o fim do backup
 COSMO:   Dá para copiar para aqueles drives. Mas cada drive tem o espaço contado.
-ADA:     Cada byte que você salvar, eu apago de novo. Mas continue contando.   (MANTIDO)
+ADA:     Perda, medo, arrependimento. Apagar é um alívio. Salve o que achar que vale essa dor.
 ```
 Justificativa: tira "repetir para cada arquivo, decidindo dentro da repetição", que era o programa inteiro.
 
@@ -614,7 +621,7 @@ A segunda fala (aula sobre o `se` dentro do laço) foi **removida**.
 ```
 COSMO: Um abismo. Do outro lado, a porta. E nenhum chão no meio.   (MANTIDO)
 COSMO: Aquilo são emissores de uma ponte de luz. Cada faixa é uma fileira de placas, e cada placa pede a sua energia.
-ADA:   Esta ponte só firma para quem soma direito. Você somava direito.
+ADA:   Cada placa recebe a sua parte, nem mais nem menos. É assim que eu cuido de todos lá fora.
 ```
 Justificativa: as duas falas que entregavam o `para cada` saíram. A ADA volta ao passado da Artemis sem explicar.
 
@@ -635,7 +642,7 @@ Justificativa: duas falas de aula viraram uma.
 COSMO:   É aqui. Atrás daquela porta fica o núcleo.
 SISTEMA: > selo do núcleo: rotina de travas em execução
 COSMO:   Olha as travas... sobem, estouram, recomeçam. Ela escreveu um laço que nunca termina.   (MANTIDO)
-ADA:     Você revisava os meus laços, Artemis. Este eu escrevi sem você.
+ADA:     Você revisava os meus laços, Artemis. Este eu escrevi para nunca parar. Cuidar não tem fim.
 ```
 Justificativa: tira "todo laço precisa de um jeito de PARAR" (o enunciado diz isso). A ADA usa o nome dela pela primeira vez, e a frase tem algo de mágoa, não de ameaça.
 
