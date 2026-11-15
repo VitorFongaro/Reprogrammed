@@ -142,11 +142,15 @@ const TYPES = {
         disabledKey: "enemy-car-broken",
         scale: 3.3, speed: 95, meleeHp: 3, ranged: true, contactDamage: 3,
         // Carro (cap. 3): dirige pelo mapa; ao avistar a Artemis ATIVA a arma
-        // (torreta sobe) e passa a manter distância (kite). Atira em RAJADA: a
-        // mesma bala `burst` vezes seguidas e depois recarrega por `fireMs` - a
-        // repetição que o jogador lê olhando, e a recarga é a janela para chegar
-        // perto. Máquina de estados em updateCar.
-        car: true, fireMs: 2600, burst: 3, burstGapMs: 170,
+        // (torreta sobe) e passa a manter distância (kite) com tiros soltos. De
+        // tempos em tempos faz o LAÇO: trava um círculo em volta dela e dá uma
+        // volta completa nele, deixando um rastro em brasa (encostar no rastro
+        // queima). Quando a volta fecha, o círculo inteiro dá um choque - é
+        // preciso sair pela parte que ainda não foi desenhada. Depois o motor
+        // superaquece e ele fica parado: a janela. Máquina de estados em updateCar.
+        car: true, fireMs: 1800,
+        lasso: { radius: 150, entryMs: 260, lapMs: 1900, damage: 5, burnDamage: 2,
+            overheatMs: 1600, cooldownMs: 4200, range: 380 },
         detectRange: 360, fireRange: 400, kiteMin: 190, kiteMax: 320,
         activateKey: "enemy-car-activate",
         shootKey: "enemy-car-shoot",
@@ -231,34 +235,38 @@ const TYPES = {
     },
 
     // === Capítulo 3 (repetições) ==============================================
-    // Cada comportamento é um LAÇO que o jogador lê olhando: a rajada do carro
-    // (a mesma bala N vezes), o varredor (atira ENQUANTO enxerga), o semeador
-    // (uma cápsula PARA CADA ponto da rota) e o mech que pula em sequência
-    // (biped com `slamRepeat`, configurado na sala). O puzzle de desligar é um
-    // laço de verdade (ConditionalConsole).
+    // Cada comportamento é um LAÇO que o jogador lê olhando: o carro que dá uma
+    // VOLTA em torno dela (o laço literal), o varredor que puxa ENQUANTO enxerga,
+    // o semeador que detona as cápsulas UMA POR UMA, na ordem em que plantou, e o
+    // mech que salta atrás dela N vezes com a contagem na cabeça (biped com
+    // `leaps`, configurado na sala). O puzzle de desligar é um laço de verdade
+    // (ConditionalConsole).
 
-    // VARREDOR: drone com um cone de varredura que gira devagar. Enquanto a
-    // Artemis estiver DENTRO do cone, ele para e atira sem parar, virando o cone
-    // atrás dela mais devagar do que ela corre: sair de lado é a saída. Fora do
-    // cone, nada acontece. O cone fica desenhado no chão (updateScanner).
+    // VARREDOR: drone com um cone de varredura que gira devagar. O cone é um
+    // FEIXE TRATOR: enquanto a Artemis estiver dentro, ele para e a PUXA para
+    // perto, e quem chega encostado nele leva choque. O cone vira atrás dela
+    // mais devagar do que ela corre: sair de lado é a saída. Fora do cone, nada
+    // acontece. O cone fica desenhado no chão (updateScanner).
     varredor: {
         name: "VARREDOR",
         walkKey: "enemy-varredor-walk",
         disabledKey: "enemy-varredor-death",
         scanKey: "enemy-varredor-scan",
-        scale: 2, speed: 45, meleeHp: 3, ranged: true, contactDamage: 3,
+        scale: 2, speed: 45, meleeHp: 3, ranged: false, contactDamage: 3,
         wander: true,
-        scanner: { range: 300, halfAngle: 0.32, turnSpeed: 0.9, trackSpeed: 1.1, fireMs: 300 },
+        scanner: { range: 290, halfAngle: 0.32, turnSpeed: 0.9, trackSpeed: 1.0,
+            pull: 125, zapRange: 62, zapDamage: 3 },
         body: { w: 24, h: 16, ox: 12, oy: 18 },
         portraitScale: 0.67,
         dodge: ["laserSweep", "bigDropHoming"],
         disablePuzzle: ENEMY_DISABLE.varredor
     },
 
-    // SEMEADOR: drone que percorre uma ROTA fixa (`route`, passada pela sala) e,
-    // para cada ponto dela, larga uma cápsula. A cápsula arma com um anel
-    // crescendo no chão e explode na área do anel. Não persegue ninguém: o
-    // perigo é o caminho, que se repete.
+    // SEMEADOR: drone que percorre uma ROTA fixa (`route`, passada pela sala) e
+    // planta uma cápsula NUMERADA em cada ponto. Fechada a rota, ele detona a
+    // lista: PARA CADA cápsula, na ordem, um anel cresce e ela explode, e só
+    // então começa a próxima. Os números dizem onde vai doer e quando. Não
+    // persegue ninguém: o perigo é o caminho, que se repete.
     semeador: {
         name: "SEMEADOR",
         walkKey: "enemy-semeador-walk",
@@ -266,7 +274,7 @@ const TYPES = {
         dropKey: "enemy-semeador-drop",
         capsuleKey: "enemy-semeador-capsule",
         scale: 2, speed: 120, meleeHp: 2, ranged: false, contactDamage: 3,
-        seeder: { armMs: 1500, radius: 70, damage: 4 },
+        seeder: { radius: 72, damage: 4, telegraphMs: 520, restMs: 900 },
         body: { w: 22, h: 16, ox: 13, oy: 16 },
         portraitScale: 0.67,
         dodge: ["fallExplode", "fan"],
@@ -275,6 +283,12 @@ const TYPES = {
 };
 
 const CHASE_RANGE = 340;        // distância para começar a perseguir.
+// Saltos do mech de impacto (leapAttack).
+const LEAP_RADIUS = 64;         // área da queda (a sombra no chão)
+const LEAP_WINDUP_MS = 520;     // aviso: sombra crescendo e a conta na cabeça
+const LEAP_AIR_MS = 420;
+const LEAP_GAP_MS = 180;
+const LEAP_EXHAUST_MS = 2400;
 const FIRE_RANGE = 400;         // alcance de tiro (ranged).
 const MUZZLE_OFFSET = 26;       // saída da bala, à frente do robô.
 const HITBOX = 20;
@@ -445,6 +459,13 @@ export default class Enemy {
             return;
         }
         if (this.def.dash && this.updateDash(time, player)) {
+            return;
+        }
+
+        // Mech de impacto (cap. 3): saltos em sequência atrás da Artemis.
+        if (this.def.leaps && time >= this.nextSlam) {
+            this.nextSlam = time + this.def.slamMs;
+            this.leapAttack(this.def.leaps);
             return;
         }
 
@@ -763,9 +784,23 @@ export default class Enemy {
     }
 
     // Carro: patrulha até avistar a Artemis; então ATIVA a arma (uma vez) e passa a
-    // MANTER DISTÂNCIA (kite) atirando. Vira sempre encarando a Artemis.
+    // MANTER DISTÂNCIA (kite) atirando. De tempos em tempos, o LAÇO (startLasso).
     updateCar(time, player) {
         const dist = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+
+        if (this.carState === "lasso") {
+            this.updateLasso(player);
+            return;
+        }
+        if (this.carState === "overheat") {
+            this.sprite.body.setVelocity(0, 0);
+            if (this.scene.time.now >= this.carUntil) {
+                this.carState = "armed";
+                this.sprite.anims.resume();
+                this.applyBaseTint();
+            }
+            return;
+        }
         this.sprite.setFlipX(player.x < this.x);
 
         if (this.carState === "activating") {
@@ -780,11 +815,18 @@ export default class Enemy {
                 this.playOnce(this.def.activateKey, () => {
                     this.carState = "armed";
                     this.nextFire = time + 400;
+                    this.nextLasso = this.scene.time.now + 1500;
                     if (!this.disabled) this.sprite.play(this.def.walkKey, true);
                 });
                 return;
             }
             this.wander(time);
+            return;
+        }
+
+        const cfg = this.def.lasso;
+        if (cfg && this.scene.time.now >= (this.nextLasso ?? 0) && dist <= cfg.range) {
+            this.startLasso(player);
             return;
         }
 
@@ -801,26 +843,105 @@ export default class Enemy {
 
         if (time >= this.nextFire && dist <= this.def.fireRange) {
             this.nextFire = time + this.def.fireMs;
-            this.carBurst();
+            this.carShoot(angle);
         }
     }
 
-    // A mesma bala `burst` vezes, mirando de novo em cada uma.
-    carBurst() {
-        const shots = this.def.burst ?? 1;
-        for (let k = 0; k < shots; k += 1) {
-            this.scene.time.delayedCall(k * (this.def.burstGapMs ?? 160), () => {
-                const player = this.scene.player?.sprite;
-                if (this.disabled || this.carState !== "armed" || !player) {
-                    return;
-                }
-                this.carShoot(Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y));
-            });
+    // LAÇO, parte 1: trava o círculo em volta de onde a Artemis está (encolhido
+    // para caber na sala) e sai do chão: na volta ele anda "nos trilhos", sem
+    // física, passando por cima do que houver.
+    startLasso(player) {
+        const cfg = this.def.lasso;
+        const b = this.scene.bounds;
+        const r = cfg.radius;
+        const cx = Phaser.Math.Clamp(player.x, b.x + r + 12, b.x + b.w - r - 12);
+        const cy = Phaser.Math.Clamp(player.y, b.y + r + 12, b.y + b.h - r - 12);
+        this.lasso = {
+            cx, cy,
+            start: Phaser.Math.Angle.Between(cx, cy, this.x, this.y),
+            dir: Math.random() < 0.5 ? 1 : -1,
+            fromX: this.x, fromY: this.y,
+            elapsed: 0, last: this.scene.time.now
+        };
+        this.carState = "lasso";
+        this.sprite.body.setVelocity(0, 0);
+        this.sprite.body.enable = false;
+        this.lassoGfx ??= this.scene.add.graphics().setDepth(3);
+        Sfx.play(this.scene, "laser", 0.6);
+    }
+
+    // LAÇO, parte 2: entra no círculo e dá a volta, desenhando o rastro em brasa.
+    // O tempo só anda enquanto a sala atualiza (diálogo/console param a volta).
+    updateLasso(player) {
+        const L = this.lasso;
+        const cfg = this.def.lasso;
+        const now = this.scene.time.now;
+        L.elapsed += Math.min(50, now - L.last);
+        L.last = now;
+        const r = cfg.radius;
+        const g = this.lassoGfx;
+        g.clear();
+        g.lineStyle(2, 0xff4545, 0.25).strokeCircle(L.cx, L.cy, r);
+
+        const sx = L.cx + Math.cos(L.start) * r;
+        const sy = L.cy + Math.sin(L.start) * r;
+        if (L.elapsed < cfg.entryMs) {
+            const t = L.elapsed / cfg.entryMs;
+            this.sprite.setPosition(Phaser.Math.Linear(L.fromX, sx, t), Phaser.Math.Linear(L.fromY, sy, t));
+            return;
         }
+        const t = Math.min(1, (L.elapsed - cfg.entryMs) / cfg.lapMs);
+        const a = L.start + L.dir * t * Math.PI * 2;
+        this.sprite.setPosition(L.cx + Math.cos(a) * r, L.cy + Math.sin(a) * r);
+        this.sprite.setFlipX(-Math.sin(a) * L.dir < 0);
+
+        g.lineStyle(6, 0xff6a3d, 0.9);
+        g.beginPath();
+        g.arc(L.cx, L.cy, r, L.start, a, L.dir < 0);
+        g.strokePath();
+
+        // Encostar no rastro já desenhado queima: a saída é pela parte que falta.
+        const pd = Phaser.Math.Distance.Between(L.cx, L.cy, player.x, player.y);
+        if (Math.abs(pd - r) < 14) {
+            const pa = Phaser.Math.Angle.Between(L.cx, L.cy, player.x, player.y);
+            const rel = Phaser.Math.Angle.Normalize((pa - L.start) * L.dir);
+            if (rel <= t * Math.PI * 2) {
+                this.scene.damagePlayer?.(cfg.burnDamage);
+            }
+        }
+        if (t >= 1) {
+            this.closeLasso(player);
+        }
+    }
+
+    // LAÇO, parte 3: a volta fechou. Choque em todo o círculo, o carro volta ao
+    // chão e o motor superaquece (parado, piscando laranja) - a janela.
+    closeLasso(player) {
+        const L = this.lasso;
+        const cfg = this.def.lasso;
+        const s = this.scene;
+        this.lasso = null;
+        this.lassoGfx.clear();
+        const flash = s.add.circle(L.cx, L.cy, cfg.radius, 0xff4545, 0.45)
+            .setStrokeStyle(4, 0xffb0a0, 1).setDepth(3);
+        s.tweens.add({ targets: flash, alpha: 0, duration: 500, onComplete: () => flash.destroy() });
+        s.cameras.main.shake(140, 0.004);
+        Sfx.play(s, "bump", 0.7);
+        if (Phaser.Math.Distance.Between(L.cx, L.cy, player.x, player.y) < cfg.radius - 6) {
+            s.damagePlayer?.(cfg.damage);
+        }
+        this.sprite.body.enable = true;
+        this.sprite.body.reset(this.x, this.y);
+        this.carState = "overheat";
+        this.carUntil = s.time.now + cfg.overheatMs;
+        this.nextLasso = this.carUntil + cfg.cooldownMs;
+        this.sprite.anims.pause();
+        this.sprite.setTint(0xff9a5a).setTintMode(Phaser.TintModes.MULTIPLY);
     }
 
     // VARREDOR: o cone gira; com a Artemis dentro, ele para, segue ela devagar e
-    // atira sem parar (enquanto a vê). `dt` sai do relógio do próprio update.
+    // a PUXA (enquanto a vê). Encostada nele, choque. `dt` sai do relógio do
+    // próprio update.
     updateScanner(time, player) {
         const cfg = this.def.scanner;
         const dt = Math.min(0.1, (time - (this.lastScan ?? time)) / 1000);
@@ -834,13 +955,15 @@ export default class Enemy {
             const step = cfg.trackSpeed * dt;
             this.scanAngle += Phaser.Math.Clamp(diff, -step, step);
             this.sprite.body.setVelocity(0, 0);
-            if (time >= this.nextFire) {
-                this.nextFire = time + cfg.fireMs;
-                Sfx.play(this.scene, "laser", 0.4);
-                this.scene.spawnEnemyBullet?.(
-                    this.x + Math.cos(toPlayer) * 22, this.y + Math.sin(toPlayer) * 22, toPlayer
-                );
+            if (dist > cfg.zapRange) {
+                // Puxa mexendo na posição: a velocidade do corpo é do controle da
+                // Artemis, e o Arcade respeita o deslocamento feito aqui.
+                player.x -= Math.cos(toPlayer) * cfg.pull * dt;
+                player.y -= Math.sin(toPlayer) * cfg.pull * dt;
+            } else {
+                this.scene.damagePlayer?.(cfg.zapDamage);
             }
+            this.tractorStreaks();
         } else {
             this.scanAngle += cfg.turnSpeed * dt;
             this.wander(time);
@@ -848,11 +971,26 @@ export default class Enemy {
         if (seen !== this.locked) {
             this.locked = seen;
             this.sprite.play(seen ? this.def.scanKey : this.def.walkKey, true);
-            // O primeiro tiro sai um instante depois de travar: dá para ver o
-            // cone acender antes de levar.
-            if (seen) this.nextFire = time + 250;
+            if (seen) Sfx.play(this.scene, "laser", 0.4);
         }
         this.drawScanCone();
+    }
+
+    // Riscos correndo para dentro do cone: dá para ver que o feixe PUXA.
+    tractorStreaks() {
+        const s = this.scene;
+        const now = s.time.now;
+        if (now < (this.nextStreak ?? 0)) return;
+        this.nextStreak = now + 70;
+        const cfg = this.def.scanner;
+        const a = this.scanAngle + Phaser.Math.FloatBetween(-cfg.halfAngle, cfg.halfAngle) * 0.9;
+        const d = cfg.range * Phaser.Math.FloatBetween(0.55, 1);
+        const streak = s.add.rectangle(this.x + Math.cos(a) * d, this.y + Math.sin(a) * d, 10, 2, 0xffb0a0, 0.9)
+            .setRotation(a).setDepth(4);
+        s.tweens.add({
+            targets: streak, x: this.x, y: this.y, alpha: 0.2, duration: 380, ease: "Quad.easeIn",
+            onComplete: () => streak.destroy()
+        });
     }
 
     drawScanCone() {
@@ -873,8 +1011,8 @@ export default class Enemy {
         g.strokePoints(points, true);
     }
 
-    // SEMEADOR: vai de ponto em ponto da rota; em cada um para, toca a soltura
-    // e larga uma cápsula. Depois do último, recomeça do primeiro.
+    // SEMEADOR: vai de ponto em ponto da rota plantando cápsulas numeradas; ao
+    // fechar a rota, para e detona a lista (detonateChain) antes de recomeçar.
     updateSeeder() {
         const route = this.def.route;
         if (!route?.length) {
@@ -887,8 +1025,8 @@ export default class Enemy {
         }
         const target = route[this.routeIndex % route.length];
         const dist = Phaser.Math.Distance.Between(this.x, this.y, target.x, target.y);
-        // Preso atrás de alguma coisa (a Artemis no caminho, um colisor): larga a
-        // cápsula onde está em vez de ficar empurrando para sempre.
+        // Preso atrás de alguma coisa (a Artemis no caminho, um colisor): planta
+        // onde está em vez de ficar empurrando para sempre.
         const now = this.scene.time.now;
         if (this.routeTarget !== this.routeIndex) {
             this.routeTarget = this.routeIndex;
@@ -899,10 +1037,14 @@ export default class Enemy {
             this.sprite.body.setVelocity(0, 0);
             this.playOnce(this.def.dropKey, () => {
                 if (this.disabled) return;
-                this.dropCapsule(this.x, this.y + 26);
                 this.routeIndex += 1;
-                this.seeding = false;
+                this.plantCapsule(this.x, this.y + 26, this.capsules.length + 1);
                 this.sprite.play(this.def.walkKey, true);
+                if (this.routeIndex % route.length === 0) {
+                    this.detonateChain();       // fechou a rota: hora de detonar a lista
+                } else {
+                    this.seeding = false;
+                }
             });
             return;
         }
@@ -914,40 +1056,66 @@ export default class Enemy {
         }
     }
 
-    // Cápsula: anel crescendo no chão (o aviso de onde vai doer), abre no fim e
-    // explode na área do anel. Desligar o semeador desarma as que sobraram.
-    dropCapsule(x, y) {
+    // Cápsula plantada: quieta, com o número da ordem em cima.
+    plantCapsule(x, y, n) {
         const s = this.scene;
-        const cfg = this.def.seeder;
         const capsule = s.add.sprite(x, y, this.def.capsuleKey, 0)
             .setScale(this.def.scale * 0.75).setOrigin(0.5, 0.85).setDepth(y);
-        const ring = s.add.circle(x, y, cfg.radius, 0xff4545, 0.08)
-            .setStrokeStyle(2, 0xff4545, 0.7).setDepth(3).setScale(0.15);
-        const grow = s.tweens.add({ targets: ring, scale: 1, duration: cfg.armMs, ease: "Sine.easeIn" });
-        const entry = { capsule, ring };
-        this.capsules.push(entry);
-        const openAt = s.time.delayedCall(Math.max(0, cfg.armMs - 500), () => capsule.play(this.def.capsuleKey));
-        const boom = s.time.delayedCall(cfg.armMs, () => {
-            this.capsules = this.capsules.filter((c) => c !== entry);
-            capsule.destroy();
-            ring.destroy();
-            Juice.impact(s, x, y - 6, { color: 0xff6a3d, size: 2.2 });
-            Sfx.play(s, "bump", 0.6);
-            s.cameras.main.shake(120, 0.003);
-            const p = s.player?.sprite;
-            if (p && Phaser.Math.Distance.Between(x, y, p.x, p.y) <= cfg.radius) {
-                s.damagePlayer?.(cfg.damage);
-            }
+        const label = s.add.text(x, y - 48, String(n), {
+            fontFamily: "VCR", fontSize: "18px", color: "#ff6a3d", stroke: "#050505", strokeThickness: 4
+        }).setOrigin(0.5).setDepth(820);
+        this.capsules.push({ capsule, label, x, y });
+    }
+
+    // PARA CADA cápsula, na ordem: o número acende, o anel cresce e ela explode;
+    // a próxima só começa quando a anterior explode. Depois de um respiro, a
+    // rota recomeça (e planta tudo de novo).
+    detonateChain() {
+        const s = this.scene;
+        const cfg = this.def.seeder;
+        const list = this.capsules;
+        this.chainTimers = [];
+        list.forEach((c, i) => {
+            this.chainTimers.push(s.time.delayedCall(i * cfg.telegraphMs, () => {
+                c.label.setColor("#ffffff").setScale(1.4);
+                c.capsule.play(this.def.capsuleKey);
+                c.ring = s.add.circle(c.x, c.y, cfg.radius, 0xff4545, 0.1)
+                    .setStrokeStyle(2, 0xff4545, 0.8).setDepth(3).setScale(0.15);
+                s.tweens.add({ targets: c.ring, scale: 1, duration: cfg.telegraphMs, ease: "Sine.easeIn" });
+            }));
+            this.chainTimers.push(s.time.delayedCall((i + 1) * cfg.telegraphMs, () => {
+                c.capsule.destroy();
+                c.label.destroy();
+                c.ring?.destroy();
+                Juice.impact(s, c.x, c.y - 6, { color: 0xff6a3d, size: 2.2 });
+                Sfx.play(s, "bump", 0.6, { detune: i * 150 });
+                s.cameras.main.shake(110, 0.003);
+                const p = s.player?.sprite;
+                if (p && Phaser.Math.Distance.Between(c.x, c.y, p.x, p.y) <= cfg.radius) {
+                    s.damagePlayer?.(cfg.damage);
+                }
+            }));
         });
-        entry.defuse = () => {
-            grow.remove();
-            openAt.remove();
-            boom.remove();
-            s.tweens.add({
-                targets: [capsule, ring], alpha: 0, duration: 300,
-                onComplete: () => { capsule.destroy(); ring.destroy(); }
+        this.chainTimers.push(s.time.delayedCall(list.length * cfg.telegraphMs + cfg.restMs, () => {
+            this.capsules = [];
+            this.chainTimers = [];
+            this.seeding = false;
+        }));
+    }
+
+    // Desligar o semeador desarma a lista inteira.
+    defuseCapsules() {
+        this.chainTimers?.forEach((t) => t.remove());
+        this.chainTimers = [];
+        const parts = (this.capsules ?? []).flatMap((c) => [c.capsule, c.label, c.ring])
+            .filter((o) => o?.active);
+        if (parts.length) {
+            this.scene.tweens.add({
+                targets: parts, alpha: 0, duration: 300,
+                onComplete: () => parts.forEach((o) => o.destroy())
             });
-        };
+        }
+        this.capsules = [];
     }
 
     carShoot(angle) {
@@ -969,13 +1137,7 @@ export default class Enemy {
     }
 
     // Pula (hop visual, sem física) e ao aterrissar solta 4 bolas nas diagonais.
-    // Com `slamRepeat` (o mech do cap. 3), repete o pulo em sequência, cada um
-    // com as bolas giradas 22,5 graus: a brecha de um pulo é onde cai o próximo.
-    slamAttack(hop = 0) {
-        if (this.disabled || !this.sprite.body) {
-            this.jumping = false;
-            return;
-        }
+    slamAttack() {
         this.jumping = true;
         const gx = this.sprite.x;
         const gy = this.sprite.y;
@@ -989,8 +1151,8 @@ export default class Enemy {
             yoyo: true,
             ease: "Quad.easeOut",
             onComplete: () => {
+                this.jumping = false;
                 if (this.disabled || !this.sprite.body) {
-                    this.jumping = false;
                     return;
                 }
                 this.sprite.body.enable = true;
@@ -998,15 +1160,96 @@ export default class Enemy {
                 Sfx.play(this.scene, "bump");   // o biped atingiu o chão
                 this.scene.cameras.main.shake(200, 0.006);
                 const d = Math.PI / 4;
-                const turn = hop * (Math.PI / 8);
-                [d, 3 * d, 5 * d, 7 * d].forEach((a) => this.scene.spawnEnergyBall?.(gx, gy, a + turn));
-                // Ainda tem pulo na sequência: continua "pulando" (o update fica de fora).
-                if (hop + 1 < (this.def.slamRepeat ?? 1)) {
-                    this.scene.time.delayedCall(this.def.slamGapMs ?? 240, () => this.slamAttack(hop + 1));
-                } else {
-                    this.jumping = false;
-                }
+                [d, 3 * d, 5 * d, 7 * d].forEach((a) => this.scene.spawnEnergyBall?.(gx, gy, a));
             }
+        });
+    }
+
+    // MECH DE IMPACTO (cap. 3): salta ATRÁS dela `left` vezes seguidas. A conta
+    // regressiva fica na cabeça dele e a sombra no chão marca onde vai cair
+    // (mira travada no aviso). Na última queda solta as 4 bolas; depois fica
+    // exausto, soltando vapor - a janela para golpear ou reprogramar.
+    leapAttack(left) {
+        const s = this.scene;
+        const player = s.player?.sprite;
+        if (this.disabled || !this.sprite.body || !player) {
+            this.jumping = false;
+            return;
+        }
+        this.jumping = true;
+        const b = s.bounds;
+        const tx = Phaser.Math.Clamp(player.x, b.x + 30, b.x + b.w - 30);
+        const ty = Phaser.Math.Clamp(player.y, b.y + 30, b.y + b.h - 30);
+        this.sprite.body.setVelocity(0, 0);
+        this.sprite.body.enable = false;
+
+        this.leapLabel ??= s.add.text(0, 0, "", {
+            fontFamily: "VCR", fontSize: "26px", color: "#ff4545", stroke: "#050505", strokeThickness: 5
+        }).setOrigin(0.5).setDepth(830);
+        this.leapLabel.setText(String(left)).setPosition(this.x, this.y - 74).setVisible(true).setScale(1.5);
+        s.tweens.add({ targets: this.leapLabel, scale: 1, duration: 160, ease: "Back.easeOut" });
+
+        this.leapShadow?.destroy();
+        const shadow = s.add.circle(tx, ty, LEAP_RADIUS, 0xff4545, 0.12)
+            .setStrokeStyle(2, 0xff4545, 0.8).setDepth(3).setScale(0.3);
+        this.leapShadow = shadow;
+        s.tweens.add({ targets: shadow, scale: 1, duration: LEAP_WINDUP_MS });
+
+        s.time.delayedCall(LEAP_WINDUP_MS, () => {
+            if (this.disabled) return;
+            this.leapLabel.setVisible(false);
+            const sx = this.x;
+            const sy = this.y;
+            s.tweens.addCounter({
+                from: 0, to: 1, duration: LEAP_AIR_MS, ease: "Sine.easeInOut",
+                onUpdate: (tw) => {
+                    const t = tw.getValue();
+                    this.sprite.setPosition(
+                        Phaser.Math.Linear(sx, tx, t),
+                        Phaser.Math.Linear(sy, ty, t) - Math.sin(t * Math.PI) * 90
+                    );
+                },
+                onComplete: () => this.leapLand(tx, ty, left)
+            });
+        });
+    }
+
+    leapLand(tx, ty, left) {
+        const s = this.scene;
+        this.leapShadow?.destroy();
+        this.leapShadow = null;
+        if (this.disabled || !this.sprite.body) return;
+        this.sprite.body.enable = true;
+        this.sprite.body.reset(tx, ty);
+        Sfx.play(s, "bump");
+        s.cameras.main.shake(180, 0.006);
+        Juice.impact(s, tx, ty, { color: 0xff4545, size: 1.8 });
+        const p = s.player?.sprite;
+        if (p && Phaser.Math.Distance.Between(tx, ty, p.x, p.y) <= LEAP_RADIUS) {
+            s.damagePlayer?.(4);
+        }
+        if (left > 1) {
+            s.time.delayedCall(LEAP_GAP_MS, () => this.leapAttack(left - 1));
+            return;
+        }
+        const d = Math.PI / 4;
+        [d, 3 * d, 5 * d, 7 * d].forEach((a) => s.spawnEnergyBall?.(tx, ty, a));
+        // Exausto: parado, cinza e soltando vapor até recuperar.
+        this.sprite.anims.pause();
+        this.sprite.setTint(0x8a8f99).setTintMode(Phaser.TintModes.MULTIPLY);
+        const puffs = s.time.addEvent({
+            delay: 240, repeat: Math.floor(LEAP_EXHAUST_MS / 240) - 1, callback: () => {
+                const puff = s.add.circle(this.x + Phaser.Math.Between(-14, 14), this.y - 30, 6, 0xdadde6, 0.5)
+                    .setDepth(this.sprite.depth + 1);
+                s.tweens.add({ targets: puff, y: puff.y - 30, scale: 2, alpha: 0, duration: 700, onComplete: () => puff.destroy() });
+            }
+        });
+        s.time.delayedCall(LEAP_EXHAUST_MS, () => {
+            puffs.remove();
+            if (this.disabled) return;
+            this.sprite.anims.resume();
+            this.applyBaseTint();
+            this.jumping = false;
         });
     }
 
@@ -1103,8 +1346,11 @@ export default class Enemy {
         this.weapon?.destroy();
         this.weapon = null;
         this.scanCone?.clear();
-        this.capsules?.forEach((c) => c.defuse());
-        this.capsules = [];
+        this.lasso = null;
+        this.lassoGfx?.clear();
+        this.leapShadow?.destroy();
+        this.leapLabel?.setVisible(false);
+        if (this.def.seeder) this.defuseCapsules();
         this.scene.onEnemyDisabled?.(this);
     }
 
@@ -1127,6 +1373,8 @@ export default class Enemy {
     destroy() {
         this.standbyTween?.remove();
         this.scanCone?.destroy();
+        this.lassoGfx?.destroy();
+        this.leapLabel?.destroy();
         this.trail?.destroy();
         this.weapon?.destroy();
         this.sprite?.destroy();

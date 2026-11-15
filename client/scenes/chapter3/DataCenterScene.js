@@ -211,10 +211,11 @@ export default class DataCenterScene extends BaseRoomScene {
     spawnEnemies() {
         new Enemy(this, 1030, 430, {
             type: "biped",
-            // O biped do cap. 1, com o padrão trocado: três pulos seguidos, cada
-            // um com as bolas giradas (repita 3 vezes), e um descanso maior depois.
+            // O biped do cap. 1, com o padrão trocado: salta ATRÁS da Artemis três
+            // vezes seguidas (repita 3 vezes), com a contagem na cabeça e a sombra
+            // marcando a queda, e depois fica exausto (Enemy.leapAttack).
             overrides: {
-                name: "MECH DE IMPACTO", slamRepeat: 3, slamGapMs: 260, slamMs: 5600,
+                name: "MECH DE IMPACTO", leaps: 3, slamMs: 6500,
                 meleeHp: 5, dodge: ["laserSweep", "fallExplode"], disablePuzzle: ENEMY_DISABLE.mech
             }
         });
