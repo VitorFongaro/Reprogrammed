@@ -291,6 +291,11 @@ Dano padrão: o `PROJECTILE_DAMAGE` (3) da batalha, com os i-frames de sempre (`
 - **Evolução.** Só acontece uma vez. É um "desfile" do jogo inteiro.
 
 ### C4 — Eco (fase 3)
+
+> **Substituído pelo CIRCUITO** (`circuit` no `AdaFight.js`): a alma fica presa nas trilhas de
+> uma placa, como os fios da aranha no Undertale. A/D anda na trilha, W/S troca de trilha só
+> nas pontes; pulsos de corrente correm pelas mesmas trilhas e alcançar a saída verde, no canto
+> oposto, encerra o turno. O texto abaixo é o projeto original do eco.
 - **Início.** Painel: `para cada passo em artemis.ultimo_turno :`. Um rastro vermelho fino aparece
   no chão da caixa: o caminho exato que a alma fez no turno anterior (o `soulTrail` que o
   `recordSoulTrail` já grava).

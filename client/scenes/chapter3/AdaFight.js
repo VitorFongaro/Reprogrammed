@@ -55,12 +55,20 @@ const SPEECH_X = 44;
 const SPEECH_Y = 80;
 const SPEECH_W = 500;
 
+// CIRCUITO (fase 3): a placa dentro da caixa. Três trilhas horizontais e
+// pontes (vias) entre elas, sorteadas por turno entre as colunas VIA_SLOTS.
+const CIRCUIT_ROWS = [-100, 0, 100];         // y das trilhas, a partir do centro da caixa
+const CIRCUIT_HALF_W = 210;                  // meia largura das trilhas
+const VIA_SLOTS = [-170, -90, 0, 90, 170];   // x possíveis das pontes
+const CIRCUIT_SNAP = 14;                     // folga para entrar numa ponte/trilha
+const PULSE_HIT = 14;                        // raio do acerto de um pulso
+
 // Fases: integridade em % para SAIR da fase, turnos mínimos (todos os ataques
 // aparecem pelo menos uma vez) e a cor da caixa.
 const PHASES = [
     { name: "VARIÁVEIS", until: 70, patterns: ["assignSize", "wallsOff", "decimalSpeed"], box: 0xf7f7f7, grid: null },
     { name: "CONDICIONAIS", until: 40, patterns: ["ifElseHalves", "ruleOrder", "imposedRule"], box: 0xffd08a, grid: AMBER },
-    { name: "REPETIÇÕES", until: 12, patterns: ["repeatRotate", "ring", "forEachMemory", "echo"], box: 0xff7a8a, grid: RED },
+    { name: "REPETIÇÕES", until: 12, patterns: ["repeatRotate", "ring", "forEachMemory", "circuit"], box: 0xff7a8a, grid: RED },
     { name: "PARADA", until: 0, patterns: ["loopPulse"], box: 0x9fe8ff, grid: 0x4ad6ff }
 ];
 
@@ -68,7 +76,7 @@ const PHASES = [
 export const ADA_PATTERN_DURATIONS = {
     assignSize: 7600, wallsOff: 8600, decimalSpeed: 8200,
     ifElseHalves: 9200, ruleOrder: 9600, imposedRule: 6200,
-    repeatRotate: 10000, ring: 11000, forEachMemory: 11400, echo: 9000,
+    repeatRotate: 10000, ring: 11000, forEachMemory: 11400, circuit: 11000,
     loopPulse: 6000
 };
 
@@ -87,7 +95,7 @@ const LINES = {
     ruleOrder: ["ADA", "Quem decide é a ordem, não você. É um alívio, se você deixar."],
     imposedRule: ["ADA", "Uma condição no seu ataque. Lá fora, todos vivem assim. E vivem bem."],
     forEachMemory: ["ADA", "Cada um deles caiu porque alguém escolheu lutar. Eu guardei todos."],
-    echo: ["ADA", "Você repete os próprios passos. Todos repetem. Eu só tiro a dor do caminho."]
+    circuit: ["ADA", "Num circuito ninguém se perde. Existe um caminho, e ele basta."]
 };
 
 // Conversas maiores (DialogueBox): começo da luta, troca de fase e fim. A
@@ -189,9 +197,7 @@ export default class AdaFight {
         this.adaRoutine = null;
         this.adaRoutineStatus = null;
         this.adaReserve = 16;
-        this.trail = [];
-        this.lastTrail = [];
-        this.echoCount = 0;
+        this.circuitCount = 0;
         this.rotateCount = 0;
         this.sideMode = false;
         this.dialogue = new DialogueBox(scene);
@@ -418,8 +424,6 @@ export default class AdaFight {
     // fase já mostrou todos os ataques. Devolve true se assumiu o fluxo.
     afterBossTurn(next) {
         if (this.dialogue.isOpen) return false;
-        this.lastTrail = this.trail;
-        this.trail = [];
         const p = PHASES[this.phase];
         const pct = (this.s.bossHp / this.s.config.maxHp) * 100;
         if (this.phase < 3 && pct <= p.until && this.turnsInPhase >= p.patterns.length) {
@@ -621,6 +625,10 @@ export default class AdaFight {
 
     // Anel: A/D correm em volta, W/S vão para dentro/fora. Devolve true se tratou.
     moveSoul(vx, vy, delta) {
+        if (this.circuit) {
+            this.moveOnCircuit(vx, vy, (this.s.soulSpeed * delta) / 1000);
+            return true;
+        }
         const r = this.ring;
         if (!r) return false;
         const dt = delta / 1000;
@@ -632,11 +640,6 @@ export default class AdaFight {
     }
 
     update(time, delta) {
-        const s = this.s;
-        const last = this.trail[this.trail.length - 1];
-        if (!this.sideMode && (!last || time - last.t >= 60) && this.trail.length < 200) {
-            this.trail.push({ t: time, x: s.soul.x, y: s.soul.y });
-        }
         if (!this.tick) return;
         try {
             this.tick(time, delta);
@@ -651,6 +654,7 @@ export default class AdaFight {
         const s = this.s;
         this.tick = null;
         this.ring = null;
+        this.circuit = null;
         this.bridgeOpen = false;
         this.code.forEach((t, i) => {
             s.tweens.killTweensOf(t);
@@ -705,17 +709,59 @@ export default class AdaFight {
         return g;
     }
 
-    // Zona retangular: avisa fraca por `warnMs` e fere por `activeMs`.
+    // Zona retangular: avisa fraca por `warnMs` (o aviso é desenhado, é
+    // informação) e fere por `activeMs`, com o golpe em efeito do pack.
     zone(x0, y0, x1, y1, warnMs, activeMs, color = RED) {
         const s = this.s;
         const now = s.time.now;
         const g = this.fx(s.add.graphics().setDepth(26));
         g.fillStyle(color, 0.16).fillRect(x0, y0, x1 - x0, y1 - y0);
+        g.lineStyle(1, color, 0.6).strokeRect(x0, y0, x1 - x0, y1 - y0);
+        s.tweens.add({ targets: g, alpha: 0.45, duration: 150, yoyo: true, repeat: -1 });
         s.later(warnMs, () => {
-            g.clear().fillStyle(color, 0.55).fillRect(x0, y0, x1 - x0, y1 - y0);
+            s.tweens.killTweensOf(g);
+            g.clear().fillStyle(color, 0.12).fillRect(x0, y0, x1 - x0, y1 - y0).setAlpha(1);
+            this.zoneFx(x0, y0, x1, y1);
             s.later(activeMs, () => g.destroy());
         });
         s.hazards.push({ shape: "rect", x0, y0, x1, y1, from: now + warnMs, until: now + warnMs + activeMs });
+    }
+
+    // O golpe de uma zona, pelo formato dela: coluna = relâmpago caindo; barra
+    // fina = relâmpago deitado (a grade da catraca); faixa larga = fileira de
+    // explosões (a faixa queima).
+    zoneFx(x0, y0, x1, y1) {
+        const s = this.s;
+        const w = x1 - x0;
+        const h = y1 - y0;
+        const cx = (x0 + x1) / 2;
+        const cy = (y0 + y1) / 2;
+        if (w < h) {
+            s.spawnFx("fx-lightning", cx, cy, { depth: 27, scale: (w + 18) / 128, scaleY: (h + 24) / 128 });
+        } else if (h < 30) {
+            s.spawnFx("fx-lightning", cx, cy, { depth: 27, scale: (h + 16) / 128, scaleY: (w + 12) / 128 }).setAngle(90);
+        } else {
+            const n = Math.max(1, Math.round(w / 60));
+            for (let i = 0; i < n; i += 1) {
+                s.spawnFx("fx-explosion", x0 + (i + 0.5) * (w / n), cy, { depth: 27, scale: (h * 0.95) / 64 });
+            }
+        }
+    }
+
+    // Feixe que DURA (ponteiro, raio do anel): relâmpago do pack em laço,
+    // esticado entre dois pontos a cada quadro por placeBeam.
+    beam(tint = null) {
+        const spr = this.fx(this.s.add.sprite(0, 0, "fx-lightning").setDepth(27));
+        spr.play({ key: "fx-lightning-anim", repeat: -1 });
+        if (tint !== null) spr.setTint(tint);
+        return spr;
+    }
+
+    placeBeam(spr, x1, y1, x2, y2, thickness) {
+        const len = Math.hypot(x2 - x1, y2 - y1);
+        spr.setPosition((x1 + x2) / 2, (y1 + y2) / 2)
+            .setRotation(Math.atan2(y2 - y1, x2 - x1) + Math.PI / 2)
+            .setScale(thickness / 128, (len + 10) / 128);
     }
 
     rainIn(rect, speed = 190) {
@@ -744,7 +790,7 @@ export default class AdaFight {
             repeatRotate: () => this.repeatRotate(),
             ring: () => this.ringPattern(),
             forEachMemory: () => this.forEachMemory(),
-            echo: () => this.echo(),
+            circuit: () => this.circuitPattern(),
             loopPulse: () => this.loopPulse()
         }[name];
         if (!fn) return false;
@@ -794,6 +840,7 @@ export default class AdaFight {
                 const fromLeft = Math.random() < 0.5;
                 const warn = this.fx(s.add.graphics().setDepth(26));
                 warn.lineStyle(2, RED, 0.5).lineBetween(70, y, 1210, y);
+                s.spawnFx("fx-charge", fromLeft ? 80 : 1200, y, { depth: 28, scale: 0.45 });
                 s.later(600, () => {
                     warn.destroy();
                     for (let k = 0; k < 6; k += 1) {
@@ -1161,15 +1208,24 @@ export default class AdaFight {
             g.arc(r.cx, r.cy, r.rMax + 10, this.exit.ang - this.exit.w / 2, this.exit.ang + this.exit.w / 2, false);
             g.strokePath();
         }
-        // Raios: avisam finos, ferem grossos, giram.
-        this.spokes = this.spokes.filter((sp) => time <= sp.until);
+        // Raios: avisam finos (linha desenhada), ferem como relâmpago do pack, giram.
+        this.spokes = this.spokes.filter((sp) => {
+            if (time <= sp.until) return true;
+            sp.beam?.destroy();
+            return false;
+        });
         this.spokes.forEach((sp) => {
             sp.ang += sp.dir * 0.5 * dt;
             const ex = r.cx + Math.cos(sp.ang) * (r.rMax + 12);
             const ey = r.cy + Math.sin(sp.ang) * (r.rMax + 12);
             const active = time >= sp.from;
-            g.lineStyle(active ? 6 : 1, RED, active ? 0.95 : 0.5).lineBetween(r.cx, r.cy, ex, ey);
-            if (active && s.soulNearSegment(r.cx, r.cy, ex, ey, 9)) s.hurtSoul();
+            if (!active) {
+                g.lineStyle(1, RED, 0.5).lineBetween(r.cx, r.cy, ex, ey);
+                return;
+            }
+            if (!sp.beam) sp.beam = this.beam();
+            this.placeBeam(sp.beam, r.cx, r.cy, ex, ey, 26);
+            if (s.soulNearSegment(r.cx, r.cy, ex, ey, 9)) s.hurtSoul();
         });
         // Condição de parada: passou pela saída aberta, o laço termina.
         const diff = Math.abs(Phaser.Math.Angle.Wrap(r.ang - this.exit.ang));
@@ -1177,6 +1233,8 @@ export default class AdaFight {
             this.ring = null;
             this.tick = null;
             g.clear();
+            this.spokes.forEach((sp) => sp.beam?.destroy());
+            this.spokes = [];
             s.boxGraphics.setVisible(true);
             this.code[0].setText("enquanto alma.no_anel :  falso");
             this.highlight(0, "#51e36b");
@@ -1222,19 +1280,32 @@ export default class AdaFight {
         }
         if (key === "witch") {
             // Ponteiros: o das horas lento e longo, o dos minutos rápido e curto.
+            // O relógio do pack (o mesmo da luta dela) marca o eixo; os ponteiros
+            // avisam como linha fina e ferem como relâmpago verde.
+            s.spawnFx("fx-haste", b.x, b.y, { depth: 25, scale: 1.3 }).setAlpha(0.55);
             const g = this.fx(s.add.graphics().setDepth(27));
             const hands = [{ ang: -Math.PI / 2, w: 0.9, len: 140 }, { ang: 0, w: -2.0, len: 95 }];
             const start = s.time.now;
+            const end = () => {
+                g.clear();
+                hands.forEach((h) => h.beam?.destroy());
+                this.tick = null;
+            };
             this.tick = (time, delta) => {
-                if (time > until) { g.clear(); this.tick = null; return; }
+                if (time > until) { end(); return; }
                 g.clear();
                 const live = time - start > 500;
                 hands.forEach((h) => {
                     h.ang += h.w * (delta / 1000);
                     const ex = b.x + Math.cos(h.ang) * h.len;
                     const ey = b.y + Math.sin(h.ang) * h.len;
-                    g.lineStyle(live ? 6 : 1, 0x51e3a0, live ? 0.95 : 0.6).lineBetween(b.x, b.y, ex, ey);
-                    if (live && s.soulNearSegment(b.x, b.y, ex, ey, 8)) s.hurtSoul();
+                    if (!live) {
+                        g.lineStyle(1, 0x51e3a0, 0.6).lineBetween(b.x, b.y, ex, ey);
+                        return;
+                    }
+                    if (!h.beam) h.beam = this.beam(0x51e3a0);
+                    this.placeBeam(h.beam, b.x, b.y, ex, ey, 24);
+                    if (s.soulNearSegment(b.x, b.y, ex, ey, 8)) s.hurtSoul();
                 });
             };
             return;
@@ -1271,47 +1342,164 @@ export default class AdaFight {
         s.patternTimers.push(t);
     }
 
-    // FASE 3 — eco: uma sombra repete o caminho que a alma fez no turno anterior,
-    // no mesmo ritmo (na segunda vez, em dobro).
-    echo() {
+    // FASE 3 — CIRCUITO (o modo da aranha do Undertale, numa placa): a alma
+    // fica PRESA nas trilhas. A/D anda na trilha; W/S troca de trilha, mas só
+    // numa ponte (via). Pulsos de corrente correm pelas MESMAS trilhas, então
+    // desviar é trocar de trilha na hora certa; a SAÍDA fica na ponta oposta,
+    // e alcançá-la encerra o turno. Na segunda vez, tudo 25% mais rápido.
+    circuitPattern() {
         const s = this.s;
         const b = s.box;
-        const speed = this.echoCount > 0 ? 2 : 1;
-        this.echoCount += 1;
-        this.setCode(["para cada passo em artemis.ultimo_turno :", "    repetir(passo)"]);
+        const fast = this.circuitCount > 0 ? 1.25 : 1;
+        this.circuitCount += 1;
+        this.setCode(["para cada pulso em circuito :", "    pulso.avancar()", "", "se alma.na_saida : parar"]);
         this.highlight(0);
-        let path = this.lastTrail.filter((p) => Number.isFinite(p.x));
-        if (path.length < 12) {
-            path = Array.from({ length: 60 }, (_, i) => ({
-                t: i * 100, x: b.x + Math.sin(i / 5) * 160, y: b.y + Math.cos(i / 7) * 90
-            }));
+
+        const x0 = b.x - CIRCUIT_HALF_W;
+        const x1 = b.x + CIRCUIT_HALF_W;
+        const rows = CIRCUIT_ROWS.map((dy) => ({ y: b.y + dy, x0, x1 }));
+        // Pontes: 2 ou 3 por vão, em colunas sorteadas (sempre ao menos uma).
+        const vias = [];
+        for (let i = 0; i < rows.length - 1; i += 1) {
+            const cols = Phaser.Utils.Array.Shuffle(VIA_SLOTS.slice()).slice(0, Phaser.Math.Between(2, 3));
+            cols.forEach((dx) => vias.push({ x: b.x + dx, y0: rows[i].y, y1: rows[i + 1].y }));
         }
-        const t0 = path[0].t;
-        const pts = path.map((p) => ({
-            t: (p.t - t0) / speed,
-            x: Phaser.Math.Clamp(p.x, b.x - b.w / 2 + 10, b.x + b.w / 2 - 10),
-            y: Phaser.Math.Clamp(p.y, b.y - b.h / 2 + 10, b.y + b.h / 2 - 10)
-        }));
-        const total = Math.min(pts[pts.length - 1].t, 7200);
-        const line = this.fx(s.add.graphics().setDepth(26));
-        line.lineStyle(2, RED, 0.45);
-        line.beginPath();
-        line.moveTo(pts[0].x, pts[0].y);
-        pts.forEach((p) => line.lineTo(p.x, p.y));
-        line.strokePath();
-        const shadow = this.fx(s.add.image(pts[0].x, pts[0].y, "battle-soul").setTint(RED).setDepth(29).setAlpha(0.5));
-        s.later(1000, () => {
-            shadow.setAlpha(1);
-            const start = s.time.now;
-            let i = 0;
-            this.tick = (time) => {
-                const e = time - start;
-                if (e > total) { this.tick = null; shadow.setAlpha(0.3); return; }
-                while (i < pts.length - 1 && pts[i + 1].t <= e) i += 1;
-                shadow.setPosition(pts[i].x, pts[i].y);
-                if (Phaser.Math.Distance.Between(shadow.x, shadow.y, s.soul.x, s.soul.y) < 14) s.hurtSoul();
-            };
+        // Entrada num canto de cima, saída no canto oposto de baixo.
+        const flip = Math.random() < 0.5;
+        const start = { x: flip ? x1 : x0, y: rows[0].y };
+        const exit = { x: flip ? x0 : x1, y: rows[rows.length - 1].y };
+        this.circuit = { rows, vias, pos: { ...start }, exit, pulses: [], fast };
+        s.soul.body.reset(start.x, start.y);
+        s.invulnUntil = s.time.now + 700;
+
+        this.drawCircuit();
+        const hint = this.fx(s.add.text(b.x, b.y + b.h / 2 + 18, "A/D: andar na trilha    W/S: trocar de trilha nas pontes", {
+            fontFamily: "VCR", fontSize: "14px", color: "#9aa0b4"
+        }).setOrigin(0.5).setDepth(29));
+        s.later(3200, () => hint.destroy());
+
+        // Um pulso em cada vão sobe e desce numa ponte: a troca de trilha também
+        // tem hora certa.
+        for (let i = 0; i < rows.length - 1; i += 1) {
+            const via = Phaser.Utils.Array.GetRandom(vias.filter((v) => v.y0 === rows[i].y));
+            this.addPulse({ kind: "via", via, x: via.x, y: via.y0 + 10, dir: 1, speed: 75 * fast });
+        }
+        s.spawnTimer = s.time.addEvent({
+            delay: Math.round(620 / fast), loop: true, callback: this.safe(() => this.spawnRowPulse())
         });
+        s.later(250, () => this.spawnRowPulse());
+        this.tick = (time, delta) => this.circuitTick(time, delta);
+    }
+
+    // Placa: trilhas e pontes em cobre vermelho, ilhas nas junções, entrada e
+    // saída marcadas (a saída em verde, pulsando).
+    drawCircuit() {
+        const s = this.s;
+        const c = this.circuit;
+        const g = this.fx(s.add.graphics().setDepth(26));
+        const trace = (ax, ay, bx, by) => {
+            g.lineStyle(7, 0x5a1622, 1).lineBetween(ax, ay, bx, by);
+            g.lineStyle(2, 0xff7a8a, 0.9).lineBetween(ax, ay, bx, by);
+        };
+        c.rows.forEach((r) => trace(r.x0, r.y, r.x1, r.y));
+        c.vias.forEach((v) => trace(v.x, v.y0, v.x, v.y1));
+        g.fillStyle(0xff7a8a, 1);
+        c.vias.forEach((v) => {
+            g.fillCircle(v.x, v.y0, 5);
+            g.fillCircle(v.x, v.y1, 5);
+        });
+        g.lineStyle(2, 0x9aa0b4, 0.9).strokeCircle(c.pos.x, c.pos.y, 9);
+        const pad = this.fx(s.add.circle(c.exit.x, c.exit.y, 13, GREEN, 0.35).setStrokeStyle(2, GREEN, 1).setDepth(26));
+        s.tweens.add({ targets: pad, scale: 1.3, alpha: 0.6, duration: 450, yoyo: true, repeat: -1 });
+        this.fx(s.add.text(c.exit.x, c.exit.y + 24, "SAÍDA", {
+            fontFamily: "VCR", fontSize: "13px", color: "#51e36b"
+        }).setOrigin(0.5).setDepth(27));
+    }
+
+    // Anda `dist` pelo grafo do circuito. Vertical só numa ponte que siga para
+    // o lado pedido; horizontal só numa trilha. Perto de uma junção, encaixa.
+    moveOnCircuit(vx, vy, dist) {
+        const c = this.circuit;
+        let { x, y } = c.pos;
+        let moved = false;
+        if (vy) {
+            const via = c.vias.find((v) => Math.abs(x - v.x) <= CIRCUIT_SNAP
+                && y >= v.y0 - 0.5 && y <= v.y1 + 0.5
+                && (vy < 0 ? y > v.y0 + 0.5 : y < v.y1 - 0.5));
+            if (via) {
+                x = via.x;
+                y = Phaser.Math.Clamp(y + vy * dist, via.y0, via.y1);
+                moved = true;
+            }
+        }
+        if (!moved && vx) {
+            const row = c.rows.find((r) => Math.abs(y - r.y) <= CIRCUIT_SNAP && x >= r.x0 - 0.5 && x <= r.x1 + 0.5);
+            if (row) {
+                y = row.y;
+                x = Phaser.Math.Clamp(x + vx * dist, row.x0, row.x1);
+            }
+        }
+        c.pos.x = x;
+        c.pos.y = y;
+        this.s.soul.body.reset(x, y);
+    }
+
+    addPulse(p) {
+        const s = this.s;
+        p.sprite = this.fx(s.add.sprite(p.x, p.y, "projetil").setScale(0.6).setDepth(28));
+        p.sprite.play("projetil-anim");
+        this.circuit.pulses.push(p);
+    }
+
+    // Pulso numa trilha, entrando por uma ponta. Não nasce colado na alma.
+    spawnRowPulse() {
+        const s = this.s;
+        const c = this.circuit;
+        if (!c) return;
+        const row = Phaser.Utils.Array.GetRandom(c.rows);
+        let dir = Math.random() < 0.5 ? 1 : -1;
+        const from = (d) => (d > 0 ? row.x0 : row.x1);
+        if (Math.abs(c.pos.y - row.y) < 1 && Math.abs(c.pos.x - from(dir)) < 100) dir = -dir;
+        if (Math.abs(c.pos.y - row.y) < 1 && Math.abs(c.pos.x - from(dir)) < 100) return;
+        const x = from(dir);
+        s.spawnFx("fx-spark", x, row.y, { depth: 28, scale: 0.28 });
+        this.addPulse({ kind: "row", row, x, y: row.y, dir, speed: Phaser.Math.Between(120, 170) * c.fast });
+    }
+
+    circuitTick(time, delta) {
+        const s = this.s;
+        const c = this.circuit;
+        if (!c) return;
+        const dt = delta / 1000;
+        c.pulses = c.pulses.filter((p) => {
+            if (p.kind === "row") {
+                p.x += p.dir * p.speed * dt;
+                if (p.x < p.row.x0 - 12 || p.x > p.row.x1 + 12) {
+                    p.sprite.destroy();
+                    return false;
+                }
+            } else {
+                p.y += p.dir * p.speed * dt;
+                if (p.y >= p.via.y1) { p.y = p.via.y1; p.dir = -1; }
+                if (p.y <= p.via.y0) { p.y = p.via.y0; p.dir = 1; }
+            }
+            p.sprite.setPosition(p.x, p.y);
+            if (Phaser.Math.Distance.Between(p.x, p.y, c.pos.x, c.pos.y) < PULSE_HIT) s.hurtSoul();
+            return true;
+        });
+        // Condição de parada: chegou à saída.
+        if (Phaser.Math.Distance.Between(c.pos.x, c.pos.y, c.exit.x, c.exit.y) <= 8) {
+            this.circuit = null;
+            this.tick = null;
+            s.spawnTimer?.remove();
+            s.spawnTimer = null;
+            c.pulses.forEach((p) => p.sprite.destroy());
+            this.code[3].setText("se alma.na_saida : parar  ok");
+            this.highlight(3, "#51e36b");
+            Sfx.play(s, "confirm", 0.5);
+            Juice.ring(s, c.exit.x, c.exit.y, { color: GREEN, radius: 20 });
+            s.later(500, () => s.endDodge());
+        }
     }
 
     // FASE 4 — enquanto o jogador não reescreve, o laço pulsa: anéis lentos que
@@ -1362,9 +1550,8 @@ export default class AdaFight {
                 const side = Phaser.Math.Between(0, 3);
                 const x = side === 0 ? b.x - b.w / 2 + 6 : side === 1 ? b.x + b.w / 2 - 6 : Phaser.Math.Between(b.x - 80, b.x + 80);
                 const y = side < 2 ? Phaser.Math.Between(b.y - 100, b.y + 100) : side === 2 ? b.y - b.h / 2 + 6 : b.y + b.h / 2 - 6;
-                const mark = this.fx(s.add.circle(x, y, 7, RED, 0.6).setDepth(1006));
+                s.spawnFx("fx-spark", x, y, { depth: 1006, scale: 0.32 });
                 s.later(320, () => {
-                    mark.destroy();
                     this.bullet(x, y, Phaser.Math.Angle.Between(x, y, s.soul.x, s.soul.y), 150, 0.5);
                 });
             })
